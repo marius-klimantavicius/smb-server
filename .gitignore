@@ -1,0 +1,22 @@
+# Build outputs and local tooling
+**/bin/
+**/obj/
+artifacts/
+.vs/
+.idea/
+*.user
+*.suo
+TestResults/
+*.trx
+*.coverage*
+# Binary packages and original compiled artifacts do not belong in this source tree
+*.nupkg
+*.snupkg
+*.dll
+*.exe
+*.pdb
+*.so
+*.dylib
+# Local operating-system files
+.DS_Store
+Thumbs.db

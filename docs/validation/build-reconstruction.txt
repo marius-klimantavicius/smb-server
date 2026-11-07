@@ -1,0 +1,24 @@
+Build reconstruction — 2026-11-07
+
+SDK: 10.0.114. Target: net10.0. Solution: SmbServer.slnx.
+The user explicitly requested this compilation fix without agents.
+
+Before: dotnet build SmbServer.slnx -c Release --nologo failed with
+CS8852 at SetInfoMessage.cs:66. FileBasicInfoUpdate.Attributes is init-only,
+but the decompiler emitted its assignment after the object initializer.
+
+Change: read the four timestamps and attributes in their existing order,
+then assign all five properties inside one object initializer. Preserve the
+existing Stamp conversion and zero-attributes-to-null mapping. No property
+accessors or protocol behavior were intentionally changed.
+
+After:
+  dotnet build SmbServer.slnx -c Release --nologo
+  dotnet build SmbServer.slnx --nologo
+Both succeed: 0 errors, 333 warnings per full build across all six projects.
+Warning categories: CS8632 (306), CA1416 (16), CS4014 (11).
+Warnings were not suppressed as part of this reconstruction.
+
+This verifies compilation only. No runtime protocol tests or Native AOT
+publish were performed. The behavioral red-green requirement remains in
+force for future correctness repairs. P0 and F01–F16 remain open.

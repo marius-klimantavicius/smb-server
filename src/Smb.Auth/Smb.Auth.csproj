@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../Smb.Protocol/Smb.Protocol.csproj" />
+    <ProjectReference Include="../Smb.Crypto/Smb.Crypto.csproj" />
+  </ItemGroup>
+</Project>

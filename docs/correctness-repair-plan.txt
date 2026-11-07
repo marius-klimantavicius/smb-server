@@ -1,0 +1,368 @@
+SMB Server Correctness Repair Plan
+
+Package: SMB-Server 2.1.1
+Prepared: 2026-11-07
+Status: Correctness repairs planned. Source-only repository scaffolding prepared; behavioral repairs and runtime validation remain pending.
+Maintained repository: /home/marius/p/SmbServer
+Original evidence archive (external; not copied into this repository): /mnt/storage/SMB-Server
+Basis: docs/review/astra-protocol-review.txt, findings F01 through F16 and its additional coverage notes.
+
+1. Intended outcome and scope
+
+Produce a maintainable, fully C# SMB2/3 server library that can be published with Native AOT and has explicit, tested protocol and filesystem contracts. Preserve the Apache-2.0 package license and notices. Any new dependency must use a permissive license; do not introduce GPL/LGPL/AGPL code or a native SMB implementation. MPL is not assumed approved for new dependencies.
+
+This plan covers non-security correctness: file operations, deletion, handle identity and lifecycle, share-mode and byte-range-lock semantics, compound requests, credits, response sizing, asynchronous completion, notifications, caching coherency, and recovery ordering. Share-mode conflicts are filesystem coordination and remain in scope.
+
+Authorization, authentication, signature verification, encryption, key derivation, preauthentication integrity, and security-oriented path isolation remain excluded as requested. Preserve those existing boundaries while editing adjacent protocol code. Routine client sessions may use existing configuration, but this plan does not certify those mechanisms or weaken client/server settings to make tests pass. A failure originating in an excluded subsystem must be recorded as a blocker for that scenario, not silently bypassed or counted as a pass.
+
+All 16 findings currently have static evidence only. Confirm the relevant control flow and applicable specification requirement before implementing each repair. Inspect original IL when decompilation leaves ambiguity. A finding may be narrowed or rejected by stronger evidence; retain the reasoning in the issue record. The upstream README and existing DLL behavior are not conformance authorities.
+
+Two delivery milestones are proposed:
+
+M1: a restricted, tested file server with honest capabilities and no grants of unfinished optional behavior. Optional features can remain unavailable, but mandatory requirements for every offered dialect still apply. M1 is not closure of a finding whose only mitigation is disabling a feature.
+
+M2: the desired advanced feature set restored after the corresponding state machines and interoperability tests pass. Multichannel, leases/oplocks, durable reconnect, and persistent/continuous-availability recovery are distinct feature gates. Persistent failover is not implied by successful in-memory durable reconnect.
+
+2. Evidence and workspace layout
+
+Preserve these inputs unchanged in the external /mnt/storage/SMB-Server evidence archive:
+  packages/smb-server.2.1.1.nupkg
+  package/                         Original DLLs, README, nuspec and LICENSE
+  decompiled/                      Raw ILSpy 11.2.0.10050 output
+  manifest.json
+  review/astra-protocol-review.txt
+
+Package SHA-256:
+  decda113d70df16bcd5805f1da941642fd6c54faf3fc9ebaf9618ed151774185
+
+The maintained repository is now /home/marius/p/SmbServer:
+  src/                             Six source projects with project references
+  docs/correctness-repair-plan.txt  This active repair plan
+  docs/review/                     Preserved static review
+  docs/provenance/                 Original decompilation manifest
+  tests/                          Planned protocol/backend/lifecycle tests
+  test-host/                      Planned minimal JIT and Native AOT host
+  validation/                     Planned results and feature support records
+
+The solution uses the installed .NET 10 SDK and targets net10.0. Source files were copied from the preserved decompilation; project scaffolding replaces binary references with ProjectReference entries. These setup steps do not complete P0 or establish correctness/AOT compatibility. The original plan in the evidence archive remains unchanged.
+
+Use this repository for maintained work; paths previously described as maintained/* map directly to its root. Git is initialized without an initial commit. Record reconstruction changes separately from behavioral fixes. Do not re-decompile over src/. Original binaries may be loaded by a separate baseline test host outside this repository, never by the repaired host.
+
+For each finding record: original location, spec section and revision, observable contract, confidence, confirming test/IL evidence, selected remedy, implementation change, red-test command and observed failure, green-test command and passing result, relevant regression results, and remaining limitations. Line numbers below refer to the preserved decompilation; maintain links as source code moves.
+
+3. Dependency order and implementation batches
+
+P0 build baseline and test scaffolding -> P1 containment -> P2 object lifecycle.
+P2 -> P3 compound/credit core -> P4 async/cancellation -> P5 command semantics.
+P2/P4/P5 -> P6 coherent leases/oplocks -> P7 multichannel/recovery.
+P8 integration, capability reconciliation and Native AOT validation run incrementally, with a final gate after each delivery milestone.
+
+Use small reviewable implementation batches within each phase. Each batch contains the narrow behavior change and its regression tests. Avoid a wholesale dispatcher rewrite before the baseline tests exist. Complete lifecycle foundations before enabling concurrency and recovery features that depend on them.
+
+3.1 Required delegation hierarchy
+
+User-specified execution settings, recorded verbatim:
+  Coordinator/supervisor: gpt-6.1 sol; reasoning effort high.
+  Implementation agents: gpt-6.1 sol; reasoning effort xhigh.
+
+When implementation is requested, delegate execution of this plan to the coordinator/supervisor. The coordinator in turn launches and directs the implementation agents that perform the actual code and test changes. This authorizes that nested delegation for future execution of the plan; saving this plan does not start the agents or implementation.
+
+Resolve the requested model names and effort settings against the available orchestration catalog at launch time. Preserve these requested selections; do not silently substitute another model/provider. If a requested selection is unavailable or ambiguous, report that specific limitation before launching a substitute. Model availability has not been verified merely by recording these preferences.
+
+The coordinator owns phase dependencies, task decomposition, interface decisions, source-file ownership, integration, the finding ledger, and acceptance gates. Each implementation brief must include the assigned findings, permitted files, prerequisites, expected behavior/specification references, mandatory red-green workflow, scope exclusions, and required validation evidence. Keep shared dispatcher/lifecycle edits serialized unless the coordinator establishes nonoverlapping changes or isolated checkouts through the supported orchestration mechanism. Parallelize only genuinely independent work.
+
+Implementation agents return code changes, regression tests, exact red/green commands and outcomes, affected finding IDs, remaining limitations and integration notes. The coordinator checks that the red failure demonstrates the intended defect, reviews the repair, and runs the applicable integration/phase gates before marking a batch accepted. Implementation and integration corrections are assigned to implementation agents; the supervisor remains responsible for assessing the assembled result. Do not start further delegation levels unless specifically authorized.
+
+3.2 Mandatory red-green-refactor development
+
+Every correctness repair and new supported behavior must follow test-first red-green-refactor:
+
+1. RED: write the smallest meaningful regression or acceptance test for the required behavior. Run it against the current unfixed maintained source and observe a failure for the intended reason before changing production behavior. Capture the command, baseline revision/diff state and relevant output. A compilation error, missing dependency, skipped test or unrelated fixture failure is not evidence of the behavioral defect.
+2. GREEN: make the smallest coherent production change that satisfies the contract. Run the same test and record its passing result, then run the relevant existing regression tests. Do not weaken assertions, remove the test, or alter expected results solely to accommodate the implementation.
+3. REFACTOR: improve structure only after green, keeping the new test and affected regressions passing. Preserve reviewable separation between reconstruction, repair and unrelated cleanup.
+
+For races, RED must use controlled ordering/barriers where practical and a bounded timeout to detect a stuck operation; a theoretical race description alone is not completed TDD evidence. For wire contracts, expected results come from the specification or independent fixtures rather than the server code under test. A failing external conformance case may supply RED when its environment, expected result and repeatability are documented.
+
+P0 compiler-artifact reconstruction and test-tool setup are prerequisites to behavioral TDD, not correctness repairs disguised as setup. Record baseline build failures and subsequent successful builds separately, and do not mix behavior changes into reconstruction. Once the relevant code is executable, add and observe the behavioral RED before its fix. If a finding cannot be made to fail as expected, investigate, narrow or reject it with evidence; keep it unconfirmed or blocked rather than claiming it fixed. Any exception to mandatory test-first behavioral work requires an explicit user-approved change to this plan.
+
+P0. Reconstruct a trustworthy source build
+
+Affected: all six generated .csproj files, assembly metadata, compiler-generated constructs, test host.
+
+Import build observation (2026-11-07): SDK 10.0.114, net10.0, Release; source project references restore successfully. Compilation stops at SetInfoMessage.cs:66 (CS8852, init-only FileBasicInfoUpdate.Attributes assignment), with 46 nullable-annotation warnings. See docs/provenance/import-build.log. This is not a complete inventory of compilation failures, and no behavioral RED/GREEN or AOT result is implied. At initial import all 328 C# files were byte-identical to raw decompilation. Subsequent compilation reconstruction is recorded separately below.
+
+Compilation reconstruction (2026-11-07, explicitly requested direct work without agents): corrected the init-only Attributes assignment in SetInfoMessage.ParseBasicInfo using an object initializer, preserving field-reading order and value mapping. Default Debug and Release solution builds now succeed with 0 errors and 333 warnings per full build. Only this C# file differs from the raw decompilation. This is build reconstruction, not behavioral TDD evidence, finding closure, completion of P0 or AOT validation. See docs/validation/build-reconstruction.txt.
+
+Tasks:
+1. Verify the raw project import into src/ and retained original license/provenance. Pin the available .NET 10 SDK and initially target net10.0 as a proposed baseline for Native AOT. Keeping net9.0 compatibility is a separate compatibility decision, not an assumed requirement.
+2. Replace references to package/lib/net9.0/*.dll with source ProjectReference entries. The generated projects currently contain binary HintPaths, so building them unchanged would not validate the entire repaired stack. Check every dependency, including optional integrations.
+3. Repair decompiler compilation artifacts only as needed. Preserve public contracts initially. Separate generated assembly metadata from SDK-generated attributes. Keep AllowUnsafeBlocks available; do not add unsafe code without a concrete need.
+4. Verify the six-project dependency graph, resolve build errors, and record warnings. Confirm actual loaded assembly paths/build identities from the test host so no original DLL substitutes for a rebuilt project.
+5. Introduce a fake IFileStore/IFileHandle with explicit counters, controllable async completion and injected ordinary I/O errors. Add a recording transport and fake watcher. Implement deterministic scheduling barriers and a controllable clock where timeouts matter.
+6. Create normal-operation fixtures for negotiation, open/read/write/close, enumeration and tree disconnect. Fixtures must be independent of server serializers where they assert wire conformance; share test helpers, not expected output logic.
+7. Enable Native AOT analysis and publish the minimal host early. Track warnings by call path; do not blanket-suppress trim/dynamic-code warnings. AOT buildability is a separate result from runtime correctness.
+
+Acceptance:
+- Clean build from source without package DLL references; test host loads rebuilt assemblies.
+- Reconstruction diff is isolated from functional changes.
+- Minimal host publishes or has an explicit, actionable AOT blocker list.
+- Fault-injection and scheduling helpers work without external shares or user data.
+
+P1. Contain data-loss behavior and misleading optional features
+
+Findings: F01; interim mitigation for F02, F03 and F15.
+Entry points: LocalFileHandle.Dispose, LocalFileStore.SetDeleteOnCloseAsync, SmbServerOptions, SmbServerBuilder, NegotiateProcessor, CREATE context processing and share capability configuration.
+
+Tasks:
+1. Remove recursive directory deletion from delete-on-close. Implement the appropriate nonempty-directory result at disposition/create validation and retain a nonrecursive final deletion operation to handle intervening changes. Do not merely perform an emptiness check followed by recursive deletion; that still has a race.
+2. Stop treating cleanup suppression as successful completion of an operation that failed. Separate protocol-visible close/disposition results from final disposal, preserving required status timing and handle cleanup.
+3. Define one feature policy used by configuration, negotiation, accepted CREATE contexts, granted caching/recovery state, and IOCTL responses. Initially decline oplock/lease grants and disable multichannel binding/advertisement and persistent/CA behavior until their gates pass. Decline basic durable grants too if lifecycle semantics cannot yet be demonstrated.
+4. Use the specification's permitted rejection/ignore behavior for each optional context. Do not clear a capability bit while continuing to grant the feature through another path. Do not assume changing maximum dialect fixes mandatory filesystem or compound behavior.
+5. Reject configuration combinations that claim backend guarantees unavailable in the selected store. Preserve unknown/unimplemented features as explicit unsupported entries.
+
+Acceptance:
+- Empty-directory deletion succeeds; nonempty-directory deletion preserves all descendants.
+- A child created between disposition and final close is preserved.
+- Clearing delete-pending behaves correctly; multiple opens do not trigger premature deletion.
+- All disabled-feature entry points behave consistently and are covered by tests.
+- F02/F03/F15 are labeled mitigated, not fixed, when only disabled.
+
+P2. Establish stable file identity and transactional open lifecycle
+
+Findings: F02 identity foundation, F08, F09, F16; complete F01 semantics.
+Entry points: State/SmbConnection, SmbSession, SmbTreeConnect, SmbOpen; CREATE/CLOSE/TREE_DISCONNECT; LocalFileStore/LocalFileHandle; lock/share/oplock maps.
+
+Tasks:
+1. Allocate TreeIds and volatile FileIds in the namespace of their resolving tables, not per connection. Use checked allocation, reserved-value rules, collision-detecting insertion and an explicit wrap/exhaustion policy. Preserve tuple uniqueness for persistent/volatile file IDs. Never replace a live entry through dictionary index assignment.
+2. Introduce stable backend object/stream identity for the lifetime of an open. Distinguish it from request pathname and protocol FileId. Key locks, share reservations, delete-pending and caching state by that identity. On local stores, choose a host-supported identity strategy or explicitly constrain unsupported aliases; a normalized string path alone does not solve rename or hard-link behavior.
+3. Make CREATE a staged transaction: provisional share reservation -> backend acquisition -> response/context preparation -> open publication -> successful completion. Track every acquired resource with a rollback owner. On exception/failure, release reservations, handles, map entries, cache/recovery records and counts exactly once. Define send-failure cleanup separately from ordinary pre-commit failure. Do not promise rollback of backend side effects the backend cannot actually reverse.
+4. Model Open transitions such as provisional, active, closing, closed and, later, durable-disconnected. Add operation references so close prevents new work and drains/cancels in-flight work according to its contract. A concurrent dictionary does not make multi-step lifecycle operations atomic.
+5. Centralize protocol close and resource cleanup. TREE_DISCONNECT closes matching opens and cancels associated work before removing its tree. Reuse the routine for CLOSE, logoff, connection loss, timeout, shutdown and failed CREATE, with reason-specific retention rules. Do not apply durable retention to explicit close/tree disconnect just because a handle is durable.
+6. Coordinate rename with the stable object registry and all open handles. Update names and path-derived metadata without losing lock/cache/share state. Define replacement behavior for destination opens and delete-pending objects.
+
+Acceptance:
+- Two channels attached to a shared session allocate distinct IDs; no existing table entry is overwritten. This unit test does not enable multichannel on the wire yet.
+- Faults injected after each CREATE acquisition leave no provisional resources or unreturned active opens.
+- TREE_DISCONNECT returns resource counters to baseline, including backend handles, reservations, locks and watchers.
+- Rename while open preserves locks and metadata for all opens; subsequent unlock/close works.
+- Concurrent close, I/O, rename and tree teardown have one cleanup owner and no use-after-dispose behavior.
+
+P3. Repair compound execution, credit accounting and structural parsing
+
+Findings: F04, F07; parser follow-ups in the review.
+Entry points: Smb2Dispatcher.ProcessMessageAsync, Smb2Header, CreditManager, request parsers and response assembly.
+
+Tasks:
+1. Introduce a compound execution context containing the prior result's SessionId/TreeId/FileId, related-chain membership, failure/dependency state, current command bounds and pending continuation. Resolve related placeholders according to the command rules; do not inherit literal placeholders or values from the previous request when the response created new identifiers.
+2. Keep unrelated commands independent and prevent identifiers from leaking between chains. Propagate prerequisite failure using the required status behavior. Preserve response flags, alignment and command-relative offsets. Ensure a dependent command cannot run before the preceding operation completes.
+3. Connect asynchronous compounds to P4's completion machinery. Until that path is implemented, use only the specification-permitted unsupported behavior; never perform dependent mutation before completion of a parked CREATE.
+4. Replace the moving sequence-window lower bound with an available/granted/consumed sequence ledger. Consume the correct range once per applicable request and extend it by actual response grants. Handle valid out-of-order sequence arrival, command-specific exceptions, compound elements, multi-credit sizes, overflow and asynchronous grants explicitly.
+5. Calculate required charge from command-specific request/expected-response sizes and negotiated large-MTU/dialect rules. Related operations must not bypass required sequence/charge processing. Preserve valid CANCEL handling rather than treating it as ordinary request consumption.
+6. Check fixed structure sizes, required fields, compound NextCommand alignment/range, CREATE name encoding/offset rules, and command-local lengths. Centralize structural checks without collapsing distinct command error semantics into one generic result.
+
+Acceptance:
+- CREATE -> READ/WRITE -> CLOSE and tree-generating related chains work with inherited identifiers.
+- An unsuccessful prerequisite prevents dependent operations; unrelated requests continue under their own rules.
+- Complete serialized responses have correct chaining and command-relative offsets.
+- Ledger model tests cover out-of-order valid IDs, consumed IDs, grant changes and multi-credit operations around size boundaries.
+- Parser boundary tests exercise valid and invalid structure/offset combinations without a network exposure requirement.
+- A pending related operation resumes only through P4's explicit continuation.
+
+P4. Repair cancellation, asynchronous completion and notifications
+
+Findings: F05, F06, F14; CANCEL scheduling follow-up.
+Entry points: InMemoryLockManager, PendingRequests, SmbConnectionHandler, lock/notify/parked-CREATE handlers, IDirectoryWatcher/FileSystemDirectoryWatcher.
+
+Tasks:
+1. Remove waiters under the lock-manager gate, but dispose cancellation registrations and complete tasks outside it. Define one winner for cancel versus grant. Avoid inline continuation execution while holding shared manager locks.
+2. Introduce a pending-operation state machine with registered, interim committed, completing and completed states. Publish pending identity before enabling completion sources. If the operation takes the pending path, queue early completion until the interim response has been committed to the ordered sender. Permit synchronous completion without a redundant interim when the protocol allows it.
+3. Centralize exactly-once completion, response ownership, cancellation and resource removal. Maintain both appropriate original MessageId lookup and AsyncId lookup. Define behavior when the transport closes before interim/final transmission.
+4. Allow CANCEL and teardown to reach pending operations without waiting behind a blocked backend READ/WRITE. Preserve required ordering of actual file operations while separating control-plane progress. Document backend cancellation limits; do not claim physical I/O cancellation when only response delivery can be cancelled.
+5. Maintain notification state per directory open, including active filter/subtree semantics, bounded queued changes, pending request ownership and watcher lifetime. Empty/all-invalid filters must follow the documented pending behavior, not a substituted default filter.
+6. Handle FileSystemWatcher.Error/overflow with the specified rescan/completion semantics. Preserve changes across re-arm where required, and distinguish expected rescan behavior from silent loss. Bound buffers and release subscriptions on close, tree disconnect and shutdown.
+
+Acceptance:
+- Deterministic barrier tests cover cancel before/after registration, cancel versus grant, disconnect during completion and close versus notify.
+- No registration disposal waits while holding the callback's required gate.
+- Every pending-path final response follows its interim response; every operation completes once or is explicitly abandoned on transport loss.
+- Pending maps, subscriptions, callbacks and locks return to baseline after each scenario.
+- Notification tests cover empty filters, subtree changes, rename pairs, overflow, changes between calls and cancellation.
+- Controlled short stress tests supplement deterministic tests; timing-only tests are not the sole evidence.
+
+P5. Make file commands honor their contracts
+
+Findings: F10, F11, F12, F13; COPYCHUNK and metadata follow-ups.
+Entry points: WriteMessage, ReadMessage, QUERY_INFO/IOCTL/SET_INFO/QUERY_DIRECTORY handlers, IFileStore, LocalFileStore and pipe buffering.
+
+Tasks:
+1. Parse WRITE flags/channel fields completely. Carry supported write-through/buffering intentions through the backend API and validate unsupported channel combinations. Distinguish MUST requirements from SHOULD behavior; document a permitted host limitation rather than inventing durability guarantees. Keep explicit FLUSH coverage.
+2. Enforce READ Length and MinimumCount with the correct zero-length/EOF behavior. For QUERY_INFO and IOCTL, implement per-class short-buffer and partial-output rules. For pipes, preserve unread output with a cursor/message-aware buffer rather than draining all queued bytes. Do not apply generic truncation to every response.
+3. Parse and validate FileAllocationInformation. Add an allocation capability and implement supported allocation/EOF effects, rounding and failure semantics; otherwise return the required unsupported result. Do not equate allocation size blindly with logical EOF or report success for a no-op. Backend guarantees may differ by host.
+4. Model directory enumeration state explicitly. Honor REOPEN and RESTART_SCANS, pattern changes, RETURN_SINGLE_ENTRY, buffer-limited pagination and EOF. Ensure a bounded backend listing can resume rather than permanently losing entries beyond its first batch.
+5. Route COPYCHUNK through the same source/destination range-lock, lifecycle and cache-coherency coordination as equivalent reads/writes, accounting for overlapping ranges and partial failure according to the FSCTL contract. Keep it unavailable until that integration passes.
+6. Define the supported local-store metadata contract: named-stream/EA persistence, restart behavior, rename consistency, timestamps and case-sensitive host behavior. Unsupported persistence guarantees must not be represented as full NTFS semantics. Security-oriented path isolation stays excluded.
+
+Acceptance:
+- Exact-size, short, zero and boundary-sized response tests cover each supported information class and pipe operation.
+- Writes invoke the intended backend durability behavior; actual power-loss durability is not inferred from a mock flush counter.
+- Allocation requests change state correctly or return an honest unsupported result, including disk-full/error cases.
+- Enumeration survives restart/reopen, changed patterns and multiple output-buffer pages.
+- COPYCHUNK respects both source and destination locks and has tested partial-result behavior.
+- Metadata features have a documented persistence contract and matching restart/rename tests.
+
+P6. Implement coherent oplocks and leases before restoring grants
+
+Finding: F03, with F09/F16 lifecycle integration.
+Dependencies: stable file identity, transactional lifecycle, pending-operation state machine and operation-specific coordination.
+
+Tasks:
+1. Use a common per-object/stream conflict coordinator for lease and oplock state. Represent granted state, requested downgrade, break epoch/acknowledgment and timeout explicitly.
+2. Decide conflicting-operation requirements before backend truncation, overwrite, write, rename, delete, size changes and copy operations. Park operations requiring a break until the protocol permits proceeding. Do not hold global locks while awaiting acknowledgments or backend I/O.
+3. Apply the same rules to ordinary and compounded commands, aliases, multiple opens and reconnects. Define host-side modification handling; if a backend cannot coordinate external changes, withhold caching rights for that backend or restrict its supported access model.
+4. Handle acknowledgment, timeout, client disconnect, cancellation and duplicate completion through P4's lifecycle. Avoid separate managers making incompatible grants for the same underlying file.
+
+Acceptance:
+- Two independent clients observe consistent contents through conflicting read/write/overwrite/rename workflows.
+- A destructive operation cannot modify the backend before its required break acknowledgment/timeout decision.
+- Mixed lease/oplock opens, related CREATE chains and disconnect during a break have deterministic outcomes.
+- Grant flags and negotiation claims match implemented behavior. Restore only individually validated cache rights; unsupported directory leases remain explicitly unavailable.
+
+P7. Implement multichannel sequencing and recovery in separate stages
+
+Findings: F02 final closure and F15.
+Dependencies: P2 identity/lifecycle, P3 credits, P4 async ordering, P6 caching where recovery preserves it.
+
+Tasks:
+1. Implement mandatory SMB3 channel-sequence processing for the offered dialects, with per-open current/prior sequence state and outstanding-request accounting. Validate old/new sequence handling and mutation ordering. Disabling multichannel does not waive dialect-mandated checks.
+2. Serialize compound/lifecycle transitions across channels where necessary while allowing independent I/O. Preserve per-connection credit accounting and shared-session open identity. Handle loss of one channel separately from loss of the entire session/connection set.
+3. Implement CREATE replay deduplication and each supported operation's replay/lock-sequence behavior. Scope replay records, results, retention and retirement to the protocol rules. Do not implement a generic replay cache without command semantics.
+4. First validate basic in-memory durable reconnect: retained handle, locks/share state, timeout, explicit close, disconnect and reconnect. Keep this distinct from restarting the server process.
+5. Treat persistent handles/CA as a separate backend capability and journal design. Record enough stable object identity, lock/cache/delete-pending/replay state to recover the promised semantics. Define atomic commit, versioning, crash points and stale-record cleanup. Reopening a pathname with saved IDs is insufficient.
+6. If the backend cannot provide persistent/CA semantics, leave them unavailable and mark that limitation explicitly. Full persistent/CA completion then remains deferred, not falsely closed. Authorization checks on binding/reconnect remain outside this work.
+
+Acceptance:
+- Multiple connections create/open/close without ID collisions or leaked entries.
+- Controlled cross-channel ordering and lost-response scenarios do not duplicate supported mutations or lose established lock state.
+- Durable tests cover success, expiration, explicit close and transport interruption.
+- Persistent/CA claims require process-restart/crash-recovery tests with the promised state preserved; otherwise no such claim or grant is emitted.
+- Enabling any feature requires its own passing gate, not simply setting EnableMultichannel=true.
+
+P8. Validate supported behavior and Native AOT delivery
+
+Run throughout implementation, then repeat the required applicable tests for the final source revision. Microsoft Windows Protocol Test Suites integration below is strongly recommended (a "really nice to have"), not a prerequisite or delivery acceptance requirement.
+
+Tasks:
+1. Maintain a feature record keyed by dialect, share/backend capability and host platform. Record advertised capability, accepted request/context, granted result, associated tests and status. Audit configuration defaults, negotiation, CREATE contexts, IOCTLs and share flags together.
+2. Run focused Samba smbtorture cases for the supported non-security surface. Strongly consider adding Microsoft's Windows Protocol Test Suites, specifically the File Server Family suite's MS-SMB2 tests and applicable MS-FSA/MS-FSCC coverage, as an optional independent interoperability layer. External test clients may be native/non-C# programs; they are validation tools, not shipped protocol dependencies. Record exact suite versions, selected cases, unsupported-feature exclusions and known blockers. Do not claim a whole suite passes when cases were skipped.
+3. Exercise Windows Explorer/normal file APIs, macOS Finder/file APIs and Linux CIFS/smbclient with create, append, overwrite, rename, enumeration, deletion, notifications, locks, multiple opens and disconnect/reconnect. Use disposable test roots. Record client versions, negotiated dialect and enabled features.
+4. Publish and run a representative Native AOT test host. As an initial target set use linux-x64 and win-x64 if those environments are available; the final supported RID set must reflect actually tested deployment targets. Add other RIDs only with a build/run result. Execute AOT builds on compatible hosts rather than assuming a cross-publish is supported.
+5. Exercise the same ordinary-workload fixtures against JIT and AOT builds. Check trim/dynamic-code warnings and loaded dependencies. Basic runtime tests may exercise existing session setup, but do not become an authentication/encryption audit.
+6. Run bounded concurrency and ordinary backend-failure tests; track open counts, pending requests, watchers, lock waiters, reservations, recovery records, file descriptors and memory trends. Require quiescent resources to return to expected baseline, allowing explicitly retained durable state only within its timeout.
+7. Verify reproducible clean restore/build/test/publish steps and dependency license records. Pin dependencies and remove accidental references to original package assemblies. Keep issue evidence and final feature limitations with release artifacts.
+
+Recommended optional Microsoft suite integration:
+- Prefer establishing a baseline soon after P0 produces an executable maintained server, rather than waiting until the final milestone. Pin a suite revision and begin with a small explicitly selected set of ordinary file-operation tests against disposable shares in a workgroup setup.
+- The suite is MIT licensed and runs as a separate network test client. It adds no protocol implementation dependency to the shipped C# library; its runner need not be Native AOT. Configure the selected tests against both JIT and Native AOT server hosts when practical.
+- Map relevant cases to findings for compounds, credits, file lifecycle, read/write, enumeration, locks, cancellation, notifications and cleanup after inspecting actual case coverage. Add advanced-feature cases only as those features are implemented and advertised.
+- Use applicable cases to supplement mandatory red-green-refactor: capture an intended failure before the fix, then rerun after the fix. Retain focused local regression tests, especially deterministic scheduling and resource-lifetime tests; external suite setup failures or skipped cases do not count as behavioral RED evidence.
+- Budget for configuration, server/share reset and any custom server-control adapters. Keep authorization, authentication/signing and encryption verification excluded under the existing scope; ordinary session setup may still be needed to run file-operation tests.
+- If setup cost or environmental limitations prevent integration, record the deferral and continue using the required local regression, interoperability and AOT checks. Missing Microsoft suite integration alone must not block P0, P8, M1 or M2. Confirmed correctness failures discovered by optional tests still require a disposition; optional integration is not permission to ignore defects in claimed functionality.
+- Passing selected tests is evidence for those scenarios, not full protocol coverage or certification. Record the exact selection and exclusions with the results.
+
+References for this recommendation:
+https://github.com/microsoft/WindowsProtocolTestSuites
+https://github.com/microsoft/WindowsProtocolTestSuites/blob/main/LICENSE.txt
+https://github.com/microsoft/WindowsProtocolTestSuites/blob/main/TestSuites/FileServer/docs/FileServerUserGuide.md
+
+Acceptance:
+- Every claimed feature has an applicable passing test path, including a native executable path for supported RIDs.
+- No unexplained conformance failures in the supported non-security surface.
+- Unsupported scenarios, unavailable client environments and excluded security work are explicitly listed.
+- No recursive delete-on-close, ID overwrites, phantom opens, stuck lock waiters or unexplained pending-resource growth in the tested workloads.
+- No security or full-SMB3-compliance claim is inferred from this scoped acceptance.
+
+4. Finding closure checklist
+
+F01: P1/P2 — nonrecursive deletion, correct delete-pending lifecycle, directory-content preservation tests.
+F02: P1/P2/P7 — disable first; shared-namespace ID allocation; multichannel lifecycle tests before restoration.
+F03: P1/P6 — withhold grants first; unified conflict coordination; two-client coherency tests before restoration.
+F04: P3/P4 — compound context, identifier inheritance, dependency/error handling and async continuation tests.
+F05: P4 — dispose registrations outside callback locks; deterministic cancel/grant interleaving tests.
+F06: P4 — pending publication and interim/final ordering; one-completion and no-leak tests.
+F07: P3 — actual credit ledger, sequence consumption and size-charge model tests.
+F08: P2/P4 — tree-scoped close/cancel; backend-resource and sharing-state cleanup tests.
+F09: P2/P6 — stable file identity; rename with multiple opens, locks and caching tests.
+F10: P5 — full WRITE parsing, backend option propagation and durability/channel contract tests.
+F11: P5 — READ MinimumCount, class-specific output bounds and pipe remainder tests.
+F12: P5 — actual allocation capability or permitted unsupported result; no false-success tests.
+F13: P5 — enumeration reopen/restart/pattern and bounded-pagination tests.
+F14: P4 — per-open notifications, correct filters, overflow/error and re-arm tests.
+F15: P1/P7 — explicit feature restrictions; mandatory channel sequence handling; staged replay/durable/persistent tests.
+F16: P2 — staged CREATE rollback; injected failure after each resource acquisition.
+
+Additional review follow-ups:
+A01: P3 — fixed-request completeness, name/offset rules and compound alignment.
+A02: P5/P6 — COPYCHUNK range locks, partial results and caching coordination.
+A03: P4 — CANCEL can progress without waiting for all blocked I/O.
+A04: P5/P8 — metadata/stream/EA persistence and local-host filesystem contract.
+A05: P1/P8 — advertised capabilities, accepted contexts and backend guarantees agree.
+
+Closure states are: unconfirmed, confirmed, repaired and tested, mitigated by feature restriction, unsupported by design where permitted, or deferred with a stated blocker. Do not relabel mitigation as implementation. Optional unsupported behavior is not automatically a defect, but mandatory dialect behavior cannot be waived by configuration notes.
+
+5. Validation discipline and stop conditions
+
+Mandatory red-green-refactor and the required delegation hierarchy in sections 3.1 and 3.2 govern every implementation phase. No correctness batch is accepted without an observed, relevant RED followed by GREEN and passing affected regressions. For concurrency, force interleavings with barriers instead of relying solely on sleeps. Tests should assert external results and resource invariants rather than copy the implementation. For source ambiguity, original IL inspection is preferable to guessing from lowered async/goto syntax.
+
+Keep reconstruction and correctness patches reviewable independently. Never compare correctness only with the original DLL: it may contain the same defect. Use the Microsoft requirements and independent client behavior as checks, documenting permitted implementation choices and SHOULD deviations.
+
+Stop feature restoration if a prerequisite invariant fails. Keep the restricted profile available while repairing an advanced feature. If source reconstruction reveals extensive unresolvable decompiler artifacts, assess replacing only the affected subsystem behind preserved interfaces rather than accumulating unreviewable edits. If an excluded authentication/encryption path prevents integration testing, record the blocked coverage and keep the feature unvalidated; no exemption from that failure is assumed.
+
+Implementation estimates should be made after P0 exposes buildability and P2 settles backend identity/API changes. The highest-uncertainty work is cross-platform stable identity, cache coherency, cross-channel ordering and persistent recovery. This is a multi-stage correctness project, not a fixed small patch count.
+
+6. Completion criteria
+
+M1 completion requires P0 through P5, applicable mandatory dialect handling from P7, and the P8 gate for the restricted feature set. It includes a clean source/AOT host, passing basic file and concurrency contracts, coherent advertised limitations, and a disposition for every finding. The coordinator must verify the recorded RED/GREEN evidence for every accepted correctness batch. Optional-feature findings may still be mitigated or deferred and must remain visible.
+
+M2 completion requires the selected advanced features from P6/P7 to pass their own P8 gates. If full persistent/CA recovery is not implemented, M2 must explicitly exclude it rather than representing all 16 findings as fully implemented. The final result includes maintained source, regression tests, reproducible build instructions, capability records, dependency/license records, and the final finding ledger.
+
+Security scope remains excluded from both milestones. Completion establishes only the tested correctness surface, not general production readiness or a security certification.
+
+7. Specification references
+
+The review's S01–S20 references are the starting normative index. At implementation time record the revision of each section used, including MUST/SHOULD wording and dialect applicability. These links are carried from the review; this plan does not replace that validation.
+
+File disposition and allocation:
+https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fscc/12c3dd1c-14f6-4229-9d29-75fb2cb392f6
+https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fscc/0201c69b-50db-412d-bab3-dd97aeede13b
+
+CREATE and per-session state:
+https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-smb2/8c61e928-9242-44ed-96a0-98d1032d0d39
+https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-smb2/fbcbc952-8c1f-4528-a0ab-7aed7d52264e
+
+Compound execution:
+https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-smb2/46dd4182-62d3-4e30-9fe5-e2ec124edca1
+https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-smb2/cb250ec7-d2d7-4a9a-9635-3e7770bfdae9
+
+Credits and message sequencing:
+https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-smb2/dec8e905-9477-4c3f-bc64-b18d97c9f905
+https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-smb2/0326f784-0baf-45fd-9687-626859ef5a9b
+https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-smb2/fba3123b-f566-4d8f-9715-0f529e856d25
+https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-smb2/46256e72-b361-4d73-ac7d-d47c04b32e4b
+
+Async responses and cancellation callback disposal:
+https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-smb2/c1692ece-7c6d-45c8-a0e3-6b53c0483030
+https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtokenregistration.dispose?view=net-9.0
+
+Tree disconnect, read, write and query information:
+https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-smb2/bf494f8d-3ee2-44ce-940d-f3400daef2ae
+https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-smb2/21e8b343-34e9-4fca-8d93-03dd2d3e961e
+https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-smb2/829f93f5-ed10-4f12-8347-42d235019459
+https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-smb2/d64e0451-64a2-425a-848e-52a7dddab7b9
+
+Enumeration and change notification:
+https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-smb2/29dfcc9b-3aec-406b-abb5-0b4fe96712e2
+https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-smb2/05869c32-39f0-4726-afc9-671b76ae5ca7
+
+Oplock breaks and channel sequence processing:
+https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-smb2/2a09fc40-1615-42df-bda6-2865b8d6da95
+https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-smb2/e3bc2d8f-d83d-41d9-a2a7-1edd60ca6eb2
