@@ -13,11 +13,17 @@ public static class AccessCheck
 			return AllAccess;
 		}
 
-		var num = 0u;
-		var num2 = 0u;
+		var owner = descriptor.Owner != null && Contains(callerSids, descriptor.Owner);
+		var ownerRights = false;
+		foreach (var ace in descriptor.Dacl.Aces)
+			if (!ace.Flags.HasFlag(AceFlags.InheritOnly) && WellKnownSids.OwnerRights.Equals(ace.Sid)) ownerRights = true;
+
+		var num = owner && !ownerRights ? AccessMask.ReadControl | AccessMask.WriteDac : 0u;
+		var num2 = num;
 		foreach (var ace in descriptor.Dacl.Aces)
 		{
-			if ((object)ace.Sid == null || !Contains(callerSids, ace.Sid))
+			if (ace.Flags.HasFlag(AceFlags.InheritOnly) || (object)ace.Sid == null ||
+				!(Contains(callerSids, ace.Sid) || owner && WellKnownSids.OwnerRights.Equals(ace.Sid)))
 			{
 				continue;
 			}
@@ -47,7 +53,7 @@ public static class AccessCheck
 		if ((desiredAccess & 0x2000000) != 0)
 		{
 			grantedAccess = num;
-			return num != 0;
+			return num != 0 && ((desiredAccess & ~AccessMask.MaximumAllowed) & ~num) == 0;
 		}
 
 		grantedAccess = desiredAccess & num;

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Smb.Auth;
+using Smb.Protocol.Enums;
 using Smb.FileSystem;
 using Smb.Server.Authorization;
 using Smb.Server.Durable;
@@ -30,6 +31,50 @@ public sealed class SmbServerState
 	public ConcurrentDictionary<Guid, SmbConnection> Connections { get; } = new ConcurrentDictionary<Guid, SmbConnection>();
 
 	public WitnessRegistrationStore WitnessRegistrations { get; } = new WitnessRegistrationStore();
+
+	private sealed class ClientEntry
+	{
+		internal SmbDialect Dialect;
+		internal readonly HashSet<Guid> Connections = new HashSet<Guid>();
+	}
+	private readonly Lock _clientGate = new Lock();
+	private readonly Dictionary<Guid, ClientEntry> _clients = new Dictionary<Guid, ClientEntry>();
+
+	internal void RegisterClientConnection(SmbConnection connection)
+	{
+		if (connection.Dialect == SmbDialect.Smb202) return;
+		lock (_clientGate)
+		{
+			var guid = new Guid(connection.ClientGuid);
+			if (!_clients.TryGetValue(guid, out var client)) _clients.Add(guid, client = new ClientEntry());
+			client.Connections.Add(connection.ConnectionId);
+		}
+	}
+
+	internal bool AcceptClientDialect(SmbConnection connection)
+	{
+		if (connection.Dialect == SmbDialect.Smb202) return true;
+		lock (_clientGate)
+		{
+			var guid = new Guid(connection.ClientGuid);
+			if (!_clients.TryGetValue(guid, out var client)) _clients.Add(guid, client = new ClientEntry());
+			client.Connections.Add(connection.ConnectionId);
+			if (client.Dialect != SmbDialect.None && client.Dialect != connection.Dialect) return false;
+			client.Dialect = connection.Dialect;
+			return true;
+		}
+	}
+
+	internal void UnregisterClientConnection(SmbConnection connection)
+	{
+		if (connection.Dialect == SmbDialect.Smb202) return;
+		lock (_clientGate)
+		{
+			var guid = new Guid(connection.ClientGuid);
+			if (_clients.TryGetValue(guid, out var client) && client.Connections.Remove(connection.ConnectionId) && client.Connections.Count == 0)
+				_clients.Remove(guid);
+		}
+	}
 
 	public SmbServerState(SmbServerOptions options)
 	{

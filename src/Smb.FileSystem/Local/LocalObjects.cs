@@ -5,6 +5,7 @@ namespace Smb.FileSystem.Local;
 
 internal sealed class LocalObject
 {
+	internal readonly SemaphoreSlim MutationGate = new SemaphoreSlim(1, 1);
 	internal readonly HashSet<LocalFileHandle> Handles = new HashSet<LocalFileHandle>();
 	internal string? DeletePath;
 	internal bool DeletePending;

@@ -36,6 +36,7 @@ public sealed class TreeConnectRequest
 		spanReader.Skip(2);
 		var num2 = spanReader.ReadUInt16();
 		var num3 = spanReader.ReadUInt16();
+		RequestBounds.Buffer(message, num2, num3, bodyOffset + 8, "TREE_CONNECT path");
 		var path = string.Empty;
 		if (num3 > 0)
 		{
@@ -44,7 +45,7 @@ public sealed class TreeConnectRequest
 				throw new SmbWireFormatException("TREE_CONNECT path extends past the message.");
 			}
 
-			path = Encoding.Unicode.GetString(message.Slice(num2, num3));
+			path = RequestBounds.ReadUnicode(message.Slice(num2, num3), "TREE_CONNECT path");
 		}
 
 		return new TreeConnectRequest

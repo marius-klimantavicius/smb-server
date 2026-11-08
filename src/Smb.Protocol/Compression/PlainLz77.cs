@@ -111,6 +111,7 @@ public static class PlainLz77
 		var num2 = 0;
 		var num3 = 0u;
 		var num4 = 0;
+		var nibbleOffset = -1;
 		while (num2 < array.Length)
 		{
 			if (num4 == 0)
@@ -148,40 +149,34 @@ public static class PlainLz77
 			var num7 = (num5 >> 3) + 1;
 			if (num6 == 7)
 			{
-				if (num >= input.Length)
+				int extended;
+				if (nibbleOffset < 0)
 				{
-					throw new SmbWireFormatException("Truncated LZ77 extended length.");
+					if (num >= input.Length) throw new SmbWireFormatException("Truncated LZ77 length nibble.");
+					nibbleOffset = num;
+					extended = input[num++] & 15;
 				}
-
-				int num8 = input[num++];
-				if (num8 == 255)
+				else { extended = input[nibbleOffset] >> 4; nibbleOffset = -1; }
+				if (extended == 15)
 				{
-					if (num + 2 > input.Length)
+					if (num >= input.Length) throw new SmbWireFormatException("Truncated LZ77 length byte.");
+					extended = input[num++];
+					if (extended == 255)
 					{
-						throw new SmbWireFormatException("Truncated LZ77 extended length (u16).");
-					}
-
-					int num9 = BinaryPrimitives.ReadUInt16LittleEndian(input.Slice(num));
-					num += 2;
-					if (num9 == 0)
-					{
-						if (num + 4 > input.Length)
+						if (num + 2 > input.Length) throw new SmbWireFormatException("Truncated LZ77 length word.");
+						uint wide = BinaryPrimitives.ReadUInt16LittleEndian(input.Slice(num));
+						num += 2;
+						if (wide == 0)
 						{
-							throw new SmbWireFormatException("Truncated LZ77 extended length (u32).");
+							if (num + 4 > input.Length) throw new SmbWireFormatException("Truncated LZ77 length dword.");
+							wide = BinaryPrimitives.ReadUInt32LittleEndian(input.Slice(num)); num += 4;
 						}
-
-						num9 = (int)BinaryPrimitives.ReadUInt32LittleEndian(input.Slice(num));
-						num += 4;
+						if (wide < 22 || wide > int.MaxValue - 3) throw new SmbWireFormatException("Invalid LZ77 extended length.");
+						extended = (int)wide - 22;
 					}
-
-					num6 = num9 - 7;
+					extended += 15;
 				}
-				else
-				{
-					num6 = num8;
-				}
-
-				num6 += 7;
+				num6 = extended + 7;
 			}
 
 			num6 += MinMatch;
@@ -190,7 +185,7 @@ public static class PlainLz77
 				throw new SmbWireFormatException("LZ77 distance before start of output.");
 			}
 
-			if (num2 + num6 > array.Length)
+			if (num6 > array.Length - num2)
 			{
 				throw new SmbWireFormatException("LZ77 match overruns the declared original size.");
 			}
@@ -213,6 +208,8 @@ public static class PlainLz77
 		var flagSlot = -1;
 		var flags = 0u;
 		var flagCount = 0;
+		var nibbleSlot = -1;
+		byte lowNibble = 0;
 		var hashMatcher = new HashMatcher(input);
 		var num = 0;
 		while (num < input.Length)
@@ -226,7 +223,7 @@ public static class PlainLz77
 			if (num2 >= MinMatch)
 			{
 				PushFlag(isMatch: true);
-				WriteMatch(output, num2, distance);
+				WriteMatch(output, num2, distance, ref nibbleSlot, ref lowNibble);
 				hashMatcher.Insert(num, num2);
 				num += num2;
 			}
@@ -270,7 +267,7 @@ public static class PlainLz77
 		}
 	}
 
-	private static void WriteMatch(GrowableWriter output, int length, int distance)
+	private static void WriteMatch(GrowableWriter output, int length, int distance, ref int nibbleSlot, ref byte lowNibble)
 	{
 		var num = length - MinMatch;
 		var num2 = (ushort)(distance - 1 << 3);
@@ -283,7 +280,16 @@ public static class PlainLz77
 		{
 			num2 |= 7;
 			output.WriteUInt16(num2);
-			output.WriteByte((byte)(num - 7));
+			var extended = num - 7;
+			var nibble = (byte)Math.Min(15, extended);
+			if (nibbleSlot < 0)
+			{
+				nibbleSlot = output.Position;
+				lowNibble = nibble;
+				output.WriteByte(nibble);
+			}
+			else { output.PatchByte(nibbleSlot, (byte)(lowNibble | nibble << 4)); nibbleSlot = -1; }
+			if (extended >= 15) output.WriteByte((byte)(extended - 15));
 		}
 	}
 }

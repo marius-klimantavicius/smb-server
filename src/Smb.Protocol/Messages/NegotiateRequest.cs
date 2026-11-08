@@ -54,6 +54,9 @@ public sealed class NegotiateRequest
 		var list = new List<NegotiateContext>();
 		if (Array.IndexOf(array, SmbDialect.Smb311) >= 0 && num3 != 0 && num4 > 0)
 		{
+			// Validate the unsigned wire offset before converting it for slicing.
+			RequestBounds.Buffer(message, num3, 8, bodyOffset + 36 + num2 * 2, "NEGOTIATE contexts");
+			if ((num3 & 7) != 0) throw new SmbWireFormatException("NEGOTIATE contexts must be 8-byte aligned.");
 			ParseContexts(message, (int)num3, num4, list);
 		}
 
@@ -72,7 +75,7 @@ public sealed class NegotiateRequest
 		var num = offset;
 		for (var i = 0; i < count; i++)
 		{
-			if (num + 8 > message.Length)
+			if (num < 0 || num > message.Length || message.Length - num < 8)
 			{
 				throw new SmbWireFormatException("Negotiate context extends past the end of the message.");
 			}

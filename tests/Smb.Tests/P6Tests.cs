@@ -53,7 +53,7 @@ static class P6Tests
     internal sealed class Root : IDisposable
     { public string Path { get; } = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "smb-p6-" + Guid.NewGuid().ToString("N")); public Root() => Directory.CreateDirectory(Path); public void Dispose() => Directory.Delete(Path, true); }
     internal static byte[] Rename((ulong P, ulong V) id, string name)
-    { var n = System.Text.Encoding.Unicode.GetBytes(name); var data = new byte[20 + n.Length]; RawSmb.Put32(data, 16, (uint)n.Length); n.CopyTo(data, 20); return Set(id, 10, data); }
+    { var n = System.Text.Encoding.Unicode.GetBytes(name); var data = new byte[Math.Max(24, 20 + n.Length)]; RawSmb.Put32(data, 16, (uint)n.Length); n.CopyTo(data, 20); return Set(id, 10, data); }
     static async Task Seeded(OplockLevel level, string operation)
     {
         using var r = new Root(); File.WriteAllText(r.Path + "/a", "original");

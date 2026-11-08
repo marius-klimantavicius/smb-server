@@ -19,7 +19,7 @@ public static class NativeHost
 
     public static long VolumeTotalBytes(string directory)
     {
-        if (!OperatingSystem.IsWindows()) return new DriveInfo(Path.GetPathRoot(directory)!).TotalSize;
+        if (!OperatingSystem.IsWindows()) return new DriveInfo(directory).TotalSize;
         if (!GetDiskFreeSpace(directory.TrimEnd('\\', '/') + "\\", out _, out var total, out _))
             throw new IOException("Volume fixture failed", new Win32Exception(Marshal.GetLastPInvokeError()));
         return checked((long)total);

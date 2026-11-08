@@ -156,6 +156,9 @@ internal sealed class SmbConnectionHandler
 						(ReadOnlyMemory<byte>, bool)? tuple = DecodeInboundFrame(connection, payload);
 						if (!tuple.HasValue)
 						{
+							// MS-SMB2 3.3.5.2.1.1: an invalid authenticated transform
+							// terminates the connection; it is not a dropped request.
+							if (SmbProtocolIds.IsTransform(payload) || SmbProtocolIds.IsCompression(payload)) break;
 							continue;
 						}
 
@@ -434,7 +437,9 @@ internal sealed class SmbConnectionHandler
 		{
 			try
 			{
-				return (SmbCompressor.Decompress(payload), false);
+				var plain = SmbCompressor.Decompress(payload);
+				if (!SmbProtocolIds.IsSmb2(plain)) return null;
+				return (plain, false);
 			}
 			catch
 			{
@@ -507,8 +512,23 @@ internal sealed class SmbConnectionHandler
 	private byte[] EncodeOutbound(SmbConnection connection, byte[] response, bool forceEncrypt)
 	{
 		var num = ReadResponseSessionId(response);
-		if (num != 0L && _server.SessionGlobalList.TryGetValue(num, out var value) && (forceEncrypt || value.EncryptData || (TryReadResponseTreeId(response, out var treeId) && value.TreeConnects.TryGetValue(treeId, out var value2) && value2.EncryptData)))
+		var command = response.Length >= 64 ? (SmbCommand)BinaryPrimitives.ReadUInt16LittleEndian(response.AsSpan(12, 2)) : SmbCommand.Negotiate;
+		if (num != 0L && _server.SessionGlobalList.TryGetValue(num, out var value) &&
+			(forceEncrypt || command is not (SmbCommand.Negotiate or SmbCommand.SessionSetup) &&
+				(value.EncryptData || (TryReadResponseTreeId(response, out var treeId) && value.TreeConnects.TryGetValue(treeId, out var value2) && value2.EncryptData))))
 		{
+			// Encryption supplies integrity. Clear each inner signature and SIGNED
+			// bit, including every response in a compound (MS-SMB2 3.3.4.1.1).
+			var offset = 0;
+			while (response.Length - offset >= 64)
+			{
+				var header = response.AsSpan(offset, 64);
+				BinaryPrimitives.WriteUInt32LittleEndian(header.Slice(16, 4), BinaryPrimitives.ReadUInt32LittleEndian(header.Slice(16, 4)) & ~(uint)Smb2HeaderFlags.Signed);
+				header.Slice(48, 16).Clear();
+				var next = BinaryPrimitives.ReadUInt32LittleEndian(header.Slice(20, 4));
+				if (next == 0 || next > response.Length - offset) break;
+				offset += (int)next;
+			}
 			var array = BuildNonce(connection.CipherId, value.NextEncryptionNonce());
 			return Smb2Transform.Encrypt(connection.CipherId, value.EncryptionKey, num, array, response);
 		}

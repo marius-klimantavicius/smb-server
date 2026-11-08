@@ -14,6 +14,7 @@ internal static class LocalIdentity
 	private struct Stat
 	{
 		[FieldOffset(0)] public uint Mask;
+		[FieldOffset(16)] public uint Links;
 		[FieldOffset(32)] public ulong Inode;
 		[FieldOffset(136)] public uint DeviceMajor;
 		[FieldOffset(140)] public uint DeviceMinor;
@@ -65,6 +66,33 @@ internal static class LocalIdentity
 		if (fd < 0) throw new IOException("Cannot pin directory identity", new Win32Exception(Marshal.GetLastPInvokeError()));
 
 		return new SafeFileHandle((IntPtr)fd, true);
+	}
+
+	internal static uint LinkCount(SafeFileHandle handle)
+	{
+		if (OperatingSystem.IsWindows()) return WindowsLocalIdentity.LinkCount(handle);
+
+		var added = false;
+		try
+		{
+			handle.DangerousAddRef(ref added);
+			if (statx(handle.DangerousGetHandle().ToInt32(), "", 0x1000, 4, out var s) != 0 || (s.Mask & 4) == 0)
+				throw new IOException("statx link count failed", new Win32Exception(Marshal.GetLastPInvokeError()));
+			return s.Links;
+		}
+		finally { if (added) handle.DangerousRelease(); }
+	}
+
+	internal static uint LinkCount(string path)
+	{
+		if (OperatingSystem.IsWindows())
+		{
+			using var handle = WindowsLocalIdentity.Open(path);
+			return LinkCount(handle);
+		}
+		if (statx(-100, path, 0, 4, out var s) != 0 || (s.Mask & 4) == 0)
+			throw new IOException("statx link count failed", new Win32Exception(Marshal.GetLastPInvokeError()));
+		return s.Links;
 	}
 
 	// The wire index has only 64 bits. Keep Linux's inode and project Windows' full

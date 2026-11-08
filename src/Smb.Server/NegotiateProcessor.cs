@@ -74,7 +74,7 @@ public static class NegotiateProcessor
 		}
 		else if (smbDialect == SmbDialect.Smb300 || smbDialect == SmbDialect.Smb302)
 		{
-			if (request.Capabilities.HasFlag(Smb2Capabilities.Encryption) || options.RequireEncryption)
+			if (request.Capabilities.HasFlag(Smb2Capabilities.Encryption))
 			{
 				smb2Capabilities |= Smb2Capabilities.Encryption;
 				connection.CipherId = SmbCipherId.Aes128Ccm;
@@ -117,15 +117,9 @@ public static class NegotiateProcessor
 		if (encryptionContext != null)
 		{
 			var smbCipherId = PickByPreference(options.CipherPreference, encryptionContext.Ciphers);
-			if (smbCipherId != SmbCipherId.None)
-			{
-				connection.CipherId = smbCipherId;
-				connection.SupportsEncryption = true;
-				responseContexts.Add(new EncryptionContext
-				{
-					Ciphers = [smbCipherId],
-				});
-			}
+			connection.CipherId = smbCipherId;
+			connection.SupportsEncryption = smbCipherId != SmbCipherId.None;
+			responseContexts.Add(new EncryptionContext { Ciphers = [smbCipherId] });
 		}
 
 		var signingContext = request.NegotiateContexts.OfType<SigningContext>().FirstOrDefault();

@@ -131,7 +131,12 @@ public sealed class SpnegoNegotiator : ISpnegoNegotiator
 					return Reject(ntStatus);
 				}
 
-				var outToken = SpnegoTokens.CreateNegTokenResp(0, supportedMech, inner.OutToken);
+				// RFC 4178 section 5: when the initiator supplies a MIC,
+				// verify it and return the acceptor's MIC over the original DER list.
+				var replyMic = (mechListMic != null || _requireMechListMic) && _mechListBytes != null &&
+					_mech is NtlmServerMechanism ntlm
+					? ntlm.MechanismListMic(inner.SessionKey!, client: false, _mechListBytes) : null;
+				var outToken = SpnegoTokens.CreateNegTokenResp(0, supportedMech, inner.OutToken, replyMic);
 				return GssResult.Succeeded(inner.SessionKey!, inner.Identity!, outToken);
 			}
 
@@ -144,7 +149,7 @@ public sealed class SpnegoNegotiator : ISpnegoNegotiator
 
 		private NtStatus VerifyMechListMic(byte[]? sessionKey, byte[]? mechListMic)
 		{
-			if (!_requireMechListMic)
+			if (!_requireMechListMic && mechListMic == null)
 			{
 				return NtStatus.Success;
 			}
@@ -164,8 +169,10 @@ public sealed class SpnegoNegotiator : ISpnegoNegotiator
 				return NtStatus.AccessDenied;
 			}
 
-			var array = NtlmCryptography.NtlmMechListMic(sessionKey, client: true, _mechListBytes);
-			if (array.Length != mechListMic.Length || !CryptographicOperations.FixedTimeEquals(array, mechListMic))
+			var array = _mech is NtlmServerMechanism ntlm
+				? ntlm.MechanismListMic(sessionKey, client: true, _mechListBytes)
+				: NtlmCryptography.NtlmMechListMic(sessionKey, client: true, _mechListBytes);
+			if (array.Length != 16 || array.Length != mechListMic.Length || !CryptographicOperations.FixedTimeEquals(array, mechListMic))
 			{
 				return NtStatus.AccessDenied;
 			}

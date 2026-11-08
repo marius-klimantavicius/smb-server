@@ -41,6 +41,7 @@ public static class CreateContextList
 
 			int offset = BinaryPrimitives.ReadUInt16LittleEndian(readOnlySpan.Slice(4));
 			int length = BinaryPrimitives.ReadUInt16LittleEndian(readOnlySpan.Slice(6));
+			if (length < 4) throw new SmbWireFormatException("CREATE context name requires at least four bytes.");
 			int offset2 = BinaryPrimitives.ReadUInt16LittleEndian(readOnlySpan.Slice(10));
 			var num5 = (int)BinaryPrimitives.ReadUInt32LittleEndian(readOnlySpan.Slice(12));
 			if (num5 < 0) throw new SmbWireFormatException("CREATE context data extends past the context.");

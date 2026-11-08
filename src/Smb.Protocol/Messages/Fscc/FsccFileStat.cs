@@ -8,6 +8,8 @@ public sealed class FsccFileStat
 
 	public uint FileAttributes { get; init; }
 
+	public uint EaSize { get; set; }
+
 	public long EndOfFile { get; init; }
 
 	public long AllocationSize { get; init; }

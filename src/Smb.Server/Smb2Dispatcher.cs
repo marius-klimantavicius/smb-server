@@ -85,6 +85,7 @@ public sealed class Smb2Dispatcher
 	}
 
 	private static readonly KeyedAsyncLock<string> NamespaceOperations = new KeyedAsyncLock<string>();
+	private static readonly KeyedAsyncLock<string> SecurityOperations = new KeyedAsyncLock<string>();
 	public static int ActiveNamespaceCount => NamespaceOperations.TrackedKeyCount;
 	private static string LegacyKey(IFileStore store) => "legacy:" + StoreNamespaces.GetValue(store, _ => new StoreNamespace()).Key;
 
@@ -115,12 +116,15 @@ public sealed class Smb2Dispatcher
 
 		public SmbSession? SigningSession { get; }
 
-		private ResponseSegment(Smb2Header header, byte[] body, bool sign, SmbSession? session, bool creditsReserved = false)
+		public byte[]? SigningKey { get; }
+
+		private ResponseSegment(Smb2Header header, byte[] body, bool sign, SmbSession? session, bool creditsReserved = false, byte[]? signingKey = null)
 		{
 			Header = header;
 			Body = body;
 			Sign = sign;
 			SigningSession = session;
+			SigningKey = signingKey;
 			CreditsReserved = creditsReserved;
 		}
 
@@ -132,6 +136,11 @@ public sealed class Smb2Dispatcher
 		public static ResponseSegment Signed(Smb2Header header, byte[] body, SmbSession session, bool creditsReserved = false)
 		{
 			return new ResponseSegment(header, body, sign: true, session, creditsReserved);
+		}
+
+		public static ResponseSegment SignedWithKey(Smb2Header header, byte[] body, byte[] key)
+		{
+			return new ResponseSegment(header, body, sign: true, null, signingKey: key.ToArray());
 		}
 	}
 
@@ -738,6 +747,33 @@ public sealed class Smb2Dispatcher
 		}
 		else pending!.ReservedForContinuation = false;
 
+		CreateReplayRegistry.PendingClaim? createClaim = null;
+		if (header.Command == SmbCommand.Create && _server.Options.FeaturePolicy.SupportsDurable(connection.Dialect) &&
+			TryGetValidSession(connection, header.SessionId, out var authenticated) && VerifyInboundSignature(connection, authenticated, header, segment.Span, encrypted))
+		{
+			try
+			{
+				var create = CreateRequest.Parse((resolved ?? segment).Span, 64);
+				var durable = CreateContextList.Find(create.Contexts, 1145582161u);
+				if (durable != null && session.TreeConnects.TryGetValue(header.TreeId, out var tree) && Caching.FileCacheCoordinator.Supports(tree.Share.FileStore))
+				{
+					var key = DurableHandleMessages.ParseV2Request(durable.Data);
+					createClaim = _server.CreateReplays.TryBeginRequest(new Guid(connection.ClientGuid), key.CreateGuid);
+					if (createClaim == null)
+					{
+						if (!continuation) pending!.Abandon();
+						return BuildError(header, (NtStatus)0xc0000467);
+					}
+					var claim = createClaim;
+					connection.ResponseCommitActions[header.MessageId] = (message => claim.Commit(message), claim.ResponseDone);
+				}
+			}
+			catch (SmbWireFormatException)
+			{
+				if (!continuation) pending!.Abandon();
+				return BuildError(header, NtStatus.InvalidParameter);
+			}
+		}
 		var requestBytes = resolved ?? segment;
 		var fileOffset = header.Command switch { SmbCommand.Read or SmbCommand.Write or SmbCommand.SetInfo => 80, SmbCommand.Ioctl => 72, SmbCommand.QueryInfo => 88, _ => -1 };
 		SmbOpen? owner = null;
@@ -747,7 +783,17 @@ public sealed class Smb2Dispatcher
 		var ordinary = connection.OrdinaryRequests.GetOrAdd(header.MessageId, _ => new OrdinaryRequest(owner));
 		pending.Attach(pending.Token.Register(ordinary.Cancel));
 		var responseToken = ordinary.Token;
-		var physical = DispatchOneCoreAsync(connection, header, segment, encrypted, true, standalone, resolved, dependencyError, ordinary.Token, sequenceAdmission).AsTask();
+		var physical = ExecutePhysicalAsync();
+		async Task<ResponseSegment?> ExecutePhysicalAsync()
+		{
+			try
+			{
+				var result = await DispatchOneCoreAsync(connection, header, segment, encrypted, true, standalone, resolved, dependencyError, ordinary.Token, sequenceAdmission).ConfigureAwait(false);
+				if (result is { } final) createClaim?.Expect(final.Header.Status, final.Body);
+				return result;
+			}
+			finally { createClaim?.ExecutionDone(); }
+		}
 		if (physical.IsCompleted || _server.Options.CacheCoordinator.BreakingCount == 0)
 		{
 			var delivered = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -890,7 +936,7 @@ public sealed class Smb2Dispatcher
 			var result = header.Command switch
 			{
 				SmbCommand.Negotiate => HandleNegotiate(connection, header, segment.Span),
-				SmbCommand.SessionSetup => HandleSessionSetup(connection, header, segment.Span),
+				SmbCommand.SessionSetup => await HandleSessionSetupAsync(connection, header, segment, frameEncrypted).ConfigureAwait(false),
 				SmbCommand.TreeConnect => await HandleTreeConnectAsync(connection, header, request, frameEncrypted).ConfigureAwait(continueOnCapturedContext: false),
 				SmbCommand.TreeDisconnect => await HandleTreeDisconnectAsync(connection, header, request, frameEncrypted),
 				SmbCommand.Logoff => await HandleLogoffAsync(connection, header, request, frameEncrypted),
@@ -1166,6 +1212,7 @@ public sealed class Smb2Dispatcher
 		var securityBuffer = _server.Options.SpnegoNegotiator!.CreateInitialServerToken();
 		var negotiateResponse = NegotiateProcessor.BuildResponse(connection, request, _server.Options, securityBuffer);
 		connection.NegotiateDone = true;
+		_server.RegisterClientConnection(connection);
 		// SMB_COM_NEGOTIATE uses sequence zero; this response promises exactly one new ID.
 		if (!connection.Credits.TryConsume(0, 1)) connection.MustTerminate = true;
 		connection.Credits.Grant(1);
@@ -1213,22 +1260,34 @@ public sealed class Smb2Dispatcher
 		}.ToArray(), negotiateResponse.ToBody());
 	}
 
-	private ResponseSegment HandleNegotiate(SmbConnection connection, Smb2Header header, ReadOnlySpan<byte> segment)
+	private ResponseSegment? HandleNegotiate(SmbConnection connection, Smb2Header header, ReadOnlySpan<byte> segment)
 	{
+		if (header.Flags.HasFlag(Smb2HeaderFlags.Signed)) return BuildError(header, NtStatus.InvalidParameter);
+
 		if (connection.NegotiateDone)
 		{
-			return BuildError(header, NtStatus.InvalidParameter);
+			connection.MustTerminate = true;
+			return null;
 		}
 
 		var negotiateRequest = NegotiateRequest.Parse(segment, 64);
-		if (negotiateRequest.OffersSmb311 && !HasSupportedPreauthContext(negotiateRequest))
+		var dialect = NegotiateProcessor.SelectDialect(negotiateRequest.Dialects, _server.Options);
+		if (dialect == SmbDialect.None) return BuildError(header, NtStatus.NotSupported);
+		if (dialect == SmbDialect.Smb311)
 		{
-			return BuildError(header, NtStatus.InvalidParameter);
+			var contexts = negotiateRequest.NegotiateContexts;
+			if (contexts.Count(c => c.Type == NegotiateContextType.PreauthIntegrityCapabilities) != 1 ||
+				contexts.Where(c => c.Type is NegotiateContextType.EncryptionCapabilities or NegotiateContextType.CompressionCapabilities or NegotiateContextType.SigningCapabilities || (ushort)c.Type == 7).GroupBy(c => c.Type).Any(g => g.Count() > 1) ||
+				contexts.OfType<SigningContext>().Any(c => c.Algorithms.Count == 0) ||
+				_server.Options.EnableCompression && contexts.OfType<CompressionContext>().Any(c => c.Algorithms.Count == 0))
+				return BuildError(header, NtStatus.InvalidParameter);
+			if (!HasSupportedPreauthContext(negotiateRequest)) return BuildError(header, (NtStatus)0xc05d0000);
 		}
 
 		var securityBuffer = _server.Options.SpnegoNegotiator!.CreateInitialServerToken();
 		var negotiateResponse = NegotiateProcessor.BuildResponse(connection, negotiateRequest, _server.Options, securityBuffer);
 		connection.NegotiateDone = true;
+		_server.RegisterClientConnection(connection);
 
 
 		var smb2Header = header.CreateResponse(NtStatus.Success);
@@ -1258,18 +1317,21 @@ public sealed class Smb2Dispatcher
 		return false;
 	}
 
-	private ResponseSegment HandleSessionSetup(SmbConnection connection, Smb2Header header, ReadOnlySpan<byte> segment)
+	private async ValueTask<ResponseSegment> HandleSessionSetupAsync(SmbConnection connection, Smb2Header header, ReadOnlyMemory<byte> segment, bool frameEncrypted)
 	{
+		if (!frameEncrypted && header.SessionId == 0 && header.Flags.HasFlag(Smb2HeaderFlags.Signed))
+			return BuildError(header, NtStatus.UserSessionDeleted);
+
 		if (!connection.NegotiateDone)
 		{
 			return BuildError(header, NtStatus.InvalidParameter);
 		}
 
-		var sessionSetupRequest = SessionSetupRequest.Parse(segment, 64);
+		var sessionSetupRequest = SessionSetupRequest.Parse(segment.Span, 64);
 		var flag = connection.Dialect == SmbDialect.Smb311;
 		if (sessionSetupRequest.Flags.HasFlag(SessionSetupFlags.Binding))
 		{
-			return HandleSessionBinding(connection, header, sessionSetupRequest, segment, flag);
+			return HandleSessionBinding(connection, header, sessionSetupRequest, segment.Span, flag);
 		}
 
 		SmbSession value;
@@ -1292,91 +1354,133 @@ public sealed class Smb2Dispatcher
 			return BuildError(header, NtStatus.UserSessionDeleted);
 		}
 
-		if (header.SessionId != 0L && value.State == SessionState.Valid)
+		await value.AuthenticationGate.WaitAsync().ConfigureAwait(false);
+		try
 		{
-			return BuildError(header, NtStatus.AccessDenied);
-		}
+			if (value.Lifetime.State != OpenState.Active || !connection.Sessions.ContainsKey(value.SessionId))
+				return BuildError(header, NtStatus.UserSessionDeleted);
+			var reauth = value.SessionKey.Length != 0;
+			if (reauth)
+			{
+				if (!VerifyInboundSignature(connection, value, header, segment.Span, frameEncrypted))
+					return BuildError(header, NtStatus.AccessDenied);
+				value.AuthContext ??= _server.Options.SpnegoNegotiator!.CreateServerContext();
+			}
+			if (!reauth) value.PreauthHash?.Append(segment.Span);
+			var gssResult = value.AuthContext!.Accept(sessionSetupRequest.SecurityBuffer);
+			if (gssResult.NeedsMoreProcessing)
+			{
+				var sessionSetupResponse = new SessionSetupResponse
+				{
+					SecurityBuffer = (gssResult.OutToken ?? Array.Empty<byte>()),
+				};
+				var smb2Header = BuildSessionHeader(connection, header, value, NtStatus.MoreProcessingRequired);
+				var array = sessionSetupResponse.ToBody();
+				if (flag && !reauth)
+				{
+					var array2 = Concat(smb2Header.ToArray(), array);
+					value.PreauthHash?.Append(array2);
+				}
 
-		value.PreauthHash?.Append(segment);
-		var gssResult = value.AuthContext!.Accept(sessionSetupRequest.SecurityBuffer);
-		if (gssResult.NeedsMoreProcessing)
-		{
-			var sessionSetupResponse = new SessionSetupResponse
-			{
-				SecurityBuffer = (gssResult.OutToken ?? Array.Empty<byte>()),
-			};
-			var smb2Header = BuildSessionHeader(connection, header, value, NtStatus.MoreProcessingRequired);
-			var array = sessionSetupResponse.ToBody();
-			if (flag)
-			{
-				var array2 = Concat(smb2Header.ToArray(), array);
-				value.PreauthHash?.Append(array2);
+				return ResponseSegment.Unsigned(smb2Header, array, creditsReserved: true);
 			}
 
-			return ResponseSegment.Unsigned(smb2Header, array, creditsReserved: true);
-		}
+			if (!gssResult.IsSuccess)
+			{
+				_server.Options.Metrics.OnAuthenticationFailed();
+				Audit(SmbAuditEventType.AuthenticationFailed, SmbLogLevel.Warning, connection, null, null, null, gssResult.Status);
+				return await FailSessionSetupAsync(gssResult.Status).ConfigureAwait(false);
+			}
 
-		if (!gssResult.IsSuccess)
-		{
-			_server.Options.Metrics.OnAuthenticationFailed();
-			Audit(SmbAuditEventType.AuthenticationFailed, SmbLogLevel.Warning, connection, null, null, null, gssResult.Status);
-			CleanupFailedSession(connection, value);
-			return BuildError(header, gssResult.Status);
-		}
+			// Reauthentication cannot replace the identity associated with existing opens.
+			if (reauth && !SameIdentity(value.Identity, gssResult.Identity))
+			{
+				return await FailSessionSetupAsync(NtStatus.AccessDenied).ConfigureAwait(false);
+			}
+			if (!reauth) ApplyIdentity(value, gssResult);
+			if (RejectByPolicy(value, out var status))
+			{
+				return await FailSessionSetupAsync(status).ConfigureAwait(false);
+			}
 
-		ApplyIdentity(value, gssResult);
-		if (RejectByPolicy(value, out var status))
-		{
-			CleanupFailedSession(connection, value);
-			return BuildError(header, status);
-		}
+			if (!_server.AcceptClientDialect(connection))
+			{
+				return await FailSessionSetupAsync(NtStatus.UserSessionDeleted).ConfigureAwait(false);
+			}
 
-		DeriveSessionKeys(connection, value, gssResult.SessionKey!);
-		if (_server.Options.RequireEncryption && (!connection.Dialect.IsSmb3OrLater() || !connection.SupportsEncryption))
-		{
-			CleanupFailedSession(connection, value);
-			return BuildError(header, NtStatus.AccessDenied);
-		}
+			if (!reauth) DeriveSessionKeys(connection, value, gssResult.SessionKey!);
+			value.AuthContext = null;
+			if (_server.Options.RequireEncryption && (!connection.Dialect.IsSmb3OrLater() || !connection.SupportsEncryption))
+			{
+				return await FailSessionSetupAsync(NtStatus.AccessDenied).ConfigureAwait(false);
+			}
 
-		value.State = SessionState.Valid;
-		value.LastActivityTicks = _server.Options.TimeProvider.GetUtcNow().Ticks;
-		_server.Options.Metrics.OnAuthenticationSucceeded();
-		Audit(SmbAuditEventType.AuthenticationSucceeded, SmbLogLevel.Information, connection, DescribeIdentity(value.Identity));
-		if (connection.Dialect.IsSmb3OrLater())
-		{
-			if (!value.TryAttachChannel(new SmbChannel { Connection = connection, SigningKey = value.SigningKey }))
-				return BuildError(header, NtStatus.RequestNotAccepted);
-		}
+			value.State = SessionState.Valid;
+			value.LastActivityTicks = _server.Options.TimeProvider.GetUtcNow().Ticks;
+			_server.Options.Metrics.OnAuthenticationSucceeded();
+			Audit(SmbAuditEventType.AuthenticationSucceeded, SmbLogLevel.Information, connection, DescribeIdentity(value.Identity));
+			if (!reauth && connection.Dialect.IsSmb3OrLater())
+			{
+				if (!value.TryAttachChannel(new SmbChannel { Connection = connection, SigningKey = value.SigningKey }))
+				{
+					return await FailSessionSetupAsync(NtStatus.RequestNotAccepted).ConfigureAwait(false);
+				}
+			}
 
-		var sessionResponseFlags = SessionResponseFlags.None;
-		if (value.IsGuest)
-		{
-			sessionResponseFlags |= SessionResponseFlags.IsGuest;
-		}
+			// MS-SMB2 3.3.5.5.3: only successful authentication by the same user
+			// can retire the previous session. Unknown, foreign and self IDs are ignored.
+			if (sessionSetupRequest.PreviousSessionId != 0 && sessionSetupRequest.PreviousSessionId != value.SessionId &&
+				_server.SessionGlobalList.TryGetValue(sessionSetupRequest.PreviousSessionId, out var previous) &&
+				SameIdentity(previous.Identity, value.Identity))
+			{
+				await CloseSessionAsync(previous, CloseReason.Logoff).ConfigureAwait(false);
+				previous.Connection.Sessions.TryRemove(previous.SessionId, out _);
+			}
 
-		if (value.IsAnonymous)
-		{
-			sessionResponseFlags |= SessionResponseFlags.IsNull;
-		}
+			var sessionResponseFlags = SessionResponseFlags.None;
+			if (value.IsGuest)
+			{
+				sessionResponseFlags |= SessionResponseFlags.IsGuest;
+			}
 
-		if (value.EncryptData)
-		{
-			sessionResponseFlags |= SessionResponseFlags.EncryptData;
-		}
+			if (value.IsAnonymous)
+			{
+				sessionResponseFlags |= SessionResponseFlags.IsNull;
+			}
 
-		var sessionSetupResponse2 = new SessionSetupResponse
-		{
-			SessionFlags = sessionResponseFlags,
-			SecurityBuffer = (gssResult.OutToken ?? Array.Empty<byte>()),
-		};
-		var header2 = BuildSessionHeader(connection, header, value, NtStatus.Success);
-		var body = sessionSetupResponse2.ToBody();
-		if (!value.SigningRequired || value.IsGuest || value.IsAnonymous)
-		{
-			return ResponseSegment.Unsigned(header2, body, creditsReserved: true);
-		}
+			if (value.EncryptData)
+			{
+				sessionResponseFlags |= SessionResponseFlags.EncryptData;
+			}
 
-		return ResponseSegment.Signed(header2, body, value, creditsReserved: true);
+			var sessionSetupResponse2 = new SessionSetupResponse
+			{
+				SessionFlags = sessionResponseFlags,
+				SecurityBuffer = (gssResult.OutToken ?? Array.Empty<byte>()),
+			};
+			var header2 = BuildSessionHeader(connection, header, value, NtStatus.Success);
+			var body = sessionSetupResponse2.ToBody();
+			if (!value.SigningRequired || value.IsGuest || value.IsAnonymous)
+			{
+				return ResponseSegment.Unsigned(header2, body, creditsReserved: true);
+			}
+
+			return ResponseSegment.Signed(header2, body, value, creditsReserved: true);
+
+			async ValueTask<ResponseSegment> FailSessionSetupAsync(NtStatus failure)
+			{
+				var error = BuildError(header, failure);
+				// Retain only this response's key while retiring all session resources.
+				// Non-success SESSION_SETUP uses the original session key, not a
+				// bound channel key (3.3.4.1.1). Initial unsigned auth has no signer.
+				if (reauth && header.Flags.HasFlag(Smb2HeaderFlags.Signed))
+					error = ResponseSegment.SignedWithKey(error.Header, error.Body, value.SigningKey);
+				await CloseSessionAsync(value, CloseReason.Logoff).ConfigureAwait(false);
+				CleanupFailedSession(connection, value);
+				return error;
+			}
+		}
+		finally { value.AuthenticationGate.Release(); }
 	}
 
 	private ResponseSegment HandleSessionBinding(SmbConnection connection, Smb2Header header, SessionSetupRequest request, ReadOnlySpan<byte> segment, bool is311)
@@ -1390,6 +1494,10 @@ public sealed class Smb2Dispatcher
 		{
 			return BuildError(header, NtStatus.UserSessionDeleted);
 		}
+		// Final channel loss claims retirement before physical I/O has drained.
+		// A still-indexed session must not start a fresh binding at that point.
+		if (value.Lifetime.State != OpenState.Active)
+			return BuildError(header, NtStatus.UserSessionDeleted);
 
 		if (connection.Sessions.ContainsKey(value.SessionId))
 		{
@@ -1398,7 +1506,7 @@ public sealed class Smb2Dispatcher
 
 		if (value.State != SessionState.Valid)
 		{
-			return BuildError(header, NtStatus.InvalidParameter);
+			return BuildError(header, value.State == SessionState.InProgress ? NtStatus.RequestNotAccepted : (NtStatus)0xc000035c);
 		}
 
 		if (connection.Dialect != value.Connection.Dialect)
@@ -1413,7 +1521,7 @@ public sealed class Smb2Dispatcher
 
 		if (!header.Flags.HasFlag(Smb2HeaderFlags.Signed))
 		{
-			return BuildError(header, NtStatus.AccessDenied);
+			return BuildError(header, NtStatus.InvalidParameter);
 		}
 
 		if (!Smb2Signer.Verify(Smb2Signer.ResolveAlgorithm(value.Connection.Dialect, value.Connection.SigningAlgorithmId), value.SigningKey, segment, header.MessageId, isServer: false, isCancel: false))
@@ -1453,11 +1561,11 @@ public sealed class Smb2Dispatcher
 		if (!SameIdentity(value.Identity, gssResult.Identity))
 		{
 			connection.PendingBindings.TryRemove(value.SessionId, out _);
-			return BuildError(header, NtStatus.AccessDenied);
+			return BuildError(header, NtStatus.NotSupported);
 		}
 
 		connection.PendingBindings.TryRemove(value.SessionId, out _);
-		var signingKey = DeriveChannelSigningKey(connection, value, orAdd.PreauthHash);
+		var signingKey = DeriveChannelSigningKey(connection, gssResult.SessionKey!, orAdd.PreauthHash);
 		if (!value.TryAttachChannel(new SmbChannel { Connection = connection, SigningKey = signingKey }))
 			return BuildError(header, NtStatus.RequestNotAccepted);
 
@@ -1477,10 +1585,11 @@ public sealed class Smb2Dispatcher
 		return ResponseSegment.Signed(header2, body, value, creditsReserved: true);
 	}
 
-	private static byte[] DeriveChannelSigningKey(SmbConnection connection, SmbSession session, PreauthIntegrityHash? channelPreauth)
+	private static byte[] DeriveChannelSigningKey(SmbConnection connection, byte[] authenticationKey, PreauthIntegrityHash? channelPreauth)
 	{
 		var array = channelPreauth?.Value ?? new byte[64];
-		return Smb3KeyDerivation.Derive(connection.Dialect, connection.CipherId, session.SessionKey, session.FullSessionKey, array).SigningKey;
+		var sessionKey = authenticationKey.Length >= 16 ? authenticationKey[..16] : Pad16(authenticationKey);
+		return Smb3KeyDerivation.Derive(connection.Dialect, connection.CipherId, sessionKey, authenticationKey, array).SigningKey;
 	}
 
 	private static bool SameIdentity(SecurityIdentity? a, SecurityIdentity? b)
@@ -1822,26 +1931,34 @@ public sealed class Smb2Dispatcher
 		return ResponseSegment.Unsigned(header, body);
 	}
 
-	private static async Task SendOutOfBandAsync(SmbSession session, SmbConnection? preferred, ResponseSegment segment, bool encrypt)
+	private static async Task SendOutOfBandAsync(SmbSession session, SmbConnection? preferred, ResponseSegment segment, bool encrypt, bool useSurvivingChannel = false)
 	{
-		var smbConnection = session.SelectSendChannel(preferred);
-		var func = smbConnection?.SendRawAsync;
-		if (func == null) throw new IOException("No active response transport.");
+		while (true)
+		{
+			var connection = session.SelectSendChannel(preferred);
+			var send = connection?.SendRawAsync;
+			if (send == null) throw new IOException("No active response transport.");
 
-		var arg = AssembleResponse(smbConnection, new List<ResponseSegment>(1) { segment });
-		try
-		{
-			await func(arg, encrypt).ConfigureAwait(continueOnCapturedContext: false);
-		}
-		catch
-		{
-			smbConnection.ResponseSendFailed = true;
-			smbConnection.AbandonPending();
-			smbConnection.CancelOrdinary();
-			smbConnection.RequestClose?.Invoke();
-			throw;
+			var bytes = AssembleResponse(connection!, new List<ResponseSegment>(1) { segment });
+			try
+			{
+				await send(bytes, encrypt).ConfigureAwait(false);
+				return;
+			}
+			catch
+			{
+				connection!.ResponseSendFailed = true;
+				connection.AbandonPending();
+				connection.CancelOrdinary();
+				connection.RequestClose?.Invoke();
+				// Each failed transport is excluded by SelectSendChannel. A live bound
+				// channel still owns the caching promise and must receive its break.
+				if (!useSurvivingChannel || session.SelectSendChannel() == null) throw;
+				preferred = null;
+			}
 		}
 	}
+
 
 	// Called exactly once before serialization. Async finals and unsolicited messages grant nothing.
 	// Reserving before handing bytes to the ordered sender is safe: send failure tears down the connection.
@@ -1874,13 +1991,15 @@ public sealed class Smb2Dispatcher
 			if (responseSegment.Sign)
 			{
 				var signingSession = responseSegment.SigningSession;
-				if (signingSession != null)
+				var signingKey = responseSegment.SigningKey ?? (responseSegment.Header.Command == SmbCommand.SessionSetup && responseSegment.Header.Status != NtStatus.Success
+					? signingSession?.SigningKey : signingSession?.SigningKeyFor(connection));
+				if (signingKey != null)
 				{
 					var message = growableWriter.WrittenSpan.Slice(position, num2);
 					var header = responseSegment.Header;
 					header.Flags |= Smb2HeaderFlags.Signed;
 					growableWriter.PatchUInt32(position + 16, (uint)header.Flags);
-					Smb2Signer.SignInPlace(Smb2Signer.ResolveAlgorithm(connection.Dialect, connection.SigningAlgorithmId), signingSession.SigningKeyFor(connection), message, header.MessageId, isServer: true, isCancel: false);
+					Smb2Signer.SignInPlace(Smb2Signer.ResolveAlgorithm(connection.Dialect, connection.SigningAlgorithmId), signingKey, message, header.MessageId, isServer: true, isCancel: false);
 				}
 			}
 		}
@@ -1957,6 +2076,8 @@ public sealed class Smb2Dispatcher
 		if (treeOperation == null || session.Lifetime.State != OpenState.Active) return BuildError(header, NtStatus.NetworkNameDeleted);
 
 		var request = CreateRequest.Parse(segment.ParsingSpan, 64);
+		if (request.Contexts.Any(c => c.Name.AsSpan().SequenceEqual("SecD"u8)))
+			return BuildError(header, NtStatus.NotSupported);
 		var policy = _server.Options.FeaturePolicy;
 		var contextStatus = policy.ValidateCreateContexts(request.Contexts, connection.Dialect);
 		if (contextStatus != NtStatus.Success)
@@ -2031,6 +2152,26 @@ public sealed class Smb2Dispatcher
 			return MaybeSigned(session, RespHeader(header, session), await BuildRetainedCreateBodyAsync(existing, existing.VolatileFileId, existing.OriginalCreateAction, contexts).ConfigureAwait(false));
 		}
 
+		if ((request.ShareAccess & ~7u) != 0) return BuildError(header, NtStatus.InvalidParameter);
+		if (request.Name.StartsWith('\\')) return BuildError(header, NtStatus.InvalidParameter);
+		if (BinaryPrimitives.ReadUInt32LittleEndian(segment.ParsingSpan.Slice(68, 4)) > 3)
+			return BuildError(header, (NtStatus)0xc00000a5);
+		if (request.Name.EndsWith('\\'))
+		{
+			if (request.Options.HasFlag(CreateOptions.NonDirectoryFile)) return BuildError(header, NtStatus.ObjectNameInvalid);
+		}
+		// Validate ordinary file CREATE semantics before admission or backend mutation.
+		// Named pipes above must ignore CreateDisposition (MS-SMB2 2.2.13).
+		if ((uint)request.Disposition > (uint)CreateDisposition.OverwriteIf ||
+			((uint)request.Options & 0xff000000u) != 0 || (request.FileAttributes & 0x48u) != 0)
+			return BuildError(header, NtStatus.InvalidParameter);
+		if (((uint)request.Options & 0x00102000u) != 0) return BuildError(header, NtStatus.NotSupported);
+		if ((request.DesiredAccess & 0x0ce0fe00u) != 0) return BuildError(header, NtStatus.AccessDenied);
+		if (request.Options.HasFlag(CreateOptions.DirectoryFile) &&
+			(((uint)request.Options & ~0x00a1f533u) != 0 ||
+			 request.Disposition is not (CreateDisposition.Open or CreateDisposition.Create or CreateDisposition.OpenIf)))
+			return BuildError(header, NtStatus.InvalidParameter);
+
 		if (tree.Share.IsDfs)
 		{
 			var dfsNamespace = _server.Options.DfsNamespace;
@@ -2052,14 +2193,40 @@ public sealed class Smb2Dispatcher
 		var disposition = (CreateDispositionIntent)request.Disposition;
 		var dirRequired = request.Options.HasFlag(CreateOptions.DirectoryFile);
 		var nonDirRequired = request.Options.HasFlag(CreateOptions.NonDirectoryFile);
+		if (request.Name.IndexOf(':') is var colon && colon >= 0 && request.Name.IndexOfAny(['\\', '/'], colon) >= 0)
+			return BuildError(header, NtStatus.ObjectNameInvalid);
 		var flag = TrySplitStreamName(request.Name, out var baseName, out var streamName);
-		var effectiveName = (flag ? baseName : request.Name);
+		if (flag && nonDirRequired && (baseName.EndsWith('\\') || baseName.EndsWith('/')))
+			return BuildError(header, NtStatus.ObjectNameInvalid);
+		var effectiveName = (flag ? baseName : request.Name.TrimEnd('\\'));
+		if (effectiveName.IndexOfAny(['*', '?', '<', '>']) >= 0) return BuildError(header, NtStatus.ObjectNameInvalid);
 		var namedStream = flag && streamName.Length > 0;
+		if (flag)
+		{
+			if (request.Name.EndsWith(':')) return BuildError(header, NtStatus.ObjectNameInvalid);
+			var suffix = request.Name[(request.Name.IndexOf(':', request.Name.LastIndexOf('\\') + 1) + 1)..];
+			var typeIndex = suffix.IndexOf(':');
+			if (typeIndex >= 0 && !suffix[(typeIndex + 1)..].Equals("$DATA", StringComparison.OrdinalIgnoreCase))
+				return BuildError(header, NtStatus.ObjectNameInvalid);
+		}
+		if (flag && dirRequired) return BuildError(header, NtStatus.NotADirectory);
+		if (namedStream && streamName.IndexOfAny(['/', '\\']) >= 0) return BuildError(header, NtStatus.ObjectNameInvalid);
 		if (namedStream && !(store is INamedStreamStore))
 		{
 			return BuildError(header, NtStatus.NotSupported);
 		}
 
+		// A historical open must never silently fall back to the live namespace.
+		var timewarp = request.Contexts.FirstOrDefault(c => c.Name.AsSpan().SequenceEqual("TWrp"u8));
+		if (timewarp != null)
+		{
+			if (timewarp.Data.Length != 8) return BuildError(header, NtStatus.InvalidParameter);
+			if (store is not ISnapshotStore) return BuildError(header, NtStatus.ObjectNameNotFound);
+			DateTime snapshot;
+			try { snapshot = DateTime.FromFileTimeUtc(BinaryPrimitives.ReadInt64LittleEndian(timewarp.Data)); }
+			catch (ArgumentOutOfRangeException) { return BuildError(header, NtStatus.InvalidParameter); }
+			effectiveName = GmtToken.Format(snapshot) + "\\" + effectiveName;
+		}
 		var symlinkResolver = store as ISymlinkResolver;
 		if (!request.Options.HasFlag(CreateOptions.OpenReparsePoint) && symlinkResolver != null)
 		{
@@ -2090,18 +2257,6 @@ public sealed class Smb2Dispatcher
 		};
 		if (connection.PendingRequests.TryGetValue(header.MessageId, out var cachePending)) cachePending.Owner = open;
 		if (connection.OrdinaryRequests.TryGetValue(header.MessageId, out var cacheOrdinary)) cacheOrdinary.BindOwner(open);
-		var shareKey = await ResolveShareKeyAsync(store, effectiveName, namedStream ? streamName : "").ConfigureAwait(false);
-		using var namespaceOperation = await NamespaceOperations.AcquireAsync(shareKey, cancellationToken).ConfigureAwait(false);
-		// Re-resolve after waiting for a rename/create of this object.
-		var currentKey = await ResolveShareKeyAsync(store, effectiveName, namedStream ? streamName : "").ConfigureAwait(false);
-		if (currentKey != shareKey) return BuildError(header, NtStatus.SharingViolation);
-
-		if (!_server.Options.ShareModeManager.TryOpen(shareKey, open, access, MapShare(request.ShareAccess)))
-		{
-			return BuildError(header, NtStatus.SharingViolation);
-		}
-
-		open.ShareModeKey = shareKey;
 		var committed = false;
 		try
 		{
@@ -2114,12 +2269,32 @@ public sealed class Smb2Dispatcher
 				if (cacheLease != null) open.LeaseKey = cacheLease.Key;
 			}
 
-			using var leaseReservation = cacheLease != null && Caching.FileCacheCoordinator.Supports(store) ? _server.Options.CacheCoordinator.ReserveLease(open, cacheLease.Key) : null;
-			if (cacheLease != null && Caching.FileCacheCoordinator.Supports(store) && leaseReservation == null) return BuildError(header, NtStatus.InvalidParameter);
-
-			using var cacheCreate = await _server.Options.CacheCoordinator.AcquireCreateAsync(open, disposition is CreateDispositionIntent.Overwrite or CreateDispositionIntent.OverwriteIf or CreateDispositionIntent.Supersede || request.Options.HasFlag(CreateOptions.DeleteOnClose), cancellationToken).ConfigureAwait(false);
-			cancellationToken.ThrowIfCancellationRequested();
-			var fileStoreResult = ((!namedStream) ? (await store.CreateAsync(effectiveName, access, disposition, dirRequired, nonDirRequired).ConfigureAwait(continueOnCapturedContext: false)) : (await ((INamedStreamStore)store).OpenNamedStreamAsync(baseName, streamName, access, disposition).ConfigureAwait(continueOnCapturedContext: false)));
+			var callerSids = BuildCallerSids(session.Identity);
+			var desiredAccess = AccessMask.MapGenericToSpecific(request.DesiredAccess);
+			grantedAccess = AccessMask.MapGenericToSpecific(grantedAccess);
+			var shareAccess = AccessMask.MapGenericToSpecific(tree.MaximalAccess) & AccessMask.FileAllAccess;
+			if (((desiredAccess & ~MaximumAllowed) & ~shareAccess) != 0) return BuildError(header, NtStatus.AccessDenied);
+			FileAccessIntent? AuthorizeExisting(SecurityDescriptor descriptor, uint supportedAccess)
+			{
+				if (!AccessCheck.IsGranted(descriptor, callerSids, desiredAccess, out var grant)) return null;
+				grant &= shareAccess & supportedAccess;
+				if (((desiredAccess & ~MaximumAllowed) & ~grant) != 0 || maximumAllowed && grant == 0) return null;
+				// These rights are required by the disposition even for MAXIMUM_ALLOWED.
+				var required = disposition == CreateDispositionIntent.Supersede ? Delete :
+					disposition is CreateDispositionIntent.Overwrite or CreateDispositionIntent.OverwriteIf ? FileWriteData : 0u;
+				if (required != 0 && ((required & ~(shareAccess & supportedAccess)) != 0 ||
+					!AccessCheck.IsGranted(descriptor, callerSids, required, out _))) return null;
+				grantedAccess = grant;
+				return MapAccess(grant);
+			}
+			bool AuthorizeParent(SecurityDescriptor descriptor, bool directory)
+				=> AccessCheck.IsGranted(descriptor, callerSids, directory ? 4u : 2u, out _);
+			using var coordination = await AcquireAuthorizedCreateAsync(store, effectiveName, namedStream ? streamName : "", open, access, cacheLease,
+				disposition is CreateDispositionIntent.Overwrite or CreateDispositionIntent.OverwriteIf or CreateDispositionIntent.Supersede || request.Options.HasFlag(CreateOptions.DeleteOnClose),
+				disposition, dirRequired, nonDirRequired, request.FileAttributes, AuthorizeExisting, AuthorizeParent, cancellationToken).ConfigureAwait(false);
+			if (coordination.Status != NtStatus.Success) return BuildError(header, coordination.Status);
+			var shareKey = open.ShareModeKey!;
+			var fileStoreResult = coordination.Acquisition;
 			var fileStoreResult2 = fileStoreResult;
 			if (!fileStoreResult2.IsSuccess)
 			{
@@ -2130,6 +2305,7 @@ public sealed class Smb2Dispatcher
 			var outcome = fileStoreResult2.Value.Action;
 			open.LocalOpen = handle;
 			cancellationToken.ThrowIfCancellationRequested();
+			open.AdmissionIdentity = handle.Identity;
 			if (store is IFileIdentityStore && handle.Identity is { } acquiredIdentity && acquiredIdentity.Key != shareKey)
 			{
 				if (!_server.Options.ShareModeManager.TryOpen(acquiredIdentity.Key, open, access, MapShare(request.ShareAccess))) return BuildError(header, NtStatus.SharingViolation);
@@ -2137,23 +2313,6 @@ public sealed class Smb2Dispatcher
 				_server.Options.ShareModeManager.Close(shareKey, open);
 				shareKey = acquiredIdentity.Key;
 				open.ShareModeKey = shareKey;
-			}
-
-			var fileStoreResult3 = await store.GetSecurityAsync(handle).ConfigureAwait(continueOnCapturedContext: false);
-			if (fileStoreResult3.IsSuccess)
-			{
-				var callerSids = BuildCallerSids(session.Identity);
-				var desiredAccess = (maximumAllowed ? MaximumAllowed : AccessMask.MapGenericToSpecific(request.DesiredAccess));
-				if (!AccessCheck.IsGranted(fileStoreResult3.Value, callerSids, desiredAccess, out var grantedAccess2))
-				{
-					return BuildError(header, NtStatus.AccessDenied);
-				}
-
-				grantedAccess = grantedAccess2;
-			}
-			else
-			{
-				grantedAccess = AccessMask.MapGenericToSpecific(grantedAccess);
 			}
 
 			open.GrantedAccess = grantedAccess;
@@ -2298,9 +2457,182 @@ public sealed class Smb2Dispatcher
 	}
 
 
+	private async ValueTask<CreateCoordination> AcquireAuthorizedCreateAsync(IFileStore store, string path, string stream, SmbOpen open,
+		FileAccessIntent access, LeaseRequest? lease, bool destructive, CreateDispositionIntent disposition, bool directory, bool nonDirectory,
+		uint attributes, Func<SecurityDescriptor, uint, FileAccessIntent?> authorizeExisting, Func<SecurityDescriptor, bool, bool> authorizeParent, CancellationToken token)
+	{
+		while (true)
+		{
+			var coordination = await AcquireCreateCoordinationAsync(store, path, stream, open, access, lease, destructive, token).ConfigureAwait(false);
+			try
+			{
+				if (coordination.Status != NtStatus.Success) return coordination;
+				token.ThrowIfCancellationRequested();
+				coordination.Acquisition = await CreateAuthorizedAsync(store, path, stream, access, disposition, directory, nonDirectory, attributes,
+					authorizeExisting, authorizeParent, identity => store is not IFileIdentityStore || identity == open.AdmissionIdentity, token).ConfigureAwait(false);
+				if (store is not IAuthorizedCreateStore || coordination.Acquisition.Status != NtStatus.Retry) return coordination;
+				// The backend saw a namespace change after coordination. Nothing has
+				// mutated: release sharing/cache/lease admission before choosing the new key.
+				_server.Options.ShareModeManager.Close(open.ShareModeKey!, open);
+				open.ShareModeKey = null;
+				coordination.Dispose();
+			}
+			catch { coordination.Dispose(); throw; }
+		}
+	}
+
+	private static async ValueTask<FileStoreResult<FileCreateResult>> CreateAuthorizedAsync(IFileStore store, string path, string stream,
+		FileAccessIntent access, CreateDispositionIntent disposition, bool directory, bool nonDirectory, uint attributes,
+		Func<SecurityDescriptor, uint, FileAccessIntent?> authorizeExisting, Func<SecurityDescriptor, bool, bool> authorizeParent, Func<FileIdentity?, bool> validateIdentity, CancellationToken token)
+	{
+		if (store is IAuthorizedCreateStore guarded)
+			return await guarded.CreateAuthorizedAsync(path, stream, access, disposition, directory, nonDirectory, attributes, authorizeExisting, authorizeParent, validateIdentity, token).ConfigureAwait(false);
+
+		// Legacy stores retain ordinary nonmutating opens. A descriptor-aware store
+		// must opt into the atomic contract before it may create/truncate anything;
+		// separate GetSecurity/Create calls cannot close its policy/namespace race.
+		var probe = stream.Length > 0 && disposition == CreateDispositionIntent.Open
+			? await ((INamedStreamStore)store).OpenNamedStreamAsync(path, stream, access, disposition, token).ConfigureAwait(false)
+			: await store.CreateAsync(path, access, CreateDispositionIntent.Open, directory, nonDirectory, token).ConfigureAwait(false);
+		if (probe.IsSuccess)
+		{
+			var retain = false;
+			try
+			{
+				if (stream.Length == 0 && disposition == CreateDispositionIntent.Create)
+					return FileStoreResult<FileCreateResult>.Fail(NtStatus.ObjectNameCollision);
+				var security = await store.GetSecurityAsync(probe.Value.Handle, token).ConfigureAwait(false);
+				if (security.IsSuccess && !authorizeExisting(security.Value, uint.MaxValue).HasValue) return FileStoreResult<FileCreateResult>.Fail(NtStatus.AccessDenied);
+				if (!security.IsSuccess && security.Status != NtStatus.NotSupported) return FileStoreResult<FileCreateResult>.Fail(security.Status);
+				if (disposition == CreateDispositionIntent.Open || stream.Length == 0 && disposition == CreateDispositionIntent.OpenIf)
+				{
+					token.ThrowIfCancellationRequested();
+					retain = true;
+					return probe;
+				}
+				if (security.IsSuccess) return FileStoreResult<FileCreateResult>.Fail(NtStatus.NotSupported);
+			}
+			finally { if (!retain) await probe.Value.Handle.DisposeAsync().ConfigureAwait(false); }
+		}
+		else
+		{
+			if (probe.Status is not (NtStatus.ObjectNameNotFound or NtStatus.ObjectPathNotFound) ||
+				disposition is CreateDispositionIntent.Open or CreateDispositionIntent.Overwrite) return probe;
+			var normalized = path.Replace('\\', '/').TrimEnd('/');
+			var slash = normalized.LastIndexOf('/');
+			var parent = await store.CreateAsync(slash < 0 ? "" : normalized[..slash], FileAccessIntent.None, CreateDispositionIntent.Open, true, false, token).ConfigureAwait(false);
+			if (!parent.IsSuccess) return FileStoreResult<FileCreateResult>.Fail(parent.Status == NtStatus.ObjectNameNotFound ? NtStatus.ObjectPathNotFound : parent.Status);
+			await using var parentHandle = parent.Value.Handle;
+			var security = await store.GetSecurityAsync(parentHandle, token).ConfigureAwait(false);
+			if (security.IsSuccess) return FileStoreResult<FileCreateResult>.Fail(authorizeParent(security.Value, directory) ? NtStatus.NotSupported : NtStatus.AccessDenied);
+			if (security.Status != NtStatus.NotSupported) return FileStoreResult<FileCreateResult>.Fail(security.Status);
+		}
+		token.ThrowIfCancellationRequested();
+		// NOT_SUPPORTED from GetSecurity is the existing no-descriptor backend contract.
+		return stream.Length > 0
+			? await ((INamedStreamStore)store).OpenNamedStreamAsync(path, stream, access, disposition, token).ConfigureAwait(false)
+			: store is ICreateMetadataStore metadata
+				? await metadata.CreateWithMetadataAsync(path, access, disposition, directory, nonDirectory, attributes, token).ConfigureAwait(false)
+				: await store.CreateAsync(path, access, disposition, directory, nonDirectory, token).ConfigureAwait(false);
+	}
+
+	private sealed class CreateCoordination : IDisposable
+	{
+		private int _disposed;
+		internal KeyedAsyncLock<string>.Releaser? Namespace;
+		internal IDisposable? Cache, LeaseReservation;
+		internal NtStatus Status;
+		internal FileStoreResult<FileCreateResult> Acquisition;
+		public void Dispose()
+		{
+			if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
+			Cache?.Dispose();
+			LeaseReservation?.Dispose();
+			Namespace?.Dispose();
+		}
+	}
+
+	private async ValueTask<CreateCoordination> AcquireCreateCoordinationAsync(IFileStore store, string path, string stream, SmbOpen open, FileAccessIntent access, LeaseRequest? lease, bool destructive, CancellationToken token)
+	{
+		while (true)
+		{
+			var coordination = new CreateCoordination();
+			try
+			{
+				var admission = await AcquireCreateNamespaceAsync(store, path, stream, token).ConfigureAwait(false);
+				coordination.Namespace = admission.Scope;
+				if (store is IFileIdentityStore identities)
+					open.AdmissionIdentity = await identities.ResolveIdentityAsync(path, stream, token).ConfigureAwait(false);
+				if (!_server.Options.ShareModeManager.TryOpen(admission.Key, open, access, MapShare(open.ShareAccess)))
+				{
+					coordination.Status = NtStatus.SharingViolation;
+					return coordination;
+				}
+				open.ShareModeKey = admission.Key;
+				if (lease != null && Caching.FileCacheCoordinator.Supports(store))
+				{
+					coordination.LeaseReservation = _server.Options.CacheCoordinator.ReserveLease(open, lease.Key);
+					if (coordination.LeaseReservation == null)
+					{
+						coordination.Status = NtStatus.InvalidParameter;
+						return coordination;
+					}
+				}
+
+				var cache = _server.Options.CacheCoordinator.AcquireCreateAsync(open, destructive, token);
+				if (!cache.IsCompletedSuccessfully)
+				{
+					// The lease owner must be able to reopen its own key while a
+					// conflicting CREATE awaits its ACK. Keep sharing reserved, but
+					// release namespace serialization for the duration of that wait.
+					coordination.Namespace.Value.Dispose();
+					coordination.Namespace = null;
+					coordination.Cache = await cache.ConfigureAwait(false);
+					var resumed = await AcquireCreateNamespaceAsync(store, path, stream, token).ConfigureAwait(false);
+					coordination.Namespace = resumed.Scope;
+					if (resumed.Key != admission.Key)
+					{
+						// Rename/replacement may have changed the pathname while we
+						// waited. Retire the old reservations and admit the new object.
+						_server.Options.ShareModeManager.Close(admission.Key, open);
+						open.ShareModeKey = null;
+						coordination.Dispose();
+						continue;
+					}
+				}
+				else coordination.Cache = cache.Result;
+				return coordination;
+			}
+			catch
+			{
+				coordination.Dispose();
+				throw;
+			}
+		}
+	}
+
+	private static async ValueTask<(string Key, KeyedAsyncLock<string>.Releaser Scope)> AcquireCreateNamespaceAsync(IFileStore store, string path, string stream, CancellationToken token)
+	{
+		// A creator may publish an identity while we wait on the missing-name key.
+		// Release before changing keys so opposite rename/create orders cannot deadlock.
+		while (true)
+		{
+			token.ThrowIfCancellationRequested();
+			var key = await ResolveShareKeyAsync(store, path, stream).ConfigureAwait(false);
+			var scope = await NamespaceOperations.AcquireAsync(key, token).ConfigureAwait(false);
+			try
+			{
+				if (await ResolveShareKeyAsync(store, path, stream).ConfigureAwait(false) == key) return (key, scope);
+			}
+			catch { scope.Dispose(); throw; }
+			scope.Dispose();
+		}
+	}
+
 	private async ValueTask<ResponseSegment> HandlePipeCreateAsync(SmbConnection connection, Smb2Header header, SmbSession session, SmbTreeConnect tree, CommandRequest segment)
 	{
 		var request = CreateRequest.Parse(segment.ParsingSpan, 64);
+		if (request.DesiredAccess == 0 || (request.DesiredAccess & 0x0ce0fe00u) != 0) return BuildError(header, NtStatus.AccessDenied);
 		var pipeName = request.Name.TrimStart('\\');
 		var rpcEndpoint = await OpenRpcEndpointAsync(connection, session, pipeName).ConfigureAwait(continueOnCapturedContext: false);
 		if (rpcEndpoint == null)
@@ -2388,6 +2720,12 @@ public sealed class Smb2Dispatcher
 		}
 
 		var req = IoctlMessage.ParseRequest(segment.ParsingSpan, 64);
+		if (req.Flags != IoctlMessage.FlagIsFsctl) return BuildError(header, NtStatus.NotSupported);
+		var serverControl = CompoundExecutionContext.RequestFileIdOffset(SmbCommand.Ioctl, segment.ParsingSpan) < 0;
+		if (serverControl && (req.PersistentId != ulong.MaxValue || req.VolatileId != ulong.MaxValue))
+			return BuildError(header, NtStatus.InvalidParameter);
+		if (!serverControl && !TryGetOpen(session, req.PersistentId, req.VolatileId, out _))
+			return BuildError(header, NtStatus.FileClosed);
 		if (!_server.Options.FeaturePolicy.AllowsIoctl(req.CtlCode))
 			return BuildError(header, NtStatus.NotSupported);
 
@@ -2480,7 +2818,7 @@ public sealed class Smb2Dispatcher
 			return BuildError(header, error);
 		}
 
-		if ((dest.GrantedAccess & 6) == 0)
+		if ((dest.GrantedAccess & FileWriteData) == 0 || req.CtlCode == 0x1440f2u && (dest.GrantedAccess & FileReadData) == 0)
 		{
 			return BuildError(header, NtStatus.AccessDenied);
 		}
@@ -2745,6 +3083,11 @@ public sealed class Smb2Dispatcher
 
 	private ResponseSegment? HandleValidateNegotiate(SmbConnection connection, Smb2Header header, SmbSession session, IoctlMessage.Request req)
 	{
+		if (connection.Dialect == SmbDialect.Smb311 || req.MaxOutputResponse < 24)
+		{
+			connection.MustTerminate = true;
+			return null;
+		}
 		var validateNegotiateRequest = IoctlMessage.ParseValidateNegotiate(req.Input);
 		var num = PickDialect(validateNegotiateRequest.Dialects);
 		if (connection.ClientCapabilities != (Smb2Capabilities)validateNegotiateRequest.Capabilities || !connection.ClientGuid.AsSpan().SequenceEqual(validateNegotiateRequest.Guid) || (uint)connection.ClientSecurityMode != validateNegotiateRequest.SecurityMode || num != (uint)connection.Dialect)
@@ -2939,11 +3282,14 @@ public sealed class Smb2Dispatcher
 			return BuildError(header, (error == NtStatus.Success) ? NtStatus.FileClosed : error);
 		}
 
-		if ((open.GrantedAccess & FileReadData) == 0)
+		if ((open.GrantedAccess & (FileReadData | 0x20u)) == 0)
 		{
 			return BuildError(header, NtStatus.AccessDenied);
 		}
+		if (open.LocalOpen.IsDirectory) return BuildError(header, NtStatus.InvalidDeviceRequest);
 
+		if (request.Offset > long.MaxValue || request.Length > (ulong)long.MaxValue - request.Offset)
+			return BuildError(header, NtStatus.InvalidParameter);
 		var length = Math.Min(request.Length, connection.MaxReadSize);
 		using var cacheScope = await _server.Options.CacheCoordinator.AcquireAsync([new FileIoRange(open, request.Offset, length, false)], cancellationToken).ConfigureAwait(false);
 		using var coherence = _server.Options.FileIoCoordinator == null ? null : await _server.Options.FileIoCoordinator.AcquireAsync([new FileIoRange(open, request.Offset, length, false)], cancellationToken).ConfigureAwait(false);
@@ -3015,6 +3361,11 @@ public sealed class Smb2Dispatcher
 		{
 			return BuildError(header, NtStatus.AccessDenied);
 		}
+
+		if (req.Offset == ulong.MaxValue)
+			req = req with { Offset = (ulong)(await open.LocalOpen.GetInfoAsync().ConfigureAwait(false)).EndOfFile };
+		if (req.Offset > long.MaxValue || (ulong)req.Data.Length > (ulong)long.MaxValue - req.Offset)
+			return BuildError(header, NtStatus.InvalidParameter);
 
 		using var cacheScope = await _server.Options.CacheCoordinator.AcquireAsync([new FileIoRange(open, req.Offset, (ulong)req.Data.Length, true)], cancellationToken).ConfigureAwait(false);
 		using var coherence = _server.Options.FileIoCoordinator == null ? null : await _server.Options.FileIoCoordinator.AcquireAsync([new FileIoRange(open, req.Offset, (ulong)req.Data.Length, true)], cancellationToken).ConfigureAwait(false);
@@ -3164,6 +3515,8 @@ public sealed class Smb2Dispatcher
 			return BuildError(header, NtStatus.FileClosed);
 		}
 
+		if (req.InfoType == InfoType.File && req.FileInfoClass is 4 or 18 or 34 or 35 && (open.GrantedAccess & 0x80u) == 0)
+			return BuildError(header, NtStatus.AccessDenied);
 		if (req.InfoType == InfoType.Security)
 		{
 			return await HandleQuerySecurityAsync(session, header, open, req).ConfigureAwait(continueOnCapturedContext: false);
@@ -3179,6 +3532,8 @@ public sealed class Smb2Dispatcher
 		{
 			switch ((FileInformationClass)req.FileInfoClass)
 			{
+				case (FileInformationClass)48:
+					return BuildError(header, NtStatus.NotSupported);
 				case FileInformationClass.FileStreamInformation:
 					return await HandleQueryStreamsAsync(session, header, open, req).ConfigureAwait(continueOnCapturedContext: false);
 				case FileInformationClass.FileFullEaInformation:
@@ -3187,12 +3542,29 @@ public sealed class Smb2Dispatcher
 		}
 
 		var e = ToStat(await open.LocalOpen.GetInfoAsync().ConfigureAwait(continueOnCapturedContext: false));
+		if (req.InfoType == InfoType.File && (FileInformationClass)req.FileInfoClass is FileInformationClass.FileEaInformation or FileInformationClass.FileAllInformation &&
+			open.TreeConnect!.Share.FileStore is IExtendedAttributeStore eaStore)
+		{
+			var eas = await eaStore.GetExtendedAttributesAsync(open.LocalOpen).ConfigureAwait(false);
+			if (!eas.IsSuccess) return BuildError(header, eas.Status);
+			e.EaSize = FullEaInformation.ComputeEaSize(eas.Value.Select(ea => new FsccEaEntry(ea.Flags, ea.Name, ea.Value)).ToArray());
+		}
 		var array = req.InfoType switch
 		{
 			InfoType.File => FsccStructures.BuildFileInformation(e, (FileInformationClass)req.FileInfoClass),
 			InfoType.FileSystem => BuildFsInfo(session, header.TreeId, (FsInformationClass)req.FileInfoClass),
 			_ => null,
 		};
+		if (array != null && req.InfoType == InfoType.File)
+		{
+			if ((FileInformationClass)req.FileInfoClass == FileInformationClass.FilePositionInformation)
+				BinaryPrimitives.WriteInt64LittleEndian(array, Interlocked.Read(ref open.CurrentByteOffset));
+			else if ((FileInformationClass)req.FileInfoClass == FileInformationClass.FileAllInformation)
+			{
+				BinaryPrimitives.WriteUInt32LittleEndian(array.AsSpan(76), open.GrantedAccess);
+				BinaryPrimitives.WriteInt64LittleEndian(array.AsSpan(80), Interlocked.Read(ref open.CurrentByteOffset));
+			}
+		}
 		if (array == null)
 		{
 			return BuildError(header, NtStatus.InvalidInfoClass);
@@ -3244,7 +3616,7 @@ public sealed class Smb2Dispatcher
 
 		if (req.InfoType == InfoType.Security)
 		{
-			return await HandleSetSecurityAsync(connection, session, header, store, open, req).ConfigureAwait(continueOnCapturedContext: false);
+			return await HandleSetSecurityAsync(connection, session, header, store, open, req, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
 		}
 
 		if (req.InfoType == InfoType.Quota)
@@ -3256,6 +3628,30 @@ public sealed class Smb2Dispatcher
 		{
 			return BuildError(header, NtStatus.NotSupported);
 		}
+
+		if ((FileInformationClass)req.FileInfoClass == FileInformationClass.FileRenameInformation)
+		{
+			// MS-SMB2 3.3.5.21.1 / MS-FSCC 2.4.42.2 require minimum padding and a zero root.
+			if (req.Buffer.Length < 24) return BuildError(header, NtStatus.InfoLengthMismatch);
+			if (BinaryPrimitives.ReadUInt64LittleEndian(req.Buffer.AsSpan(8, 8)) != 0) return BuildError(header, NtStatus.InvalidParameter);
+			var nameLength = BinaryPrimitives.ReadUInt32LittleEndian(req.Buffer.AsSpan(16, 4));
+			if (nameLength == 0 || (nameLength & 1) != 0 || nameLength > req.Buffer.Length - 20)
+				return BuildError(header, NtStatus.InvalidParameter);
+		}
+
+		var minimumSetSize = (FileInformationClass)req.FileInfoClass switch
+		{
+			FileInformationClass.FileBasicInformation => 40,
+			FileInformationClass.FileEndOfFileInformation or FileInformationClass.FilePositionInformation or FileInformationClass.FileAllocationInformation => 8,
+			FileInformationClass.FileDispositionInformation => 1,
+			_ => 0
+		};
+		if (req.Buffer.Length < minimumSetSize) return BuildError(header, NtStatus.InfoLengthMismatch);
+		if ((FileInformationClass)req.FileInfoClass == FileInformationClass.FileBasicInformation)
+			for (var offset = 0; offset < 32; offset += 8)
+				if (BinaryPrimitives.ReadInt64LittleEndian(req.Buffer.AsSpan(offset)) < -2) return BuildError(header, NtStatus.InvalidParameter);
+		if ((FileInformationClass)req.FileInfoClass == FileInformationClass.FileEndOfFileInformation && open.LocalOpen.IsDirectory)
+			return BuildError(header, NtStatus.InvalidParameter);
 
 		var namespaceMutation = (FileInformationClass)req.FileInfoClass is FileInformationClass.FileRenameInformation or FileInformationClass.FileDispositionInformation or FileInformationClass.FileBasicInformation or FileInformationClass.FileFullEaInformation;
 		using var cacheScope = namespaceMutation
@@ -3281,6 +3677,12 @@ public sealed class Smb2Dispatcher
 			return BuildError(header, NtStatus.AccessDenied);
 		}
 
+		if (infoClass is FileInformationClass.FileEndOfFileInformation or FileInformationClass.FilePositionInformation)
+		{
+			if (req.Buffer.Length < 8) return BuildError(header, NtStatus.InfoLengthMismatch);
+			if (BinaryPrimitives.ReadInt64LittleEndian(req.Buffer) < 0) return BuildError(header, NtStatus.InvalidParameter);
+		}
+
 		var renameOldPhysicalPath = ((infoClass == FileInformationClass.FileRenameInformation) ? open.LocalOpen.PhysicalPath : null);
 		var ntStatus = infoClass switch
 		{
@@ -3298,6 +3700,8 @@ public sealed class Smb2Dispatcher
 			return BuildError(header, ntStatus);
 		}
 
+		if (infoClass == FileInformationClass.FilePositionInformation)
+			Interlocked.Exchange(ref open.CurrentByteOffset, BinaryPrimitives.ReadInt64LittleEndian(req.Buffer));
 		if (infoClass == FileInformationClass.FileDispositionInformation)
 		{
 			open.DeleteOnClose = req.Buffer.Length != 0 && req.Buffer[0] != 0;
@@ -3355,6 +3759,9 @@ public sealed class Smb2Dispatcher
 
 	private async ValueTask<ResponseSegment> HandleQuerySecurityAsync(SmbSession session, Smb2Header header, SmbOpen open, QueryInfoMessage.Request req)
 	{
+		if (((SecurityInformation)req.AdditionalInformation & (SecurityInformation.Owner | SecurityInformation.Group | SecurityInformation.Dacl)) != 0 &&
+			(open.GrantedAccess & 0x20000u) == 0) return BuildError(header, NtStatus.AccessDenied);
+
 		if (!TryGetFileStore(session, header.TreeId, out var store, out var error))
 		{
 			return BuildError(header, error);
@@ -3376,8 +3783,14 @@ public sealed class Smb2Dispatcher
 		return MaybeSigned(session, RespHeader(header, session), QueryInfoMessage.BuildResponseBody(array));
 	}
 
-	private async ValueTask<ResponseSegment> HandleSetSecurityAsync(SmbConnection connection, SmbSession session, Smb2Header header, IFileStore store, SmbOpen open, SetInfoMessage.Request req)
+	private async ValueTask<ResponseSegment> HandleSetSecurityAsync(SmbConnection connection, SmbSession session, Smb2Header header, IFileStore store, SmbOpen open, SetInfoMessage.Request req, CancellationToken cancellationToken)
 	{
+		var security = (SecurityInformation)req.AdditionalInformation;
+		if (security.HasFlag(SecurityInformation.Dacl) && (open.GrantedAccess & 0x40000u) == 0 ||
+			(security & (SecurityInformation.Owner | SecurityInformation.Group)) != 0 && (open.GrantedAccess & 0x80000u) == 0 ||
+			security.HasFlag(SecurityInformation.Sacl) && (open.GrantedAccess & 0x01000000u) == 0)
+			return BuildError(header, NtStatus.AccessDenied);
+
 		SecurityDescriptor incoming;
 		try
 		{
@@ -3388,6 +3801,10 @@ public sealed class Smb2Dispatcher
 			return BuildError(header, NtStatus.InvalidParameter);
 		}
 
+		// Partial updates must merge against the latest descriptor across FileIds,
+		// aliases and named streams of this base object.
+		var securityKey = LegacyKey(store) + ":" + (open.LocalOpen!.Identity is { } identity ? (identity with { StreamId = "" }).Key : "");
+		using var securityScope = await SecurityOperations.AcquireAsync(securityKey, cancellationToken).ConfigureAwait(false);
 		var fileStoreResult = await store.GetSecurityAsync(open.LocalOpen!).ConfigureAwait(continueOnCapturedContext: false);
 		if (!fileStoreResult.IsSuccess)
 		{
@@ -3406,14 +3823,28 @@ public sealed class Smb2Dispatcher
 		return MaybeSigned(session, RespHeader(header, session), SetInfoMessage.BuildResponseBody());
 	}
 
+	private const SecurityDescriptorControl DaclStoredControl = SecurityDescriptorControl.DaclPresent |
+		SecurityDescriptorControl.DaclDefaulted | SecurityDescriptorControl.DaclProtected | SecurityDescriptorControl.DaclAutoInherited;
+
 	private static SecurityDescriptor FilterSecurityDescriptor(SecurityDescriptor sd, SecurityInformation which)
 	{
-		return SecurityDescriptor.Create(which.HasFlag(SecurityInformation.Owner) ? sd.Owner : null, which.HasFlag(SecurityInformation.Group) ? sd.Group : null, which.HasFlag(SecurityInformation.Dacl) ? sd.Dacl : null, which.HasFlag(SecurityInformation.Sacl) ? sd.Sacl : null);
+		return SecurityDescriptor.Create(which.HasFlag(SecurityInformation.Owner) ? sd.Owner : null, which.HasFlag(SecurityInformation.Group) ? sd.Group : null, which.HasFlag(SecurityInformation.Dacl) ? sd.Dacl : null, which.HasFlag(SecurityInformation.Sacl) ? sd.Sacl : null,
+			which.HasFlag(SecurityInformation.Dacl) ? sd.Control & DaclStoredControl : SecurityDescriptorControl.None);
 	}
 
 	private static SecurityDescriptor MergeSecurityDescriptor(SecurityDescriptor existing, SecurityDescriptor incoming, SecurityInformation which)
 	{
-		return SecurityDescriptor.Create(which.HasFlag(SecurityInformation.Owner) ? incoming.Owner : existing.Owner, which.HasFlag(SecurityInformation.Group) ? incoming.Group : existing.Group, which.HasFlag(SecurityInformation.Dacl) ? incoming.Dacl : existing.Dacl, which.HasFlag(SecurityInformation.Sacl) ? incoming.Sacl : existing.Sacl);
+		var control = existing.Control & DaclStoredControl;
+		if (which.HasFlag(SecurityInformation.Dacl))
+		{
+			control = incoming.Control & (DaclStoredControl & ~SecurityDescriptorControl.DaclAutoInherited);
+			// MS-DTYP 2.4.6: a computed-inheritance request is consumed; both
+			// request and auto-inherited input bits retain the resulting DI bit.
+			if (incoming.Control.HasFlag(SecurityDescriptorControl.DaclAutoInheritReq | SecurityDescriptorControl.DaclAutoInherited))
+				control |= SecurityDescriptorControl.DaclAutoInherited;
+		}
+		return SecurityDescriptor.Create(which.HasFlag(SecurityInformation.Owner) ? incoming.Owner : existing.Owner, which.HasFlag(SecurityInformation.Group) ? incoming.Group : existing.Group, which.HasFlag(SecurityInformation.Dacl) ? incoming.Dacl : existing.Dacl, which.HasFlag(SecurityInformation.Sacl) ? incoming.Sacl : existing.Sacl,
+			control);
 	}
 
 	private ResponseSegment BoundedRecords(SmbSession session, Smb2Header header, QueryInfoMessage.Request req, byte[] data, bool streams, out int written)
@@ -3567,6 +3998,9 @@ public sealed class Smb2Dispatcher
 			return BuildError(header, NtStatus.InvalidParameter);
 		}
 
+		if (source.Any(e => (e.Flags & ~0x80) != 0 || e.Name.Length == 0 ||
+			e.Name.Any(c => c < 0x20 || "\\/:*?\"<>|,+=[];".Contains(c))))
+			return BuildError(header, (NtStatus)0xc0000054);
 		var entries = source.Select(e => new ExtendedAttribute(e.Name, e.Value, e.Flags)).ToList();
 		var ntStatus = await extendedAttributeStore.SetExtendedAttributesAsync(open.LocalOpen!, entries).ConfigureAwait(continueOnCapturedContext: false);
 		if (ntStatus != NtStatus.Success)
@@ -3591,9 +4025,12 @@ public sealed class Smb2Dispatcher
 
 		var persistent = BinaryPrimitives.ReadUInt64LittleEndian(segment.ParsingSpan.Slice(72, 8));
 		var volatileId = BinaryPrimitives.ReadUInt64LittleEndian(segment.ParsingSpan.Slice(80, 8));
-		if (TryGetOpen(session, persistent, volatileId, out var open) && open.LocalOpen != null && TryGetFileStore(session, header.TreeId, out var store, out _))
+		if (!TryGetOpen(session, persistent, volatileId, out var open)) return BuildError(header, NtStatus.FileClosed);
+		if (open.LocalOpen != null)
 		{
-			await store.FlushAsync(open.LocalOpen).ConfigureAwait(continueOnCapturedContext: false);
+			if (!TryGetFileStore(session, header.TreeId, out var store, out var error)) return BuildError(header, error);
+			var status = await store.FlushAsync(open.LocalOpen).ConfigureAwait(false);
+			if (status != NtStatus.Success) return BuildError(header, status);
 		}
 
 		var array = new byte[4];
@@ -3612,7 +4049,7 @@ public sealed class Smb2Dispatcher
 	private static FileAccessIntent MapAccess(uint desiredAccess)
 	{
 		var fileAccessIntent = FileAccessIntent.None;
-		if ((desiredAccess & (GenericRead | GenericAll | MaximumAllowed | FileReadData)) != 0)
+		if ((desiredAccess & (GenericRead | GenericAll | MaximumAllowed | FileReadData | 0x20000020u)) != 0)
 		{
 			fileAccessIntent |= FileAccessIntent.Read;
 		}
@@ -3776,6 +4213,7 @@ public sealed class Smb2Dispatcher
 		connection.CancelAllPending();
 		connection.Sessions.Clear();
 		_server.WitnessRegistrations.RemoveAllForConnection(connection.ConnectionId);
+		_server.UnregisterClientConnection(connection);
 	}
 
 	public void OnConnectionClosed(SmbConnection connection) => OnConnectionClosedAsync(connection).AsTask().GetAwaiter().GetResult();
@@ -4019,7 +4457,8 @@ public sealed class Smb2Dispatcher
 		var offset = header.Command switch
 		{
 			SmbCommand.Read or SmbCommand.Write => 80,
-			SmbCommand.Flush or SmbCommand.Lock or SmbCommand.QueryDirectory or SmbCommand.ChangeNotify or SmbCommand.Ioctl => 72,
+			SmbCommand.Flush or SmbCommand.Lock or SmbCommand.QueryDirectory or SmbCommand.ChangeNotify => 72,
+			SmbCommand.Ioctl => CompoundExecutionContext.RequestFileIdOffset(header.Command, segment.ParsingSpan),
 			SmbCommand.QueryInfo => 88,
 			SmbCommand.SetInfo => 80,
 			_ => -1
@@ -4328,7 +4767,7 @@ public sealed class Smb2Dispatcher
 			CreditRequestResponse = 0,
 		};
 		var body = LeaseBreakMessage.BuildNotificationBody(brk.Key, brk.FromState, brk.ToState, brk.Epoch, LeaseAckRequired(brk));
-		await SendOutOfBandAsync(session, session.Connection, MaybeSigned(session, header, body), ResponseNeedsEncryption(session, holder)).ConfigureAwait(continueOnCapturedContext: false);
+		await SendOutOfBandAsync(session, session.Connection, MaybeSigned(session, header, body), ResponseNeedsEncryption(session, holder), useSurvivingChannel: true).ConfigureAwait(continueOnCapturedContext: false);
 	}
 
 	private ResponseSegment HandleLeaseBreakAck(SmbConnection connection, Smb2Header header, ReadOnlySpan<byte> segment, bool frameEncrypted)
@@ -4381,12 +4820,12 @@ public sealed class Smb2Dispatcher
 		for (var i = 0; i < request.Locks.Count; i++)
 		{
 			var lockEntry = request.Locks[i];
-			if (lockEntry.IsUnlock != isUnlock)
+			if (!isUnlock && lockEntry.IsUnlock)
 			{
 				return BuildError(header, NtStatus.InvalidParameter);
 			}
 
-			array[i] = new LockElement(lockEntry.Offset, lockEntry.Length, lockEntry.IsExclusive, lockEntry.IsUnlock);
+			array[i] = new LockElement(lockEntry.Offset, lockEntry.Length, (LockFlags)lockEntry.Flags);
 		}
 
 		var failImmediately = request.Locks[0].FailImmediately;
@@ -4428,7 +4867,7 @@ public sealed class Smb2Dispatcher
 			catch { outcome = LockOutcome.Cancelled; }
 			finally { channelTicket?.Dispose(); }
 
-			var status = outcome switch { LockOutcome.Granted => NtStatus.Success, LockOutcome.Cancelled => NtStatus.Cancelled, LockOutcome.RangeNotLocked => NtStatus.RangeNotLocked, _ => NtStatus.LockNotGranted };
+			var status = outcome switch { LockOutcome.Granted => NtStatus.Success, LockOutcome.Cancelled => NtStatus.Cancelled, LockOutcome.RangeNotLocked => NtStatus.RangeNotLocked, LockOutcome.InvalidParameter => NtStatus.InvalidParameter, _ => NtStatus.LockNotGranted };
 			var body = outcome == LockOutcome.Granted ? LockMessage.BuildResponseBody() : ErrorResponse.BuildBody();
 			pending.Complete(status, body, () => SendAsyncFinalAsync(connection, header, session, pending.AsyncId, status, body, ResponseNeedsEncryption(session, open)));
 		}
@@ -4461,6 +4900,7 @@ public sealed class Smb2Dispatcher
 			LockOutcome.Granted => MaybeSigned(session, RespHeader(header, session), LockMessage.BuildResponseBody()),
 			LockOutcome.RangeNotLocked => BuildError(header, NtStatus.RangeNotLocked),
 			LockOutcome.Cancelled => BuildError(header, NtStatus.Cancelled),
+			LockOutcome.InvalidParameter => BuildError(header, NtStatus.InvalidParameter),
 			_ => BuildError(header, NtStatus.LockNotGranted),
 		};
 	}
@@ -4513,6 +4953,7 @@ public sealed class Smb2Dispatcher
 			return BuildError(header, NtStatus.InvalidParameter);
 		}
 
+		if ((open.GrantedAccess & FileReadData) == 0) return BuildError(header, NtStatus.AccessDenied);
 		var physicalPath = open.LocalOpen.PhysicalPath;
 		if (physicalPath == null)
 		{
@@ -4695,7 +5136,7 @@ public sealed class Smb2Dispatcher
 			CreditRequestResponse = 0,
 		};
 		var body = OplockBreakMessage.BuildBody(brk.NewLevel, holder.PersistentFileId, holder.VolatileFileId);
-		await SendOutOfBandAsync(session, session.Connection, MaybeSigned(session, header, body), ResponseNeedsEncryption(session, holder)).ConfigureAwait(continueOnCapturedContext: false);
+		await SendOutOfBandAsync(session, session.Connection, MaybeSigned(session, header, body), ResponseNeedsEncryption(session, holder), useSurvivingChannel: true).ConfigureAwait(continueOnCapturedContext: false);
 	}
 
 	private ResponseSegment HandleOplockBreak(SmbConnection connection, Smb2Header header, ReadOnlySpan<byte> segment, bool frameEncrypted)

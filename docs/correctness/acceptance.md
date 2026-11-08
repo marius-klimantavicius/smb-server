@@ -1,9 +1,25 @@
 # Correctness acceptance
 
-Review of the Windows/Linux implementation and fresh Linux JIT/AOT delivery
-validation completed on 2026-11-08: 854/854 tests per mode plus actual LocalFileStore
+The first upstream campaign's Linux JIT/AOT delivery on 2026-11-08 passed
+940/940 tests per mode plus actual LocalFileStore
 TCP workloads. See [platform validation](platform-validation.md) for commands and
 remaining native Windows verification.
+
+The [upstream-test campaign](upstream-tests.md) added 86 adapted scenarios from
+pinned Samba, SMBLibrary and Microsoft FileServer conformance tests. The captured
+original production baseline passed 66 and failed 20 of those additions; six
+focused defect groups were repaired with retained RED/GREEN evidence. The final
+published Linux gate passed all 26 delivery steps with stable source. This does
+not waive the historical qualifications below. The broader second campaign
+supersedes those counts: 3,144 registered cases, including authentication and
+independent Go/Samba client execution. Its inventories and repair records are
+linked from [the campaign report](upstream-tests.md); final published results
+are recorded in [platform validation](platform-validation.md): JIT and Native AOT
+each pass 2,917/3,144 with the same 227 failures. All other 24 driver stages pass,
+including both actual local TCP workloads; source is stable during the capture.
+The aggregate platform result remains fail. Test-port completion
+does not mean functional acceptance: compatibility failures and unresolved bounded
+cache/notification reproducers remain ordinary failures.
 
 Windows and Linux LocalFileStore support are required. Native-host JIT and Native
 AOT runs must exercise the full harness and the actual LocalFileStore TCP workload
@@ -28,8 +44,9 @@ evidence does not waive them, and later GREEN tests cannot recreate their order.
 
 Strict M1/M2 acceptance remains incomplete. Other limits persist:
 
-- External Samba 4.19.5 attempts stopped during excluded authentication before file
-  operations; no external file-operation pass was established.
+- The earlier external-auth blocker was reproduced and repaired. Fresh signed
+  Samba operations and two pinned independent Go clients execute selected file
+  workflows; this establishes those selections, not entire-suite interoperability.
 - SMB 3.1.1 bound signing/preauthentication blocked advanced recovery validation;
   multichannel and durable recovery remain withheld for that dialect.
 - Persistent handles and continuous availability lack an atomic recovery journal
@@ -37,9 +54,11 @@ Strict M1/M2 acceptance remains incomplete. Other limits persist:
 - QUIC import/generation provenance is incomplete. Later user edits require their
   own review; historical byte-match observations do not certify the current tree.
 
-Authentication, authorization, signature verification, encryption, key derivation,
-preauthentication integrity and security-oriented path isolation remain outside
-this correctness task. No security, full SMB3 conformance, production-readiness or
+The user explicitly included protocol/authentication coverage in the second
+campaign, superseding the original authentication exclusion. Focused signing,
+encryption-boundary, descriptor and CREATE admission repairs are documented;
+broader security architecture, privilege/claims support and unavailable domain
+infrastructure remain limited. No security, full SMB3 conformance, production-readiness or
 unqualified redistribution claim follows from passing local tests.
 
 Raw historical evidence is retained externally without rewriting recorded paths,

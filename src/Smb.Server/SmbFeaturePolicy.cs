@@ -73,6 +73,14 @@ public sealed class SmbFeaturePolicy
 		var v1Reconnect = CreateContextList.Find(contexts, 1145597507u) != null; // DHnC
 		var v2Request = CreateContextList.Find(contexts, 1145582161u) != null; // DH2Q
 		var v2Reconnect = CreateContextList.Find(contexts, 1145582147u) != null; // DH2C
+		// Process the first recovery claim in chain order. V2 recovery rejects any
+		// additional durable request/reconnect with NAME_NOT_FOUND (3.3.5.9.12).
+		if (SupportsDurable(dialect) && v2Reconnect && (v1Request || v1Reconnect || v2Request))
+			foreach (var context in contexts)
+			{
+				if (context.Tag == 1145582147u) return NtStatus.ObjectNameNotFound;
+				if (context.Tag == 1145597507u) break;
+			}
 		// MS-SMB2 3.3.5.9.10 MUST; 3.3.5.9.6/.7 SHOULD for conflicting versions.
 		if ((v2Request || v2Reconnect) && (v1Request || v1Reconnect) || v2Request && v2Reconnect)
 			return NtStatus.InvalidParameter;

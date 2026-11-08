@@ -67,6 +67,7 @@ public static class SetInfoMessage
 		var attributes = spanReader.ReadUInt32();
 		return new FileBasicInfoUpdate
 		{
+			SuppressLastWriteTimeUpdates = System.Buffers.Binary.BinaryPrimitives.ReadInt64LittleEndian(buffer.Slice(16)) switch { -1 => true, -2 => false, _ => null },
 			CreationTime = creationTime,
 			LastAccessTime = lastAccessTime,
 			LastWriteTime = lastWriteTime,

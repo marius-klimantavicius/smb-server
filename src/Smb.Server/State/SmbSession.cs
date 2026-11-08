@@ -90,6 +90,8 @@ public sealed class SmbSession
 
 	public long LastActivityTicks { get; set; }
 
+	internal SemaphoreSlim AuthenticationGate { get; } = new(1, 1);
+
 	public ISpnegoServerContext? AuthContext { get; set; }
 
 	public SecurityIdentity? Identity { get; set; }

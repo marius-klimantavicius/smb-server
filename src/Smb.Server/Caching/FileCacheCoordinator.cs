@@ -202,11 +202,16 @@ public sealed class FileCacheCoordinator(SmbServerOptions options) : IOplockMana
 
 				foreach (var (open, write) in allOperations)
 				{
+					// Attribute-only opens do not access stream data or cached handles.
+					// Destructive CREATEs still invalidate even with only attribute access.
+					if (creating && !write && (open.GrantedAccess & ~0x00100180u) == 0) continue;
 					if (!_files.TryGetValue(open.IdentityKey, out var list)) continue;
 
 					foreach (var g in list)
 					{
-						if (g.Opens.Contains(open) || SameLease(g, open)) continue;
+						// A classic level-II grant is invalidated by every write/lock,
+						// including one issued through its own FileId.
+						if (g.Opens.Contains(open) && (!write || g.Classic != OplockLevel.LevelII) || SameLease(g, open)) continue;
 
 						var conflict = write || (g.Lease ? (g.State & (creating ? LeaseState.Write | LeaseState.Handle : LeaseState.Write)) != 0 : g.Classic is OplockLevel.Exclusive or OplockLevel.Batch);
 						if (!conflict || g.Classic == OplockLevel.None && g.State == LeaseState.None && g.Breaking == null) continue;

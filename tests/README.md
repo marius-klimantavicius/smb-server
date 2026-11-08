@@ -7,6 +7,35 @@ or test adapter is needed. Empty selection exits 2, assertion failure exits 1,
 all selected tests passing exits 0. Each test has a 60-second outer bound; I/O,
 barriers and cleanup have shorter 10-second bounds. Default runs now require F08 to pass. Historical P0 logs preserve its original failure; later final-source gates require all tests green.
 
+The complete harness now registers **3,144** cases. The second campaign adds
+2,068 source-derived public protocol/auth cases and 136 repair regressions to the
+previous 940. Published Linux JIT and Native AOT each pass **2,917/3,144**; the
+same **227 failures remain** in both, including compatibility expectations and
+unresolved cache/notify reproducers. No skip or expected-failure mechanism is used.
+Both modes' host selftests, real local TCP workloads and stress/expiry checks pass.
+Native Windows remains unexecuted.
+
+`--filter upstream.` selects all upstream-related cases, including the first
+campaign's 86 (`upstream.create.` 29, `upstream.protocol.` 27, `upstream.state.` 30).
+The broader source selections are `upstream.samba.` (811 plus 737 under
+`upstream.samba.more.`), `upstream.go.` (83), `upstream.microsoft.` (297), and
+`upstream.inventory.` (140). They include meaningful matrix partitions, not a
+claim that every registration is an unrelated workflow. The five Go sources
+include three servers and two clients. The [source map and findings](../docs/correctness/upstream-tests.md)
+identify pinned upstream filenames/symbols, exact local references, independent assertions, specification
+differences and execution results. Builds require no upstream checkout, network
+access or evidence archive. CREATE/namespace and multi-credit cases use signed
+TCP; deterministic direct-session cases are identified separately and do not
+claim external-client interoperability. Authentication/signing configuration
+remains unchanged. Authentication coverage is explicitly included by the updated
+user scope; internal-only upstream APIs/helpers are excluded from new adaptations.
+
+To capture every independent gate even with failing selections, run
+`python3 scripts/validate-platform.py --out "$SMB_VALIDATION_OUTPUT" --keep-going`.
+The output directory must be new and external. Failed publications block their
+dependent executions; the aggregate result/exit remains failing. Default mode
+still stops at the first failure. No upstream download is part of either mode.
+
 `Smb.Testing` is shared with the JIT/AOT executable host. Future phases can add
 focused tests here without creating new fixtures or loading original DLLs.
 
@@ -138,4 +167,4 @@ No directory leases, multichannel, durable/persistent handles or CA are restored
 
 P7a/b/c add mandatory SMB3 sequence state, explicit SMB300/302 multichannel and in-memory durable/replay cases. P8 adds `p8.audit.` (120 supplemental profile/dialect/backend rows) and `p8.local.` (five real local-backend TCP workflows). Historical published JIT/native harnesses passed 837/837; that result does not validate later source. `Smb.TestHost localtest` runs actual local TCP rounds and prints resource samples; `selftest` uses fake storage. Run `python3 scripts/validate-platform.py --out "$SMB_VALIDATION_OUTPUT"` from the repository root on Linux, or `python scripts/validate-platform.py --out $env:SMB_VALIDATION_OUTPUT` in Windows PowerShell. Set the variable to a new output directory outside the source tree. Native AOT requires the host C++ toolchain. Both Windows and Linux must run the full harness and actual LocalFileStore workload; native Windows execution remains outstanding.
 
-`LocalWorkload` wraps the production OS watcher with a counting adapter. It uses a private disposable root and public loopback fixture credential, retains required signing, and asserts quiescent handles/pending/watchers/locks/shares/cache/recovery plus warm OS resource/managed-memory bounds. It never loads archived DLLs. These GREEN cases do not waive [historical acceptance gaps](../docs/correctness/acceptance.md). External Samba operations are blocked during excluded authentication. Ordinary builds/tests need no external evidence directory, archived assemblies or storage mount.
+`LocalWorkload` wraps the production OS watcher with a counting adapter. It uses a private disposable root and public loopback fixture credential, retains required signing, and asserts quiescent handles/pending/watchers/locks/shares/cache/recovery plus warm OS resource/managed-memory bounds. It never loads archived DLLs. These GREEN cases do not waive [historical acceptance gaps](../docs/correctness/acceptance.md). The second campaign repairs the earlier NTLM negotiation blocker and records fresh signed Samba/Go selections separately. Ordinary builds/tests need no external evidence directory, archived assemblies or storage mount.

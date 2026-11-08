@@ -69,7 +69,7 @@ public static class IoctlMessage
 		spanWriter.WriteUInt32(ctlCode);
 		spanWriter.WriteUInt64(persistentId);
 		spanWriter.WriteUInt64(volatileId);
-		spanWriter.WriteUInt32(0u);
+		spanWriter.WriteUInt32((output.Length > 0) ? 112u : 0u);
 		spanWriter.WriteUInt32(0u);
 		spanWriter.WriteUInt32((output.Length > 0) ? 112u : 0u);
 		spanWriter.WriteUInt32((uint)output.Length);

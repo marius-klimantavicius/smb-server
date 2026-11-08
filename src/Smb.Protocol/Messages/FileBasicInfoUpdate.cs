@@ -2,6 +2,8 @@ namespace Smb.Protocol.Messages;
 
 public sealed class FileBasicInfoUpdate
 {
+	public bool? SuppressLastWriteTimeUpdates { get; init; }
+
 	public long? CreationTime { get; init; }
 
 	public long? LastAccessTime { get; init; }

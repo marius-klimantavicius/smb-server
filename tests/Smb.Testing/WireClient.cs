@@ -63,7 +63,7 @@ public sealed class WireClient : IAsyncDisposable
         var challenge=RawSmb.Buffer(b,RawSmb.U16(b,68),RawSmb.U16(b,70));
         request=RawSmb.SessionSetup(ntlm.BuildAuthenticate(challenge),_mid++,Session);request[66]=1;
         await ExchangeAsync(request,size:9);
-        if(_dialect==0x311)_key=Smb.Crypto.Smb3KeyDerivation.Derive(Smb.Protocol.Enums.SmbDialect.Smb311,Smb.Protocol.Enums.SmbCipherId.None,primary._sessionKey!,primary._sessionKey!,_preauth.Value).SigningKey;
+        _key=Smb.Crypto.Smb3KeyDerivation.Derive((Smb.Protocol.Enums.SmbDialect)_dialect,Smb.Protocol.Enums.SmbCipherId.None,ntlm.ExportedSessionKey,ntlm.ExportedSessionKey,_dialect==0x311?_preauth.Value:new byte[64]).SigningKey;
     }
     public async Task<byte[]> ExchangeAsync(byte[] request, uint status = 0, ushort? size = null)
     {

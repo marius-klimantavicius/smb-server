@@ -6,4 +6,5 @@ public enum LockOutcome
 	Conflict,
 	RangeNotLocked,
 	Cancelled,
+	InvalidParameter,
 }

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Smb.Server.State;
+using Smb.Protocol.Enums;
+using Smb.Protocol.Messages;
 
 namespace Smb.Server.Durable;
 
@@ -11,6 +13,52 @@ public sealed class CreateReplayRegistry
 {
 	private readonly Lock _gate = new Lock();
 	private readonly Dictionary<(Guid, Guid), Entry> _entries = new Dictionary<(Guid, Guid), Entry>();
+
+	private readonly Dictionary<(Guid, Guid), PendingClaim> _pending = new Dictionary<(Guid, Guid), PendingClaim>();
+
+	internal PendingClaim? TryBeginRequest(Guid client, Guid create)
+	{
+		lock (_gate)
+		{
+			var key = (client, create);
+			if (_pending.ContainsKey(key)) return null;
+			var claim = new PendingClaim(this, key);
+			_pending.Add(key, claim);
+			return claim;
+		}
+	}
+
+	internal sealed class PendingClaim(CreateReplayRegistry owner, (Guid, Guid) key)
+	{
+		private bool _executed, _delivered;
+		private byte[]? _expectedBody;
+		private NtStatus _expectedStatus;
+		internal void Expect(NtStatus status, byte[] body)
+		{
+			_expectedStatus = status;
+			Volatile.Write(ref _expectedBody, body);
+		}
+		internal bool Commit(ReadOnlyMemory<byte> message)
+		{
+			var body = Volatile.Read(ref _expectedBody);
+			if (body == null || message.Length < 64 + body.Length) return false;
+			var header = Smb2Header.Read(message.Span);
+			if (header.Command != SmbCommand.Create || header.Status != _expectedStatus || !message.Span.Slice(64, body.Length).SequenceEqual(body)) return false;
+			ResponseDone();
+			return true;
+		}
+		internal void ExecutionDone() => Finish(true);
+		internal void ResponseDone() => Finish(false);
+		private void Finish(bool execution)
+		{
+			lock (owner._gate)
+			{
+				if (execution) _executed = true; else _delivered = true;
+				if (_executed && _delivered && owner._pending.TryGetValue(key, out var current) && ReferenceEquals(current, this))
+					owner._pending.Remove(key);
+			}
+		}
+	}
 
 	internal sealed class Entry
 	{

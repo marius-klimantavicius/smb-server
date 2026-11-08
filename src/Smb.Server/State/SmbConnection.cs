@@ -112,6 +112,8 @@ public sealed class SmbConnection
 		return false;
 	}
 
+	internal ConcurrentDictionary<ulong, (Func<ReadOnlyMemory<byte>, bool> Commit, Action Abandon)> ResponseCommitActions { get; } = new ConcurrentDictionary<ulong, (Func<ReadOnlyMemory<byte>, bool>, Action)>();
+
 	/// <summary>Call only after the complete ordered transport write and flush succeeds.</summary>
 	public void ResponseSent(ReadOnlyMemory<byte> response)
 	{
@@ -119,6 +121,9 @@ public sealed class SmbConnection
 		while (response.Length - offset >= 64)
 		{
 			var header = Smb2Header.Read(response.Span.Slice(offset));
+			if (header.Status != NtStatus.Pending && ResponseCommitActions.TryGetValue(header.MessageId, out var committed) &&
+				committed.Commit(response.Slice(offset, header.NextCommand == 0 ? response.Length - offset : checked((int)header.NextCommand))))
+				ResponseCommitActions.TryRemove(new System.Collections.Generic.KeyValuePair<ulong, (Func<ReadOnlyMemory<byte>, bool>, Action)>(header.MessageId, committed));
 			if (header.IsAsync && header.Status == NtStatus.Pending && AsyncRequests.TryGetValue(header.AsyncId, out var pending)) pending.CommitInterim();
 			if (header.NextCommand == 0) break;
 
@@ -129,6 +134,8 @@ public sealed class SmbConnection
 	public void AbandonPending()
 	{
 		foreach (var pending in PendingRequests.Values) pending.Abandon();
+		foreach (var pair in ResponseCommitActions)
+			if (ResponseCommitActions.TryRemove(pair.Key, out var abandoned)) abandoned.Abandon();
 	}
 
 	public ulong AllocateTreeId()

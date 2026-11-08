@@ -98,7 +98,7 @@ internal static class P7cTests
         byte[] Req() { var r=Request("a",guid);RawSmb.Put32(r,100,5);return mode is "lease" or "lease-ack"?Lease(r):r; }
         var original=Req();byte[] first;
         if(mode is "inflight" or "failure") {
-            // Hold response preparation after the first destructive acquisition. The duplicate must wait.
+            // Hold response preparation. Pending replay is explicitly FILE_NOT_AVAILABLE; a fresh replay after delivery retains the winner.
             var gate=new AsyncBarrier();var held=root.Store();
             var wrapper=new PausedStore(held,gate,mode=="failure");
             var replacement=new SmbTreeConnect { TreeId=42,Session=d.Session,Share=new Share { Name="P0",FileStore=wrapper },MaximalAccess=0x1f01ff };d.Session.TreeConnects[42]=replacement;
@@ -106,7 +106,9 @@ internal static class P7cTests
             var retry=Req();RawSmb.Put32(retry,16,0x20000000);var loser=d.Send(retry);
             try { Check.Equal(1,wrapper.Creates,"duplicate cannot acquire backend while winner prepares response"); }
             finally { gate.Release(); }
-            first=await winner.WaitAsync(Check.Timeout);var second=await loser.WaitAsync(Check.Timeout);
+            first=await winner.WaitAsync(Check.Timeout);var pendingReplay=await loser.WaitAsync(Check.Timeout);
+            Status(pendingReplay,(NtStatus)0xc0000467,"inflight replay is explicitly unavailable before original delivery");
+            var second=await d.Send(retry);
             if(mode=="failure") { Check.That(RawSmb.U32(first,8)!=0,"first provisional winner failed");Status(second,NtStatus.Success,"failed arbitration owner permits valid retry");Check.Equal(2,wrapper.Creates,"one retry after provisional failure"); }
             else { Status(first,NtStatus.Success,"winner success");Status(second,NtStatus.Success,"inflight replay success");Check.Equal(Id(first),Id(second),"inflight replay result");Check.Equal(1,wrapper.Creates,"one backend acquisition"); }
             return;
@@ -260,8 +262,9 @@ internal static class P7cTests
         var response=await b.ExchangeAsync(Wire(reconnect,b),size:89);var restored=Id(response);Check.That(restored.V!=id.V,"wire volatile ID renewed");Check.That(ReferenceEquals(open,host.State.SessionGlobalList[b.Session].Opens[restored])&&ReferenceEquals(handle,open.LocalOpen),"TCP reconnect retains actual open");if(mode=="replay-after-reconnect") { var replay=Request("wrong-path",guid);RawSmb.Put32(replay,16,0x20000000);var repeated=await b.ExchangeAsync(Wire(replay,b));Check.Equal(restored,Id(repeated),"replay after reconnect uses attached session and actual retained open");await b.WriteAsync(restored,new byte[]{7}); }
         Check.Equal((byte)7,(await b.ReadAsync(restored,1))[0],"same retained bytes");await b.CloseAsync(restored);Check.Equal(0L,metrics.OpenHandles,"TCP cleanup metric");
     }
-    internal sealed class PausedStore(IFileStore inner,AsyncBarrier gate,bool fail) : IFileStore,ICacheCoherentFileStore
+    internal sealed class PausedStore(IFileStore inner,AsyncBarrier gate,bool fail) : IFileStore,ICacheCoherentFileStore,IAuthorizedCreateStore
     {
+        public async ValueTask<FileStoreResult<FileCreateResult>> CreateAuthorizedAsync(string p,string stream,FileAccessIntent a,CreateDispositionIntent d,bool dir,bool non,uint attrs,Func<Smb.Protocol.Security.SecurityDescriptor,bool> existing,Func<Smb.Protocol.Security.SecurityDescriptor,bool,bool> parent,Func<FileIdentity?,bool> validateIdentity,CancellationToken ct=default) { Interlocked.Increment(ref Creates);var r=await ((IAuthorizedCreateStore)inner).CreateAuthorizedAsync(p,stream,a,d,dir,non,attrs,existing,parent,validateIdentity,ct);if(Creates==1&&r.IsSuccess)return FileStoreResult<FileCreateResult>.Ok(new FileCreateResult(new FaultHandle(r.Value.Handle){Barrier=gate,Fail=fail},r.Value.Action));return r; }
         public int Creates;public bool HasExclusiveServerAccess=>true;
         public ValueTask<FileIdentity?> ResolveIdentityAsync(string p,string stream="",CancellationToken ct=default)=>((IFileIdentityStore)inner).ResolveIdentityAsync(p,stream,ct);
         public async ValueTask<FileStoreResult<FileCreateResult>> CreateAsync(string p,FileAccessIntent a,CreateDispositionIntent d,bool dir,bool non,CancellationToken ct=default) { Interlocked.Increment(ref Creates);var r=await inner.CreateAsync(p,a,d,dir,non,ct);if(Creates==1&&r.IsSuccess)return FileStoreResult<FileCreateResult>.Ok(new FileCreateResult(new FaultHandle(r.Value.Handle){Barrier=gate,Fail=fail},r.Value.Action));return r; }

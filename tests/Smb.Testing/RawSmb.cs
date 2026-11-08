@@ -70,6 +70,10 @@ public static class RawSmb
     {
         var b = Header(4, 4, mid, session, tree); Put16(b, 64, 4); return b;
     }
+    public static byte[] Logoff(ulong mid, ulong session)
+    {
+        var b = Header(2, 4, mid, session); Put16(b, 64, 4); return b;
+    }
     private static void Id(byte[] b, int p, (ulong P, ulong V) id) { Put64(b, p, id.P); Put64(b, p + 8, id.V); }
     public static void Sign(byte[] b, byte[] key)
     {

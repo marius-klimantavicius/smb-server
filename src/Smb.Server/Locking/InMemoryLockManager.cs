@@ -77,20 +77,29 @@ public sealed class InMemoryLockManager : ILockManager
 			if (elements[0].Unlock) outcome = ApplyUnlocks(state, owner, elements, decisions);
 			else
 			{
-				var conflict = false;
-				foreach (var e in elements) conflict |= Conflicts(state, owner, e.Offset, e.Length, e.Exclusive);
-				if (!conflict)
+				var firstNewLock = state.Active.Count;
+				outcome = LockOutcome.Granted;
+				foreach (var e in elements)
 				{
-					foreach (var e in elements) state.Active.Add(new ActiveLock(owner, e.Offset, e.Length, e.Exclusive));
-					outcome = LockOutcome.Granted;
+					if (Conflicts(state, owner, e.Offset, e.Length, e.Exclusive))
+					{
+						outcome = LockOutcome.Conflict;
+						break;
+					}
+
+					state.Active.Add(new ActiveLock(owner, e.Offset, e.Length, e.Exclusive));
 				}
-				else if (failImmediately || elements.Count != 1) outcome = LockOutcome.Conflict;
-				else
+
+				if (outcome == LockOutcome.Conflict)
 				{
-					var e = elements[0];
-					waiter = new Waiter(owner, e.Offset, e.Length, e.Exclusive, new TaskCompletionSource<LockOutcome>(TaskCreationOptions.RunContinuationsAsynchronously));
-					state.Waiters.Add(waiter);
-					outcome = LockOutcome.Conflict;
+					// Only grants from this request are rolled back; earlier locks survive.
+					state.Active.RemoveRange(firstNewLock, state.Active.Count - firstNewLock);
+					if (!failImmediately && elements.Count == 1)
+					{
+						var e = elements[0];
+						waiter = new Waiter(owner, e.Offset, e.Length, e.Exclusive, new TaskCompletionSource<LockOutcome>(TaskCreationOptions.RunContinuationsAsynchronously));
+						state.Waiters.Add(waiter);
+					}
 				}
 			}
 
@@ -154,7 +163,7 @@ public sealed class InMemoryLockManager : ILockManager
 
 			foreach (var item in value.Active)
 			{
-				if (item.Owner != owner && Overlaps(offset, length, item.Offset, item.Length) && (forWrite || item.Exclusive))
+				if (Overlaps(offset, length, item.Offset, item.Length) && (item.Exclusive ? item.Owner != owner : forWrite))
 				{
 					return false;
 				}
@@ -189,36 +198,38 @@ public sealed class InMemoryLockManager : ILockManager
 
 	private LockOutcome ApplyUnlocks(FileLockState state, SmbOpen owner, IReadOnlyList<LockElement> elements, List<(Waiter, LockOutcome)> decisions)
 	{
-		var list = new List<int>(elements.Count);
+		var outcome = LockOutcome.Granted;
 		foreach (var element in elements)
 		{
+			// MS-SMB2 3.3.5.14.1 retains every successfully unlocked prefix.
+			if (element.Shared || element.Exclusive)
+			{
+				outcome = LockOutcome.InvalidParameter;
+				break;
+			}
+
 			var num = -1;
 			for (var i = 0; i < state.Active.Count; i++)
 			{
 				var activeLock = state.Active[i];
-				if (activeLock.Owner == owner && activeLock.Offset == element.Offset && activeLock.Length == element.Length && !list.Contains(i))
+				if (activeLock.Owner == owner && activeLock.Offset == element.Offset && activeLock.Length == element.Length)
 				{
-					num = i;
-					break;
+					if (num < 0 || activeLock.Exclusive) num = i;
+					if (activeLock.Exclusive) break;
 				}
 			}
 
 			if (num < 0)
 			{
-				return LockOutcome.RangeNotLocked;
+				outcome = LockOutcome.RangeNotLocked;
+				break;
 			}
 
-			list.Add(num);
-		}
-
-		list.Sort();
-		for (var num2 = list.Count - 1; num2 >= 0; num2--)
-		{
-			state.Active.RemoveAt(list[num2]);
+			state.Active.RemoveAt(num);
 		}
 
 		WakeWaiters(state, decisions);
-		return LockOutcome.Granted;
+		return outcome;
 	}
 
 	private static void WakeWaiters(FileLockState state, List<(Waiter, LockOutcome)> decisions)
@@ -242,14 +253,10 @@ public sealed class InMemoryLockManager : ILockManager
 
 	private static bool Conflicts(FileLockState state, SmbOpen owner, ulong offset, ulong length, bool exclusive)
 	{
-		if (length == 0L)
-		{
-			return false;
-		}
-
 		foreach (var item in state.Active)
 		{
-			if (item.Owner != owner && Overlaps(offset, length, item.Offset, item.Length) && (exclusive || item.Exclusive))
+			// Exclusive acquisition conflicts even with this open's existing locks.
+			if (Overlaps(offset, length, item.Offset, item.Length) && (exclusive || item.Exclusive && item.Owner != owner))
 			{
 				return true;
 			}
@@ -260,10 +267,10 @@ public sealed class InMemoryLockManager : ILockManager
 
 	private static bool Overlaps(ulong aOff, ulong aLen, ulong bOff, ulong bLen)
 	{
-		if (aLen == 0L || bLen == 0L)
-		{
-			return false;
-		}
+		if (aOff == 0 && aLen == 0 || bOff == 0 && bLen == 0) return false;
+		// A zero-length range at N spans [N, N-1]; it overlaps only a strict interior.
+		if (aLen == 0) return bOff < aOff && aOff < bOff + (UInt128)bLen;
+		if (bLen == 0) return aOff < bOff && bOff < aOff + (UInt128)aLen;
 
 		var uInt = aOff + (UInt128)aLen;
 		var uInt2 = bOff + (UInt128)bLen;

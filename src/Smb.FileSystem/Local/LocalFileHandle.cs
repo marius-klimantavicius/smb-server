@@ -10,6 +10,7 @@ namespace Smb.FileSystem.Local;
 
 internal sealed class LocalFileHandle : IFileHandle, IDisposable
 {
+	private readonly LocalFileStore _store;
 	private readonly string _root;
 
 	private readonly FileStream? _stream;
@@ -31,6 +32,9 @@ internal sealed class LocalFileHandle : IFileHandle, IDisposable
 		}
 	}
 
+	internal SemaphoreSlim MutationGate => _object.MutationGate;
+	internal bool SuppressLastWriteTimeUpdates;
+
 	private bool _closed;
 	private NtStatus _closeStatus;
 
@@ -44,8 +48,9 @@ internal sealed class LocalFileHandle : IFileHandle, IDisposable
 
 	public string? PhysicalPath => FullPath;
 
-	public LocalFileHandle(string fullPath, string relativePath, string root, FileStream? stream, bool isDirectory)
+	public LocalFileHandle(LocalFileStore store, string fullPath, string relativePath, string root, FileStream? stream, bool isDirectory)
 	{
+		_store = store;
 		FullPath = fullPath;
 		Path = relativePath;
 		_root = root;
@@ -84,12 +89,20 @@ internal sealed class LocalFileHandle : IFileHandle, IDisposable
 	{
 		if (_stream == null || !_stream.CanWrite) return FileStoreResult<int>.Fail(NtStatus.AccessDenied);
 
+		await MutationGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+		DateTime? preserved = null;
 		try
 		{
+			if (SuppressLastWriteTimeUpdates) preserved = File.GetLastWriteTimeUtc(NativeHandle);
 			await RandomAccess.WriteAsync(_stream.SafeFileHandle, data, offset, cancellationToken).ConfigureAwait(false);
 			return FileStoreResult<int>.Ok(data.Length);
 		}
 		catch (IOException) { return FileStoreResult<int>.Fail(NtStatus.DiskFull); }
+		finally
+		{
+			try { if (preserved is { } time) File.SetLastWriteTimeUtc(NativeHandle, time); }
+			finally { MutationGate.Release(); }
+		}
 	}
 
 	public FileStoreResult<int> ReadAt(long offset, Span<byte> buffer)
@@ -120,6 +133,7 @@ internal sealed class LocalFileHandle : IFileHandle, IDisposable
 
 	public FileStoreResult<int> WriteAt(long offset, ReadOnlySpan<byte> data)
 	{
+		using var mutation = PreserveWriteTime();
 		lock (_io)
 		{
 			if (_stream == null || !_stream.CanWrite)
@@ -142,6 +156,7 @@ internal sealed class LocalFileHandle : IFileHandle, IDisposable
 
 	public NtStatus SetLength(long length)
 	{
+		using var mutation = PreserveWriteTime();
 		lock (_io)
 		{
 			if (_stream == null || !_stream.CanWrite)
@@ -158,6 +173,22 @@ internal sealed class LocalFileHandle : IFileHandle, IDisposable
 			{
 				return NtStatus.InvalidParameter;
 			}
+		}
+	}
+
+	private IDisposable PreserveWriteTime()
+	{
+		MutationGate.Wait();
+		try { return new WriteTimeScope(this, SuppressLastWriteTimeUpdates ? File.GetLastWriteTimeUtc(NativeHandle) : null); }
+		catch { MutationGate.Release(); throw; }
+	}
+
+	private sealed class WriteTimeScope(LocalFileHandle owner, DateTime? time) : IDisposable
+	{
+		public void Dispose()
+		{
+			try { if (time is { } value) File.SetLastWriteTimeUtc(owner.NativeHandle, value); }
+			finally { owner.MutationGate.Release(); }
 		}
 	}
 
@@ -213,10 +244,10 @@ internal sealed class LocalFileHandle : IFileHandle, IDisposable
 		{
 			Name = System.IO.Path.GetFileName(FullPath),
 			DeletePending = DeletePending,
-			Attributes = LocalFileStore.MapAttributes(File.GetAttributes(_stream?.SafeFileHandle ?? _directoryHandle!)),
+			Attributes = _store.GetAttributes(Identity!.Value, File.GetAttributes(_stream?.SafeFileHandle ?? _directoryHandle!)),
 			EndOfFile = size,
 			AllocationSize = (isDir ? 0 : ((size + 4095) / 4096 * 4096)),
-			CreationTime = Safe(File.GetCreationTimeUtc(_stream?.SafeFileHandle ?? _directoryHandle!)),
+			CreationTime = _store.CreationTime(Identity!.Value, Safe(File.GetCreationTimeUtc(_stream?.SafeFileHandle ?? _directoryHandle!))),
 			LastAccessTime = Safe(File.GetLastAccessTimeUtc(_stream?.SafeFileHandle ?? _directoryHandle!)),
 			LastWriteTime = Safe(File.GetLastWriteTimeUtc(_stream?.SafeFileHandle ?? _directoryHandle!)),
 			ChangeTime = Safe(File.GetLastWriteTimeUtc(_stream?.SafeFileHandle ?? _directoryHandle!)),
@@ -246,6 +277,8 @@ internal sealed class LocalFileHandle : IFileHandle, IDisposable
 
 			try
 			{
+				if (delete && (File.GetAttributes(NativeHandle) & FileAttributes.ReadOnly) != 0)
+					return (NtStatus)0xc0000121;
 				if (delete && _isDirectory && Directory.EnumerateFileSystemEntries(FullPath).Any())
 					return NtStatus.DirectoryNotEmpty;
 
@@ -287,9 +320,11 @@ internal sealed class LocalFileHandle : IFileHandle, IDisposable
 
 				if (DeleteOnClose)
 				{
+					var lastLink = _isDirectory || LocalIdentity.LinkCount(NativeHandle) == 1;
 					if (OperatingSystem.IsWindows()) WindowsLocalIdentity.Delete(deletePath, Identity!.Value);
 					else if (_isDirectory) Directory.Delete(deletePath, recursive: false);
 					else File.Delete(deletePath);
+					if (lastLink) _store.RetireMetadata(Identity!.Value);
 				}
 
 				return _closeStatus = NtStatus.Success;

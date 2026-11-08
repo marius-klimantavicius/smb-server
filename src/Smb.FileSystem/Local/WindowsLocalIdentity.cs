@@ -20,6 +20,16 @@ internal static class WindowsLocalIdentity
 		public ulong IdHigh;
 	}
 
+	[StructLayout(LayoutKind.Sequential)]
+	private struct FileStandardInfo
+	{
+		public long AllocationSize;
+		public long EndOfFile;
+		public uint NumberOfLinks;
+		public byte DeletePending;
+		public byte Directory;
+	}
+
 	[DllImport("kernel32.dll", EntryPoint = "CreateFileW", ExactSpelling = true, CharSet = CharSet.Unicode, SetLastError = true)]
 	private static extern SafeFileHandle CreateFile(string name, uint access, uint share, IntPtr security, uint disposition, uint flags, IntPtr template);
 
@@ -33,6 +43,17 @@ internal static class WindowsLocalIdentity
 	[DllImport("kernel32.dll", EntryPoint = "GetFileInformationByHandleEx", ExactSpelling = true, SetLastError = true)]
 	[return: MarshalAs(UnmanagedType.Bool)]
 	private static extern bool GetFileInformation(SafeFileHandle handle, int informationClass, out FileIdInfo info, uint size);
+
+	[DllImport("kernel32.dll", EntryPoint = "GetFileInformationByHandleEx", ExactSpelling = true, SetLastError = true)]
+	[return: MarshalAs(UnmanagedType.Bool)]
+	private static extern bool GetFileInformation(SafeFileHandle handle, int informationClass, out FileStandardInfo info, uint size);
+
+	internal static uint LinkCount(SafeFileHandle handle)
+	{
+		if (!GetFileInformation(handle, 1, out FileStandardInfo info, 24))
+			throw Error("FILE_STANDARD_INFO link count query failed", Marshal.GetLastPInvokeError());
+		return info.NumberOfLinks;
+	}
 
 	[DllImport("kernel32.dll", EntryPoint = "SetFileInformationByHandle", ExactSpelling = true, SetLastError = true)]
 	[return: MarshalAs(UnmanagedType.Bool)]
@@ -97,7 +118,7 @@ internal static class WindowsLocalIdentity
 	private static FileIdentity ResolveHandle(SafeFileHandle handle)
 	{
 		// FileIdInfo = 18; FILE_ID_INFO = ULONGLONG + FILE_ID_128, 24 bytes.
-		if (!GetFileInformation(handle, 18, out var info, 24))
+		if (!GetFileInformation(handle, 18, out FileIdInfo info, 24))
 			throw Error("FILE_ID_INFO identity query failed", Marshal.GetLastPInvokeError());
 
 		return new FileIdentity(FormattableString.Invariant($"windows:{info.VolumeSerialNumber:x16}:{info.IdLow:x16}{info.IdHigh:x16}"));

@@ -103,7 +103,8 @@ internal static class P7bTests
     {
         await using var d=new P2Tests.Direct();var c=Seed(d);d.Connection.ServerCapabilities=c.ServerCapabilities=Smb2Capabilities.MultiChannel;
         var id=await d.Open();try {
-            Status(await d.Send(Lock(id,sequence)),0,"first unsequenced lock");Status(await d.Send(Lock(id,sequence),c),0,"second unsequenced lock");
+            // Shared locks may stack; exclusive locks conflict even for the same open (MS-FSA 2.1.4.10).
+            Status(await d.Send(Lock(id,sequence,0x11)),0,"first unsequenced lock");Status(await d.Send(Lock(id,sequence,0x11),c),0,"second unsequenced lock");
             Check.Equal(2,((Smb.Server.Locking.InMemoryLockManager)d.Options.LockManager).ActiveLockCount,"reserved/out-of-array slot continues normal processing");
         } finally { await d.Dispatcher.OnConnectionClosedAsync(c); }
     }
@@ -138,11 +139,13 @@ internal static class P7bTests
                 var other=await d.Open();Status(await d.Send(Lock(other,0)),0,"foreign lock holds range");
                 Status(await d.Send(Lock(id,0x11)),0xc0000055,"conflict is not saved as success");await d.Send(Lock(other,0,4));
             }
-            Status(await d.Send(Lock(id,0x11)),0,"first successful lock");
+            // A changed slot must reapply a legal shared acquisition, rather than stack exclusive locks.
+            var flags=mode=="changed"?0x11u:0x12u;
+            Status(await d.Send(Lock(id,0x11,flags)),0,"first successful lock");
             if(mode=="unlock") {
                 Status(await d.Send(Lock(id,0x12,4)),0,"unlock once");Status(await d.Send(Lock(id,0x12,4),c),0,"lost unlock response reexecutes as success");Check.Equal(0,locks.ActiveLockCount,"unlock applied once");
             } else {
-                var replay=Lock(id,mode=="changed"?0x12u:0x11u);RawSmb.Put32(replay,16,0x20000000);
+                var replay=Lock(id,mode=="changed"?0x12u:0x11u,flags);RawSmb.Put32(replay,16,0x20000000);
                 Status(await d.Send(replay,c),0,"replayed/changed LOCK succeeds");
                 Check.Equal(mode=="changed"?2:1,locks.ActiveLockCount,"sequence slot decides applications, replay flag alone does not");
                 await d.Send(Lock(id,0x13,4));Check.Equal(mode=="changed"?1:0,locks.ActiveLockCount,"one unlock removes one established lock");

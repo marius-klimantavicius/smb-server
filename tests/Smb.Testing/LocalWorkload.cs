@@ -55,7 +55,7 @@ public static class LocalWorkload
                     await c.ExchangeAsync(Lock(c,a,4));
                     await c.WriteAsync(a,"FIRST"u8.ToArray());
                     var flush=Request(c,7,24);RawSmb.Put16(flush,64,24);Id(flush,72,a);await c.ExchangeAsync(flush);
-                    var rename=new byte[22];RawSmb.Put32(rename,16,2);Encoding.Unicode.GetBytes("b").CopyTo(rename,20);
+                    var rename=new byte[24];RawSmb.Put32(rename,16,2);Encoding.Unicode.GetBytes("b").CopyTo(rename,20);
                     await c.ExchangeAsync(Set(c,a,10,rename));
                     Check.That((await c.ReadAsync(b,12)).SequenceEqual("FIRST+append"u8.ToArray()),"rename preserves other local open");
                     var dir=await c.CreateAsync("",true);Check.That((await c.EnumerateAsync(dir)).Contains("b"),"real directory enumeration");

@@ -55,6 +55,18 @@ var tests = new (string Name, Func<Task> Run)[]
         Check.Equal(0, h.Store.ActiveHandles, "MS-SMB2 3.3.5.8 requires closing tree opens before disconnect"); }),
 };
 tests = tests.Concat(P1Tests.Cases()).Concat(P2Tests.Cases()).Concat(P3Tests.Cases()).Concat(P4Tests.Cases()).Concat(P5Tests.Cases()).Concat(P6Tests.Cases()).Concat(P6AdvancedTests.Cases()).Concat(P6WorkflowTests.Cases()).Concat(P6FinalTests.Cases()).Concat(P6NamespaceTests.Cases()).Concat(P6RaceTests.Cases()).Concat(P7aTests.Cases()).Concat(P7bTests.Cases()).Concat(P7cTests.Cases()).Concat(P8Tests.Cases()).Concat(P8Profiles.Cases()).Concat(PlatformTests.Cases()).ToArray();
+tests = tests.Concat(UpstreamCreateTests.Cases()).Concat(UpstreamProtocolTests.Cases()).Concat(UpstreamStateTests.Cases()).ToArray();
+tests = tests.Concat(UpstreamMicrosoftTests.Cases()).ToArray();
+tests = tests.Concat(UpstreamSambaTests.Cases()).ToArray();
+tests = tests.Concat(UpstreamGoTests.Cases()).ToArray();
+tests = tests.Concat(UpstreamSambaMoreTests.Cases()).ToArray();
+tests = tests.Concat(UpstreamRepairTests.Cases()).ToArray();
+tests = tests.Concat(UpstreamDescriptorRepairTests.Cases()).ToArray();
+tests = tests.Concat(UpstreamCreateAuthorizationTests.Cases()).ToArray();
+tests = tests.Concat(UpstreamGrantRepairTests.Cases()).ToArray();
+tests = tests.Concat(UpstreamCacheRepairTests.Cases()).ToArray();
+tests = tests.Concat(UpstreamInventoryTests.Cases()).ToArray();
+tests = tests.Concat(UpstreamFinalProtocolTests.Cases()).ToArray();
 if (args is ["--list"]) { foreach (var test in tests) Console.WriteLine(test.Name); return 0; }
 var filter = args switch { [] => "", ["--filter", var value] => value, _ => throw new ArgumentException("Usage: [--list | --filter <case-insensitive-substring>]") };
 var selected = tests.Where(t => t.Name.Contains(filter, StringComparison.OrdinalIgnoreCase)).ToArray();

@@ -58,7 +58,7 @@ public static class AclInheritance
 		return SecurityDescriptor.Create(parent.Owner, parent.Group, new Acl
 		{
 			Aces = list,
-		});
+		}, extraControl: parent.Control & SecurityDescriptorControl.DaclAutoInherited);
 	}
 
 	private static Ace Rewrite(Ace source, AceFlags flags)

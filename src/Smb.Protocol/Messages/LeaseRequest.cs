@@ -50,7 +50,7 @@ public sealed class LeaseRequest
 			Key = key,
 			RequestedState = requestedState,
 			Flags = flags,
-			ParentKey = parentKey,
+			ParentKey = flags.HasFlag(LeaseFlags.ParentLeaseKeySet) ? parentKey : default,
 			Epoch = epoch,
 			IsV2 = flag,
 		};

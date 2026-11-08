@@ -66,7 +66,7 @@ public sealed class CreateRequest
 				throw new SmbWireFormatException("CREATE name extends past the message.");
 			}
 
-			text = Encoding.Unicode.GetString(message.Slice(num2, num3));
+			text = RequestBounds.ReadUnicode(message.Slice(num2, num3), "CREATE name");
 		}
 
 		var contexts = CreateContextList.Parse(message, contextsOffset, contextsLength);
@@ -78,7 +78,7 @@ public sealed class CreateRequest
 			ShareAccess = shareAccess,
 			Disposition = disposition,
 			Options = options,
-			Name = text.TrimStart('\\'),
+			Name = text,
 			Contexts = contexts,
 		};
 	}

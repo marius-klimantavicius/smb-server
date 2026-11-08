@@ -59,20 +59,43 @@ public sealed class NtlmAuthenticateMessage
 		var item11 = tuple6.len;
 		var item12 = tuple6.off;
 		var flags = (NtlmNegotiateFlags)r.ReadUInt32();
-		var mic = new byte[16];
-		if (Min(item2, item4, item6, item8, item10, item12) >= 88 && data.Length >= 88)
+		var minimum = flags.HasFlag(NtlmNegotiateFlags.NegotiateVersion) ? 72 : 64;
+		if (data.Length < minimum) throw new FormatException("Truncated AUTHENTICATE_MESSAGE Version.");
+		ValidateField(data, item4, item3, minimum);
+		var ntResponse = Slice(data, item4, item3);
+		var hasMic = false;
+		if (ntResponse.Length >= 48)
+			foreach (var pair in NtlmAvPairs.Decode(ntResponse.AsSpan(44)))
+				if (pair.Id == NtlmAvId.Flags && pair.Value.Length >= 4 && (pair.Value[0] & 2) != 0) hasMic = true;
+		// An announced MIC occupies the protocol's reserved Version + MIC layout.
+		// Without it, a compact message may omit Version and start Payload at 64.
+		if (hasMic) minimum = 88;
+		ValidateField(data, item2, item, minimum);
+		ValidateField(data, item4, item3, minimum);
+		ValidateField(data, item6, item5, minimum);
+		ValidateField(data, item8, item7, minimum);
+		ValidateField(data, item10, item9, minimum);
+		var keyExchange = flags.HasFlag(NtlmNegotiateFlags.NegotiateKeyExchange);
+		if (keyExchange) ValidateField(data, item12, item11, minimum);
+		if (item is not (0 or 24)) throw new FormatException("Invalid LM response size.");
+		// Preserve the mechanism's terminal proof-too-short rejection before
+		// interpreting the text fields of an unusable authentication attempt.
+		if (ntResponse.Length >= 16 && flags.HasFlag(NtlmNegotiateFlags.NegotiateUnicode))
 		{
-			mic = data.Slice(72, 16).ToArray();
+			ValidateUnicodeField(item6, item5);
+			ValidateUnicodeField(item8, item7);
+			ValidateUnicodeField(item10, item9);
 		}
+		var mic = hasMic ? Slice(data, 72, 16) : new byte[16];
 
 		return new NtlmAuthenticateMessage
 		{
 			LmChallengeResponse = Slice(data, item2, item),
-			NtChallengeResponse = Slice(data, item4, item3),
+			NtChallengeResponse = ntResponse,
 			DomainName = Unicode(data, item6, item5),
 			UserName = Unicode(data, item8, item7),
 			Workstation = Unicode(data, item10, item9),
-			EncryptedRandomSessionKey = Slice(data, item12, item11),
+			EncryptedRandomSessionKey = keyExchange ? Slice(data, item12, item11) : Array.Empty<byte>(),
 			Flags = flags,
 			Mic = mic,
 		};
@@ -116,17 +139,17 @@ public sealed class NtlmAuthenticateMessage
 		}
 	}
 
-	private static int Min(params int[] values)
+	private static void ValidateField(ReadOnlySpan<byte> data, int off, int len, int minimum)
 	{
-		var num = int.MaxValue;
-		foreach (var num2 in values)
-		{
-			if (num2 > 0 && num2 < num)
-			{
-				num = num2;
-			}
-		}
+		// Absent values have no referenced bytes; their suggested offsets and
+		// MaxLen fields do not impose a payload or message-length requirement.
+		if (len == 0) return;
+		if (off < minimum) throw new FormatException("AUTHENTICATE field overlaps its fixed fields.");
+		EnsureInBounds(data.Length, off, len);
+	}
 
-		return num;
+	private static void ValidateUnicodeField(int off, int len)
+	{
+		if (len != 0 && ((off | len) & 1) != 0) throw new FormatException("AUTHENTICATE Unicode field is not two-byte aligned.");
 	}
 }

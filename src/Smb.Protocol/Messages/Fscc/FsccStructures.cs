@@ -136,7 +136,7 @@ public static class FsccStructures
 			FileInformationClass.FileBasicInformation => FileBasic(e),
 			FileInformationClass.FileStandardInformation => FileStandard(e),
 			FileInformationClass.FileInternalInformation => U64((ulong)e.IndexNumber),
-			FileInformationClass.FileEaInformation => U32(0u),
+			FileInformationClass.FileEaInformation => U32(e.EaSize),
 			FileInformationClass.FilePositionInformation => U64(0uL),
 			FileInformationClass.FileNetworkOpenInformation => FileNetworkOpen(e),
 			FileInformationClass.FileAttributeTagInformation => FileAttributeTag(e),
@@ -212,7 +212,7 @@ public static class FsccStructures
 		growableWriter.WriteBytes(FileBasic(e));
 		growableWriter.WriteBytes(FileStandard(e));
 		growableWriter.WriteUInt64((ulong)e.IndexNumber);
-		growableWriter.WriteUInt32(0u);
+		growableWriter.WriteUInt32(e.EaSize);
 		growableWriter.WriteUInt32(2032127u);
 		growableWriter.WriteUInt64(0uL);
 		growableWriter.WriteUInt32(0u);

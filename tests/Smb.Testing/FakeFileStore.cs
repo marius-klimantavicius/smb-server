@@ -6,7 +6,7 @@ using Smb.Protocol.Enums;
 namespace Smb.Testing;
 
 // In-memory ordinary I/O fixture. No access to host paths, shares or original package DLLs.
-public sealed class FakeFileStore : IFileStore
+public sealed class FakeFileStore : IFileStore, IAuthorizedCreateStore
 {
     internal sealed class Node(string path, bool directory, byte[] data)
     {
@@ -23,6 +23,13 @@ public sealed class FakeFileStore : IFileStore
     public IReadOnlyList<FakeFileHandle> Handles => _handles.ToArray();
     public int ActiveHandles => _handles.Count(h => !h.IsDisposed);
     public FakeFileStore() => Seed("", [], true);
+    // This fixture has no descriptors. Preserve its one controlled acquisition
+    // per CREATE while exercising the server's guarded admission path.
+    public async ValueTask<FileStoreResult<FileCreateResult>> CreateAuthorizedAsync(string path, string streamName, FileAccessIntent access, CreateDispositionIntent disposition, bool directoryRequired, bool nonDirectoryRequired, uint attributes, Func<Smb.Protocol.Security.SecurityDescriptor, bool> authorizeExisting, Func<Smb.Protocol.Security.SecurityDescriptor, bool, bool> authorizeParent, Func<FileIdentity?, bool> validateIdentity, CancellationToken cancellationToken = default)
+    {
+        await Control.BeforeAsync("GetSecurity", cancellationToken);
+        return await CreateAsync(path, access, disposition, directoryRequired, nonDirectoryRequired, cancellationToken);
+    }
     public void Seed(string path, byte[] data, bool directory = false) => _nodes[path] = new Node(path, directory, data.ToArray());
     public byte[] Contents(string path) { var n = _nodes[path]; lock (n.Gate) return n.Data.ToArray(); }
     public async ValueTask<FileStoreResult<FileCreateResult>> CreateAsync(string path, FileAccessIntent access, CreateDispositionIntent disposition, bool directoryRequired, bool nonDirectoryRequired, CancellationToken cancellationToken = default)

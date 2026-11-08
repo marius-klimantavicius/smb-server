@@ -40,7 +40,7 @@ public static class QueryDirectoryMessage
 		var searchPattern = string.Empty;
 		if (num3 > 0 && num2 + num3 <= message.Length)
 		{
-			searchPattern = Encoding.Unicode.GetString(message.Slice(num2, num3));
+			searchPattern = RequestBounds.ReadUnicode(message.Slice(num2, num3), "QUERY_DIRECTORY name");
 		}
 
 		return new Request((FileInformationClass)infoClass, flags, persistentId, volatileId, searchPattern, outputBufferLength);

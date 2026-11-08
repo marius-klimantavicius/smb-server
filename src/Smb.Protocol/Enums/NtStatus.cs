@@ -29,7 +29,7 @@ public enum NtStatus : uint
 	LogonFailure = 3221225581u,
 	NotSupported = 3221225659u,
 	InsufficientResources = 3221225626u,
-	BadNetworkName = 3221225662u,
+	BadNetworkName = 3221225676u,
 	Cancelled = 3221225760u,
 	FileClosed = 3221225768u,
 	DiskFull = 3221225599u,
@@ -41,5 +41,6 @@ public enum NtStatus : uint
 	NotFound = 3221226021u,
 	NotAReparsePoint = 3221226101u,
 	RequestNotAccepted = 3221225680u,
+	Retry = 0xc000022du,
 	PathNotCovered = 3221226071u,
 }

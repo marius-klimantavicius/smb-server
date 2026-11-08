@@ -1,11 +1,11 @@
 # SmbServer
 
 Maintained C# source reconstruction of KaimoSystemSolutions **SMB-Server 2.1.1**,
-with scoped non-security correctness repairs through P7c and P8 integration evidence.
+with correctness repairs through P7c/P8 and an expanded upstream protocol/auth campaign.
 This is a reviewable checkout, not a production-ready or certified SMB release.
 The coordinator still owns acceptance: historical TDD-order exceptions are pending,
-external Samba operations are blocked during authentication, and QUIC attribution
-is not fully resolved. See [acceptance](docs/correctness/acceptance.md).
+upstream compatibility failures remain, native Windows is untested, and QUIC
+attribution is not fully resolved. See [acceptance](docs/correctness/acceptance.md).
 
 Use the .NET SDK selected by `global.json` (observed 10.0.114). All six runtime
 projects use source project references; no original package DLLs or new runtime
@@ -34,9 +34,19 @@ The former F08 baseline assertion now passes normally. Both published hosts run
 required signing). Four persistent JSON AOT diagnostics and the fixture identity
 reader IL3000 have been recorded; see [provenance](docs/correctness/provenance.md).
 Windows AND Linux are required local-backend platforms. The platform implementation
-has been reviewed; fresh Linux JIT and Native AOT each pass **854/854** tests plus
-actual LocalFileStore TCP workloads. Native Windows execution is outstanding and
+has been reviewed; the first upstream campaign passed **940/940** in Linux JIT
+and Native AOT plus actual LocalFileStore TCP workloads. That result is historical.
+Native Windows execution is outstanding and
 will be tested by the user. See [platform validation](docs/correctness/platform-validation.md).
+The [broader upstream campaign](docs/correctness/upstream-tests.md) now has **3,144
+registered cases**: the previous 940 plus 2,068 protocol/auth adaptations and 136
+focused repair regressions. It surveys pinned Samba, Microsoft FileServer and five
+Go server/client projects. Run `--filter upstream.` for upstream-related cases;
+some deliberately retain failing compatibility expectations. Use the platform
+driver's `--keep-going` to capture all independent gates with a failing final exit.
+Final Linux JIT and Native AOT each pass **2,917/3,144**, with the same **227
+failures**. Both host/TCP workloads and repeated stress/expiry checks pass; the
+aggregate gate remains failed. See the campaign report for exact dispositions.
 
 | Explicit profile | Copy | File caching | Multichannel | In-memory durable |
 | --- | --- | --- | --- | --- |
@@ -50,8 +60,9 @@ will be tested by the user. See [platform validation](docs/correctness/platform-
 
 Multichannel also requires `EnableMultichannel=true`. Advanced multichannel and
 durability are limited to **SMB 3.0/3.0.2**. SMB 3.1.1 primary local TCP workloads
-pass, but bound signed CREATE/LOCK fails at an excluded signing/preauth boundary;
-multichannel and durable recovery remain withheld there. Mandatory SMB3 channel
+pass; multichannel and durable recovery remain withheld there. The newer campaign
+includes standalone signing/encryption and supported SMB300/302 binding tests.
+Mandatory SMB3 channel
 sequencing applies under every profile, including Restricted.
 
 Caching/durable grants require a stable-identity coherent backend and an explicit
@@ -75,8 +86,9 @@ The share is `P0`; the published JIT/native host accepts the same arguments.
 Signing remains required. No authentication, authorization, signature, encryption,
 key-derivation, preauth or security-path certification is implied. Existing user
 QUIC edits and attribution limitations remain outside this platform repair.
-Historical Samba attempts stopped in excluded authentication before file operations;
-see [acceptance](docs/correctness/acceptance.md).
+The expanded campaign includes authentication tests and focused repairs. Fresh
+signed Samba file operations and independent Go client operations now execute;
+see [acceptance](docs/correctness/acceptance.md) for their limits.
 
 The [repair plan](docs/correctness-repair-plan.txt), [findings](docs/correctness/findings.md),
 [acceptance gaps](docs/correctness/acceptance.md) and [test API notes](tests/README.md)

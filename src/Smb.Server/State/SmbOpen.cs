@@ -18,6 +18,8 @@ public sealed class SmbOpen
 
 	internal readonly SemaphoreSlim RecoveryGate = new SemaphoreSlim(1, 1);
 	public OpenLifetime Lifetime { get; } = new OpenLifetime(false);
+	internal FileIdentity? AdmissionIdentity;
+	internal long CurrentByteOffset;
 	internal bool Counted;
 	internal bool MetricCounted;
 

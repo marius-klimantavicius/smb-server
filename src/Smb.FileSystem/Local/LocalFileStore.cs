@@ -10,11 +10,12 @@ using Smb.Protocol.Security;
 
 namespace Smb.FileSystem.Local;
 
-public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStore, IExtendedAttributeStore, IBasicInfoStore, ISharedDeleteFileStore, IDirectoryCursorStore, IVolumeInfoProvider, ICacheCoherentFileStore
+public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStore, IExtendedAttributeStore, IBasicInfoStore, ISharedDeleteFileStore, IDirectoryCursorStore, IVolumeInfoProvider, ICacheCoherentFileStore, ICreateMetadataStore, IAuthorizedCreateStore
 {
-	private sealed class StreamData
+	internal sealed class StreamData
 	{
 		public required string Name;
+		public readonly string Identity = Guid.NewGuid().ToString("N");
 
 		public byte[] Content = Array.Empty<byte>();
 		public int Opens;
@@ -35,6 +36,10 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 	private readonly Dictionary<string, StreamData> _streams = new Dictionary<string, StreamData>(StringComparer.Ordinal);
 
 	private readonly Dictionary<string, List<ExtendedAttribute>> _eas = new Dictionary<string, List<ExtendedAttribute>>(StringComparer.Ordinal);
+
+	private readonly Dictionary<FileIdentity, long> _creationTimes = new Dictionary<FileIdentity, long>();
+
+	private readonly Dictionary<FileIdentity, uint> _dosAttributes = new Dictionary<FileIdentity, uint>();
 
 	private const uint SettableAttributes = 8615u;
 
@@ -61,6 +66,7 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 	public VolumeInfo GetVolumeInfo()
 	{
 		if (OperatingSystem.IsWindows()) return WindowsLocalIdentity.Volume(_root);
+
 		var drive = new DriveInfo(_root);
 		return new VolumeInfo("SMBLOCAL", 0, drive.TotalSize, drive.AvailableFreeSpace);
 	}
@@ -71,7 +77,127 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 		if (!TryResolve(path, out var full)) return new ValueTask<FileIdentity?>((FileIdentity?)null);
 
 		var identity = LocalIdentity.Resolve(full);
+		if (identity is { } baseIdentity && streamName.Length > 0)
+			lock (_adsLock)
+				if (_streams.TryGetValue(StreamKey(full, streamName), out var stream))
+					return new ValueTask<FileIdentity?>(baseIdentity with { StreamId = stream.Identity });
 		return new ValueTask<FileIdentity?>(identity is { } id ? id with { StreamId = streamName.ToUpperInvariant() } : null);
+	}
+
+	public ValueTask<FileStoreResult<FileCreateResult>> CreateAuthorizedAsync(string path, string streamName, FileAccessIntent access, CreateDispositionIntent disposition, bool directoryRequired, bool nonDirectoryRequired, uint attributes, Func<SecurityDescriptor, bool> authorizeExisting, Func<SecurityDescriptor, bool, bool> authorizeParent, Func<FileIdentity?, bool> validateIdentity, CancellationToken cancellationToken = default)
+		=> CreateAuthorizedAsync(path, streamName, access, disposition, directoryRequired, nonDirectoryRequired, attributes,
+			(descriptor, _) => authorizeExisting(descriptor) ? access : null, authorizeParent, validateIdentity, cancellationToken);
+
+	public ValueTask<FileStoreResult<FileCreateResult>> CreateAuthorizedAsync(string path, string streamName, FileAccessIntent access, CreateDispositionIntent disposition, bool directoryRequired, bool nonDirectoryRequired, uint attributes, Func<SecurityDescriptor, uint, FileAccessIntent?> authorizeExisting, Func<SecurityDescriptor, bool, bool> authorizeParent, Func<FileIdentity?, bool> validateIdentity, CancellationToken cancellationToken = default)
+	{
+		lock (LocalObjects.Gate)
+		{
+			cancellationToken.ThrowIfCancellationRequested();
+			if (!TryResolve(path, out var full)) return new(FileStoreResult<FileCreateResult>.Fail(NtStatus.ObjectNameNotFound));
+			if (!validateIdentity(ResolveIdentityAsync(path, streamName, cancellationToken).Result))
+				return new(FileStoreResult<FileCreateResult>.Fail(NtStatus.Retry));
+			if (LocalIdentity.Resolve(full) is { } identity)
+			{
+				// CREATE on an existing ordinary object cannot acquire it at all.
+				if (streamName.Length == 0 && disposition == CreateDispositionIntent.Create)
+					return new(FileStoreResult<FileCreateResult>.Fail(NtStatus.ObjectNameCollision));
+				var supportedAccess = AccessMask.FileAllAccess;
+				if (_readOnly)
+					supportedAccess &= ~(AccessMask.FileWriteData | AccessMask.FileAppendData | AccessMask.FileWriteEa |
+						AccessMask.FileDeleteChild | AccessMask.FileWriteAttributes | AccessMask.Delete | AccessMask.WriteDac | AccessMask.WriteOwner);
+				var native = File.GetAttributes(full);
+				if ((native & FileAttributes.Directory) == 0 && GetAttributes(identity, native).HasFlag(SmbFileAttributes.ReadOnly))
+					supportedAccess &= ~(AccessMask.FileWriteData | AccessMask.FileAppendData | AccessMask.FileDeleteChild);
+				var finalAccess = authorizeExisting(StoredSecurity(identity, full) ?? DefaultDescriptor(), supportedAccess);
+				if (!finalAccess.HasValue)
+					return new(FileStoreResult<FileCreateResult>.Fail(NtStatus.AccessDenied));
+				access = finalAccess.Value;
+			}
+			else if (disposition is not (CreateDispositionIntent.Open or CreateDispositionIntent.Overwrite))
+			{
+				var parent = Path.GetDirectoryName(full);
+				if (parent == null || !Directory.Exists(parent) || LocalIdentity.Resolve(parent) is not { } parentIdentity)
+					return new(FileStoreResult<FileCreateResult>.Fail(NtStatus.ObjectPathNotFound));
+				if (!authorizeParent(StoredSecurity(parentIdentity, parent) ?? DefaultDescriptor(), directoryRequired))
+					return new(FileStoreResult<FileCreateResult>.Fail(NtStatus.AccessDenied));
+			}
+			// The same gate covers SET_SECURITY, rename, retirement and acquisition.
+			// No descriptor/identity snapshot survives an await or cache-break wait.
+			cancellationToken.ThrowIfCancellationRequested();
+			return streamName.Length == 0
+				? CreateWithMetadataAsync(path, access, disposition, directoryRequired, nonDirectoryRequired, attributes, cancellationToken)
+				: OpenNamedStreamCore(path, streamName, access, disposition, cancellationToken);
+		}
+	}
+
+	public ValueTask<FileStoreResult<FileCreateResult>> CreateWithMetadataAsync(string path, FileAccessIntent access, CreateDispositionIntent disposition, bool directoryRequired, bool nonDirectoryRequired, uint attributes, CancellationToken cancellationToken = default)
+	{
+		cancellationToken.ThrowIfCancellationRequested();
+		lock (LocalObjects.Gate)
+		{
+			if (directoryRequired && (attributes & 0x100u) != 0)
+				return new(FileStoreResult<FileCreateResult>.Fail(NtStatus.InvalidParameter));
+			if (disposition is CreateDispositionIntent.Overwrite or CreateDispositionIntent.OverwriteIf or CreateDispositionIntent.Supersede &&
+				TryResolve(path, out var full) && LocalIdentity.Resolve(full) is { } identity)
+			{
+				var existing = (uint)GetAttributes(identity, File.GetAttributes(full));
+				if ((existing & 6u & ~attributes) != 0)
+					return new(FileStoreResult<FileCreateResult>.Fail(NtStatus.AccessDenied));
+			}
+			var result = CreateCore(path, access, disposition, directoryRequired, nonDirectoryRequired, out var action);
+			if (!result.IsSuccess) return new(FileStoreResult<FileCreateResult>.Fail(result.Status));
+
+			if (action is CreateOutcome.Created or CreateOutcome.Overwritten or CreateOutcome.Superseded)
+			{
+				var handle = (LocalFileHandle)result.Value;
+				var status = SetBasicInfoAsync(handle, new FileBasicInfoUpdate { Attributes = (attributes & SettableAttributes) | (handle.IsDirectory ? 0u : 0x20u) }).Result;
+				if (status != NtStatus.Success) { handle.Dispose(); return new(FileStoreResult<FileCreateResult>.Fail(status)); }
+				if (!handle.IsDirectory && action != CreateOutcome.Created) RemoveStreams(handle.Identity!.Value);
+			}
+			return new(FileStoreResult<FileCreateResult>.Ok(new FileCreateResult(result.Value, action)));
+		}
+	}
+
+	internal long CreationTime(FileIdentity identity, long native)
+	{
+		if (OperatingSystem.IsWindows()) return native;
+		lock (_adsLock)
+		{
+			if (_creationTimes.TryGetValue(identity, out var value)) return value;
+			_creationTimes.Add(identity, native);
+			return native;
+		}
+	}
+
+	internal SmbFileAttributes GetAttributes(FileIdentity identity, FileAttributes native)
+	{
+		lock (_adsLock)
+		{
+			if (!OperatingSystem.IsWindows() && _dosAttributes.TryGetValue(identity with { StreamId = "" }, out var attributes))
+			{
+				// Native READONLY remains authoritative on data files; directories need a DOS flag.
+				var mask = (native & FileAttributes.Directory) != 0 ? SettableAttributes : SettableAttributes & ~1u;
+				native = (FileAttributes)(((uint)native & ~mask) | (attributes & mask));
+			}
+		}
+		return MapAttributes(native);
+	}
+
+	internal void RetireMetadata(FileIdentity identity)
+	{
+		_securityStore.Remove(SecurityKey(identity));
+		lock (_adsLock) { _dosAttributes.Remove(identity with { StreamId = "" }); _creationTimes.Remove(identity with { StreamId = "" }); }
+		RemoveStreams(identity);
+	}
+
+	private void RemoveStreams(FileIdentity identity)
+	{
+		lock (_adsLock)
+		{
+			var prefix = identity.ObjectId + "\0";
+			foreach (var key in new List<string>(_streams.Keys))
+				if (key.StartsWith(prefix, StringComparison.Ordinal)) _streams.Remove(key);
+		}
 	}
 
 	protected override FileStoreResult<IFileHandle> Create(string path, FileAccessIntent access, CreateDispositionIntent disposition, bool directoryRequired, bool nonDirectoryRequired, out CreateOutcome createAction)
@@ -120,6 +246,12 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 		var flag4 = Directory.Exists(fullPath);
 		var flag5 = File.Exists(fullPath);
 		var flag6 = flag4 | flag5;
+		if (_readOnly && !flag6 && disposition == CreateDispositionIntent.OpenIf)
+			return FileStoreResult<IFileHandle>.Fail(NtStatus.AccessDenied);
+		if (flag6 && disposition == CreateDispositionIntent.Create)
+			return FileStoreResult<IFileHandle>.Fail(NtStatus.ObjectNameCollision);
+		if (!flag6 && directoryRequired && !Directory.Exists(Path.GetDirectoryName(fullPath)))
+			return FileStoreResult<IFileHandle>.Fail(NtStatus.ObjectPathNotFound);
 		if ((directoryRequired & flag6) && !flag4)
 		{
 			return FileStoreResult<IFileHandle>.Fail(NtStatus.NotADirectory);
@@ -136,7 +268,7 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 			var result = CreateDirectoryHandle(fullPath, relative, disposition, flag6, out createAction);
 			if (result.IsSuccess && createAction == CreateOutcome.Created)
 			{
-				ApplyInheritedSecurity(fullPath, isDirectory: true);
+				ApplyInheritedSecurity((LocalFileHandle)result.Value);
 			}
 
 			return result;
@@ -145,27 +277,54 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 		var result2 = CreateFileHandle(fullPath, relative, access, disposition, flag6, out createAction);
 		if (result2.IsSuccess && createAction == CreateOutcome.Created)
 		{
-			ApplyInheritedSecurity(fullPath, isDirectory: false);
+			ApplyInheritedSecurity((LocalFileHandle)result2.Value);
 		}
 
 		return result2;
 	}
 
-	private void ApplyInheritedSecurity(string childFull, bool isDirectory)
+	private static string SecurityKey(FileIdentity identity) => "local-security:" + (identity with { StreamId = "" }).Key;
+
+	// Path keys were used by earlier versions, including injected stores. Adopt a
+	// legacy entry only while that path still names this acquired object, then remove
+	// it so a recycled name cannot import the old policy. The supplied store remains
+	// the authority; there is no private descriptor cache shadowing it.
+	private SecurityDescriptor? StoredSecurity(FileIdentity identity, string path)
 	{
+		var key = SecurityKey(identity);
+		var descriptor = _securityStore.TryGet(key);
+		if (descriptor == null && LocalIdentity.Resolve(path) == identity)
+		{
+			descriptor = _securityStore.TryGet(path);
+			if (descriptor != null)
+			{
+				_securityStore.Set(key, descriptor);
+				_securityStore.Remove(path);
+			}
+		}
+		return descriptor;
+	}
+
+	private void ApplyInheritedSecurity(LocalFileHandle child)
+	{
+		var childFull = child.FullPath;
+		// A newly created object can reuse a native ID as well as a pathname.
+		_securityStore.Remove(SecurityKey(child.Identity!.Value));
+		_securityStore.Remove(childFull);
 		var directoryName = Path.GetDirectoryName(childFull);
 		if (directoryName == null)
 		{
 			return;
 		}
 
-		var securityDescriptor = _securityStore.TryGet(directoryName);
+		var parentIdentity = LocalIdentity.Resolve(directoryName);
+		var securityDescriptor = parentIdentity is { } id ? StoredSecurity(id, directoryName) : null;
 		if (securityDescriptor != null)
 		{
-			var securityDescriptor2 = AclInheritance.ComputeInherited(securityDescriptor, isDirectory);
+			var securityDescriptor2 = AclInheritance.ComputeInherited(securityDescriptor, child.IsDirectory);
 			if (securityDescriptor2 != null)
 			{
-				_securityStore.Set(childFull, securityDescriptor2);
+				_securityStore.Set(SecurityKey(child.Identity.Value), securityDescriptor2);
 			}
 		}
 	}
@@ -207,7 +366,7 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 				break;
 		}
 
-		return FileStoreResult<IFileHandle>.Ok(new LocalFileHandle(full, relative, _root, null, isDirectory: true));
+		return FileStoreResult<IFileHandle>.Ok(new LocalFileHandle(this, full, relative, _root, null, isDirectory: true));
 	}
 
 	private FileStoreResult<IFileHandle> CreateFileHandle(string full, string relative, FileAccessIntent access, CreateDispositionIntent disposition, bool exists, out CreateOutcome createAction)
@@ -228,13 +387,13 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 		{
 			CreateDispositionIntent.Open => FileMode.Open,
 			CreateDispositionIntent.Create => FileMode.CreateNew,
-			CreateDispositionIntent.OpenIf => FileMode.OpenOrCreate,
+			CreateDispositionIntent.OpenIf => exists ? FileMode.Open : FileMode.OpenOrCreate,
 			CreateDispositionIntent.Overwrite => FileMode.Truncate,
 			CreateDispositionIntent.OverwriteIf => FileMode.Create,
 			CreateDispositionIntent.Supersede => FileMode.Create,
 			_ => FileMode.Open,
 		};
-		var access2 = (((!access.HasFlag(FileAccessIntent.Write) && disposition == CreateDispositionIntent.Open) || _readOnly) ? FileAccess.Read : FileAccess.ReadWrite);
+		var access2 = (((!access.HasFlag(FileAccessIntent.Write) && (disposition == CreateDispositionIntent.Open || disposition == CreateDispositionIntent.OpenIf && exists)) || _readOnly) ? FileAccess.Read : FileAccess.ReadWrite);
 		try
 		{
 			var stream = new FileStream(full, fileMode, access2, FileShare.ReadWrite | FileShare.Delete, 1);
@@ -247,7 +406,7 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 				CreateDispositionIntent.Supersede => (!exists) ? CreateOutcome.Created : CreateOutcome.Superseded,
 				_ => CreateOutcome.Opened,
 			};
-			return FileStoreResult<IFileHandle>.Ok(new LocalFileHandle(full, relative, _root, stream, isDirectory: false));
+			return FileStoreResult<IFileHandle>.Ok(new LocalFileHandle(this, full, relative, _root, stream, isDirectory: false));
 		}
 		catch (FileNotFoundException)
 		{
@@ -260,6 +419,10 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 		catch (UnauthorizedAccessException)
 		{
 			return FileStoreResult<IFileHandle>.Fail(NtStatus.AccessDenied);
+		}
+		catch (PathTooLongException)
+		{
+			return FileStoreResult<IFileHandle>.Fail(NtStatus.ObjectNameInvalid);
 		}
 		catch (IOException ex4) when (IsSharingViolation(ex4))
 		{
@@ -284,7 +447,7 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 	{
 		if (handle is NamedStreamHandle namedStreamHandle)
 		{
-			return StreamRead(namedStreamHandle.StorageKey, offset, buffer);
+			return StreamRead(namedStreamHandle.Data, offset, buffer);
 		}
 
 		var localFileHandle = (LocalFileHandle)handle;
@@ -300,7 +463,7 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 	{
 		if (handle is NamedStreamHandle namedStreamHandle)
 		{
-			return StreamRead(namedStreamHandle.StorageKey, offset, buffer.Span);
+			return StreamRead(namedStreamHandle.Data, offset, buffer.Span);
 		}
 
 		var localFileHandle = (LocalFileHandle)handle;
@@ -316,7 +479,7 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 	{
 		if (handle is NamedStreamHandle namedStreamHandle)
 		{
-			return StreamWrite(namedStreamHandle.StorageKey, offset, data);
+			return StreamWrite(namedStreamHandle.Data, offset, data);
 		}
 
 		if (_readOnly)
@@ -337,7 +500,7 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 	{
 		if (handle is NamedStreamHandle namedStreamHandle)
 		{
-			return StreamWrite(namedStreamHandle.StorageKey, offset, data.Span);
+			return StreamWrite(namedStreamHandle.Data, offset, data.Span);
 		}
 
 		if (_readOnly)
@@ -371,21 +534,28 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 		cancellationToken.ThrowIfCancellationRequested();
 		if (handle is not LocalFileHandle local || !local.IsDirectory) return new ValueTask<FileStoreResult<IDirectoryCursor>>(FileStoreResult<IDirectoryCursor>.Fail(NtStatus.InvalidParameter));
 
-		return new ValueTask<FileStoreResult<IDirectoryCursor>>(FileStoreResult<IDirectoryCursor>.Ok(new LocalDirectoryCursor(Entries().GetEnumerator())));
-
-		IEnumerable<FileEntryInfo> Entries()
-		{
-			var directory = new DirectoryInfo(local.FullPath);
-			var match = string.IsNullOrEmpty(pattern) ? "*" : pattern;
-			// Follow the host's ordinary name comparison; Linux case stays significant.
-			if (System.IO.Enumeration.FileSystemName.MatchesSimpleExpression(match, ".", OperatingSystem.IsWindows())) yield return ToEntry(directory, ".");
-			if (directory.FullName != _root && System.IO.Enumeration.FileSystemName.MatchesSimpleExpression(match, "..", OperatingSystem.IsWindows())) yield return ToEntry(directory.Parent ?? directory, "..");
-			foreach (var entry in directory.EnumerateFileSystemInfos(match, new EnumerationOptions { MatchCasing = MatchCasing.PlatformDefault, AttributesToSkip = 0 }))
-				yield return ToEntry(entry, entry.Name);
-		}
+		return new ValueTask<FileStoreResult<IDirectoryCursor>>(FileStoreResult<IDirectoryCursor>.Ok(new LocalDirectoryCursor(this, EnumerateDirectoryEntries(local).GetEnumerator(), DirectoryPattern(pattern))));
 	}
 
-	private sealed class LocalDirectoryCursor(IEnumerator<FileEntryInfo> entries) : IDirectoryCursor
+	private IEnumerable<(FileSystemInfo Info, string Name)> EnumerateDirectoryEntries(LocalFileHandle local)
+	{
+		var directory = new DirectoryInfo(local.FullPath);
+		yield return (directory, ".");
+
+		if (directory.FullName != _root) yield return (directory.Parent ?? directory, "..");
+
+		// Enumerate all names; SMB expression semantics must not depend on host globbing.
+		foreach (var entry in directory.EnumerateFileSystemInfos("*", new EnumerationOptions { AttributesToSkip = 0 }))
+			yield return (entry, entry.Name);
+	}
+
+	private static string DirectoryPattern(string pattern) => string.IsNullOrEmpty(pattern) || pattern == "*.*" ? "*" : pattern;
+
+	private static bool MatchesDirectoryPattern(string pattern, string name)
+		// Raw SMB expressions retain '?' and DOS wildcards; do not translate Win32 syntax.
+		=> System.IO.Enumeration.FileSystemName.MatchesWin32Expression(pattern, name, OperatingSystem.IsWindows());
+
+	private sealed class LocalDirectoryCursor(LocalFileStore store, IEnumerator<(FileSystemInfo Info, string Name)> entries, string pattern) : IDirectoryCursor
 	{
 		bool ended;
 
@@ -395,7 +565,11 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 			while (!ended && batch.Count < Math.Max(1, maxEntries))
 			{
 				cancellationToken.ThrowIfCancellationRequested();
-				if (entries.MoveNext()) batch.Add(entries.Current);
+				if (entries.MoveNext())
+				{
+					var (info, name) = entries.Current;
+					if (MatchesDirectoryPattern(pattern, name) && store.TryDirectoryEntry(info, name) is { } entry) batch.Add(entry);
+				}
 				else
 				{
 					ended = true;
@@ -421,20 +595,14 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 			return FileStoreResult<IReadOnlyList<FileEntryInfo>>.Fail(NtStatus.InvalidParameter);
 		}
 
-		var searchPattern2 = (string.IsNullOrEmpty(searchPattern) ? "*" : searchPattern);
+		var searchPattern2 = DirectoryPattern(searchPattern);
 		var list = new List<FileEntryInfo>();
-		var directoryInfo = new DirectoryInfo(localFileHandle.FullPath);
-		list.Add(ToEntry(directoryInfo, "."));
-		if (Path.GetFullPath(localFileHandle.FullPath) != _root)
-		{
-			list.Add(ToEntry(directoryInfo.Parent ?? directoryInfo, ".."));
-		}
 
 		try
 		{
-			foreach (var item in directoryInfo.EnumerateFileSystemInfos(searchPattern2))
+			foreach (var (info, name) in EnumerateDirectoryEntries(localFileHandle))
 			{
-				list.Add(ToEntry(item, item.Name));
+				if (MatchesDirectoryPattern(searchPattern2, name) && TryDirectoryEntry(info, name) is { } entry) list.Add(entry);
 			}
 		}
 		catch (DirectoryNotFoundException)
@@ -453,27 +621,23 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 			return FileStoreResult<BoundedDirectoryListing>.Fail(NtStatus.InvalidParameter);
 		}
 
-		var searchPattern2 = (string.IsNullOrEmpty(searchPattern) ? "*" : searchPattern);
+		var searchPattern2 = DirectoryPattern(searchPattern);
 		var list = new List<FileEntryInfo>();
-		var directoryInfo = new DirectoryInfo(localFileHandle.FullPath);
-		list.Add(ToEntry(directoryInfo, "."));
-		if (Path.GetFullPath(localFileHandle.FullPath) != _root)
-		{
-			list.Add(ToEntry(directoryInfo.Parent ?? directoryInfo, ".."));
-		}
 
 		var truncated = false;
 		try
 		{
-			foreach (var item in directoryInfo.EnumerateFileSystemInfos(searchPattern2))
+			foreach (var (info, name) in EnumerateDirectoryEntries(localFileHandle))
 			{
+				if (!MatchesDirectoryPattern(searchPattern2, name)) continue;
+
 				if (maxEntries > 0 && list.Count >= maxEntries)
 				{
 					truncated = true;
 					break;
 				}
 
-				list.Add(ToEntry(item, item.Name));
+				if (TryDirectoryEntry(info, name) is { } entry) list.Add(entry);
 			}
 		}
 		catch (DirectoryNotFoundException)
@@ -493,7 +657,7 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 
 		if (handle is NamedStreamHandle namedStreamHandle)
 		{
-			return StreamSetLength(namedStreamHandle.StorageKey, length);
+			return StreamSetLength(namedStreamHandle.Data, length);
 		}
 
 		return ((LocalFileHandle)handle).SetLength(length);
@@ -536,10 +700,15 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 			if (sameEntry && string.Equals(oldFull, fullPath, StringComparison.Ordinal)) return NtStatus.Success;
 			if (!sameEntry && destinationId is { } did && LocalObjects.Objects.TryGetValue(did, out var destination) && destination.Handles.Count > 0)
 				return destination.DeletePending ? (NtStatus)0xc0000056 : NtStatus.AccessDenied;
+
 			if (!sameEntry && destinationId != null && !replaceIfExists)
 			{
 				return NtStatus.ObjectNameCollision;
 			}
+			var retireDestination = destinationId != null && destinationId != localFileHandle.Identity &&
+				(Directory.Exists(fullPath) || LocalIdentity.LinkCount(fullPath) == 1);
+			if (destinationId is { } replaced && destinationId != localFileHandle.Identity)
+				_ = StoredSecurity(replaced, fullPath);
 
 			if (OperatingSystem.IsWindows())
 			{
@@ -553,6 +722,8 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 			{
 				File.Move(localFileHandle.FullPath, fullPath, replaceIfExists);
 			}
+			_securityStore.Remove(fullPath);
+			if (retireDestination) RetireMetadata(destinationId!.Value);
 
 			foreach (var entry in LocalObjects.Objects.Values)
 			{
@@ -564,8 +735,9 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 						h.Relocate(relocated, Path.GetRelativePath(_root, relocated));
 					}
 				}
+
 				if (entry.DeletePath is { } pendingPath && (string.Equals(pendingPath, oldFull, comparison) ||
-					(localFileHandle.IsDirectory && pendingPath.StartsWith(oldFull + Path.DirectorySeparatorChar, comparison))))
+					    (localFileHandle.IsDirectory && pendingPath.StartsWith(oldFull + Path.DirectorySeparatorChar, comparison))))
 					entry.DeletePath = fullPath + pendingPath.Substring(oldFull.Length);
 			}
 
@@ -579,6 +751,15 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 
 	public ValueTask<NtStatus> SetBasicInfoAsync(IFileHandle handle, FileBasicInfoUpdate update, CancellationToken cancellationToken = default(CancellationToken))
 	{
+		// Serialize DOS restriction changes with guarded CREATE grant selection.
+		// Take this gate before the per-object mutation gate, as CREATE does.
+		if (update.Attributes.HasValue)
+			lock (LocalObjects.Gate) return SetBasicInfoCore(handle, update, cancellationToken);
+		return SetBasicInfoCore(handle, update, cancellationToken);
+	}
+
+	private ValueTask<NtStatus> SetBasicInfoCore(IFileHandle handle, FileBasicInfoUpdate update, CancellationToken cancellationToken)
+	{
 		if (update.ChangeTime.HasValue) return new ValueTask<NtStatus>(NtStatus.NotSupported);
 
 		if (_readOnly)
@@ -587,6 +768,8 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 		}
 
 		var local = handle is NamedStreamHandle namedStreamHandle ? namedStreamHandle.BaseHandle : (LocalFileHandle)handle;
+		if (local.IsDirectory && (update.Attributes.GetValueOrDefault() & 0x100u) != 0) return new(NtStatus.InvalidParameter);
+		local.MutationGate.Wait(cancellationToken);
 		try
 		{
 			using var metadata = OperatingSystem.IsWindows() ? WindowsLocalIdentity.OpenMetadata(local.NativeHandle) : null;
@@ -596,6 +779,7 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 			{
 				var valueOrDefault = creationTime.GetValueOrDefault();
 				File.SetCreationTimeUtc(native, DateTime.FromFileTimeUtc(valueOrDefault));
+				if (!OperatingSystem.IsWindows()) lock (_adsLock) _creationTimes[local.Identity!.Value] = valueOrDefault;
 			}
 
 			creationTime = update.LastAccessTime;
@@ -617,7 +801,11 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 			{
 				var valueOrDefault4 = attributes.GetValueOrDefault();
 				File.SetAttributes(native, (FileAttributes)(valueOrDefault4 & SettableAttributes));
+				if (!OperatingSystem.IsWindows())
+					lock (_adsLock) _dosAttributes[local.Identity!.Value] = valueOrDefault4 & SettableAttributes;
 			}
+
+			if (update.SuppressLastWriteTimeUpdates is { } suppress) local.SuppressLastWriteTimeUpdates = suppress;
 
 			return new ValueTask<NtStatus>(NtStatus.Success);
 		}
@@ -633,6 +821,7 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 		{
 			return new ValueTask<NtStatus>(NtStatus.AccessDenied);
 		}
+		finally { local.MutationGate.Release(); }
 	}
 
 	protected override NtStatus SetDeleteOnClose(IFileHandle handle, bool delete)
@@ -662,8 +851,12 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 
 	public override ValueTask<FileStoreResult<SecurityDescriptor>> GetSecurityAsync(IFileHandle handle, CancellationToken cancellationToken = default(CancellationToken))
 	{
-		var key = ((handle is NamedStreamHandle namedStreamHandle) ? namedStreamHandle.BaseFullPath : ((LocalFileHandle)handle).FullPath);
-		return new ValueTask<FileStoreResult<SecurityDescriptor>>(FileStoreResult<SecurityDescriptor>.Ok(_securityStore.TryGet(key) ?? DefaultDescriptor()));
+		cancellationToken.ThrowIfCancellationRequested();
+		lock (LocalObjects.Gate)
+		{
+			var local = handle is NamedStreamHandle stream ? stream.BaseHandle : (LocalFileHandle)handle;
+			return new(FileStoreResult<SecurityDescriptor>.Ok(StoredSecurity(local.Identity!.Value, local.FullPath) ?? DefaultDescriptor()));
+		}
 	}
 
 	public override ValueTask<NtStatus> SetSecurityAsync(IFileHandle handle, SecurityDescriptor descriptor, CancellationToken cancellationToken = default(CancellationToken))
@@ -673,9 +866,32 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 			return new ValueTask<NtStatus>(NtStatus.AccessDenied);
 		}
 
-		var key = ((handle is NamedStreamHandle namedStreamHandle) ? namedStreamHandle.BaseFullPath : ((LocalFileHandle)handle).FullPath);
-		_securityStore.Set(key, descriptor);
-		return new ValueTask<NtStatus>(NtStatus.Success);
+		cancellationToken.ThrowIfCancellationRequested();
+		lock (LocalObjects.Gate)
+		{
+			// Only the existing basic discretionary ACL profile is enforced. Never
+			// acknowledge an object/callback/claims ACE that access checks would ignore.
+			if (descriptor.Dacl is { } dacl)
+				foreach (var ace in dacl.Aces)
+					if (ace.Type is not (AceType.AccessAllowed or AceType.AccessDenied) ||
+						((ace.Flags & (AceFlags.ObjectInherit | AceFlags.ContainerInherit)) != 0 &&
+						 (ace.Sid == WellKnownSids.CreatorOwner || ace.Sid == WellKnownSids.CreatorGroup)))
+						return new(NtStatus.NotSupported);
+
+			var local = handle is NamedStreamHandle stream ? stream.BaseHandle : (LocalFileHandle)handle;
+			_securityStore.Set(SecurityKey(local.Identity!.Value), MapSecurity(descriptor));
+			return new(NtStatus.Success);
+		}
+	}
+
+	private static SecurityDescriptor MapSecurity(SecurityDescriptor descriptor)
+	{
+		if (descriptor.Dacl == null) return descriptor;
+
+		var aces = new List<Ace>();
+		foreach (var ace in descriptor.Dacl.Aces)
+			aces.Add(new Ace { Type = ace.Type, Flags = ace.Flags, Sid = ace.Sid, AccessMask = AccessMask.MapGenericToSpecific(ace.AccessMask) });
+		return SecurityDescriptor.Create(descriptor.Owner, descriptor.Group, new Acl { Aces = aces }, descriptor.Sacl, descriptor.Control);
 	}
 
 	public ValueTask<FileStoreResult<FileCreateResult>> OpenNamedStreamAsync(string basePath, string streamName, FileAccessIntent access, CreateDispositionIntent disposition, CancellationToken cancellationToken = default(CancellationToken))
@@ -718,7 +934,13 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 
 		if (!File.Exists(fullPath))
 		{
-			return Fail(NtStatus.ObjectNameNotFound);
+			if (disposition is CreateDispositionIntent.Open or CreateDispositionIntent.Overwrite) return Fail(NtStatus.ObjectNameNotFound);
+			if (_readOnly) return Fail(NtStatus.AccessDenied);
+			var created = CreateCore(basePath, access, CreateDispositionIntent.OpenIf, false, true, out _);
+			if (!created.IsSuccess) return Fail(created.Status);
+			using var baseHandle = created.Value;
+			var status = SetBasicInfoAsync(baseHandle, new FileBasicInfoUpdate { Attributes = 0x20u }).Result;
+			if (status != NtStatus.Success) return Fail(status);
 		}
 
 		var baseId = LocalIdentity.Resolve(fullPath)!.Value;
@@ -729,6 +951,7 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 		lock (_adsLock)
 		{
 			var flag4 = _streams.ContainsKey(key);
+			if (_readOnly && !flag4) return Fail(NtStatus.AccessDenied);
 			if (flag4 && _streams[key].DeletePending) return Fail((NtStatus)0xc0000056);
 
 			switch (disposition)
@@ -789,7 +1012,7 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 		try { return new ValueTask<FileStoreResult<FileCreateResult>>(FileStoreResult<FileCreateResult>.Ok(new FileCreateResult(new NamedStreamHandle(this, fullPath, streamName), action))); }
 		catch
 		{
-			CloseStream(key);
+			CloseStream(_streams[key]);
 			throw;
 		}
 
@@ -835,43 +1058,35 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 		else _streams.Add(key, new StreamData { Name = name });
 	}
 
-	internal string GetStreamKey(string full, string name) => StreamKey(full, name);
+	internal StreamData GetStreamData(string full, string name) { lock (_adsLock) return _streams[StreamKey(full, name)]; }
 
 	private NtStatus SetStreamDelete(NamedStreamHandle handle, bool delete)
 	{
 		lock (_adsLock)
 		{
-			if (handle.IsClosed || !_streams.TryGetValue(handle.StorageKey, out var data)) return NtStatus.FileClosed;
+			if (handle.IsClosed) return NtStatus.FileClosed;
+
+			var data = handle.Data;
 
 			data.DeletePending = delete;
 			return NtStatus.Success;
 		}
 	}
 
-	internal bool StreamDeletePending(string key)
-	{
-		lock (_adsLock) return _streams.TryGetValue(key, out var data) && data.DeletePending;
-	}
-
-	internal void CloseStream(string key)
+	internal void CloseStream(StreamData data)
 	{
 		lock (_adsLock)
 		{
-			if (!_streams.TryGetValue(key, out var data)) return;
-
-			if (--data.Opens == 0 && data.DeletePending) _streams.Remove(key);
+			if (--data.Opens == 0 && data.DeletePending)
+				foreach (var key in new List<string>(_streams.Keys))
+					if (ReferenceEquals(_streams[key], data)) _streams.Remove(key);
 		}
 	}
 
-	internal FileStoreResult<int> StreamRead(string key, long offset, Span<byte> buffer)
+	internal FileStoreResult<int> StreamRead(StreamData value, long offset, Span<byte> buffer)
 	{
 		lock (_adsLock)
 		{
-			if (!_streams.TryGetValue(key, out var value))
-			{
-				return FileStoreResult<int>.Fail(NtStatus.FileClosed);
-			}
-
 			if (offset < 0 || offset >= value.Content.Length)
 			{
 				return FileStoreResult<int>.Ok(0);
@@ -883,7 +1098,7 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 		}
 	}
 
-	internal FileStoreResult<int> StreamWrite(string key, long offset, ReadOnlySpan<byte> data)
+	internal FileStoreResult<int> StreamWrite(StreamData value, long offset, ReadOnlySpan<byte> data)
 	{
 		if (_readOnly)
 		{
@@ -897,11 +1112,6 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 
 		lock (_adsLock)
 		{
-			if (!_streams.TryGetValue(key, out var value))
-			{
-				return FileStoreResult<int>.Fail(NtStatus.FileClosed);
-			}
-
 			var num = offset + data.Length;
 			if (num > value.Content.Length)
 			{
@@ -915,7 +1125,7 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 		}
 	}
 
-	internal NtStatus StreamSetLength(string key, long length)
+	internal NtStatus StreamSetLength(StreamData value, long length)
 	{
 		if (_readOnly)
 		{
@@ -929,11 +1139,6 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 
 		lock (_adsLock)
 		{
-			if (!_streams.TryGetValue(key, out var value))
-			{
-				return NtStatus.FileClosed;
-			}
-
 			var array = new byte[length];
 			Array.Copy(value.Content, array, Math.Min(value.Content.Length, length));
 			value.Content = array;
@@ -941,11 +1146,11 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 		}
 	}
 
-	internal long StreamLength(string key)
+	internal long StreamLength(StreamData value)
 	{
 		lock (_adsLock)
 		{
-			return _streams.TryGetValue(key, out var value) ? value.Content.Length : 0;
+			return value.Content.Length;
 		}
 	}
 
@@ -1115,17 +1320,25 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 		}
 	}
 
-	private static FileEntryInfo ToEntry(FileSystemInfo info, string name)
+	private FileEntryInfo? TryDirectoryEntry(FileSystemInfo info, string name)
+	{
+		// Only a vanished child is omitted. Root scans and access/I/O errors still fail.
+		try { return ToEntry(info, name); }
+		catch (FileNotFoundException) when (name is not ("." or "..")) { return null; }
+		catch (DirectoryNotFoundException) when (name is not ("." or "..")) { return null; }
+	}
+
+	private FileEntryInfo ToEntry(FileSystemInfo info, string name)
 	{
 		var flag = (info.Attributes & FileAttributes.Directory) != 0;
 		var num = (flag ? 0 : ((FileInfo)info).Length);
 		return new FileEntryInfo
 		{
 			Name = name,
-			Attributes = MapAttributes(info.Attributes),
+			Attributes = GetAttributes(LocalIdentity.Resolve(info.FullName) ?? throw new FileNotFoundException("Directory entry disappeared", info.FullName), info.Attributes),
 			EndOfFile = num,
 			AllocationSize = (flag ? 0 : AlignUp(num, 4096L)),
-			CreationTime = SafeFileTime(info.CreationTimeUtc),
+			CreationTime = CreationTime(LocalIdentity.Resolve(info.FullName) ?? throw new FileNotFoundException("Directory entry disappeared", info.FullName), SafeFileTime(info.CreationTimeUtc)),
 			LastAccessTime = SafeFileTime(info.LastAccessTimeUtc),
 			LastWriteTime = SafeFileTime(info.LastWriteTimeUtc),
 			ChangeTime = SafeFileTime(info.LastWriteTimeUtc),

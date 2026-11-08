@@ -1,6 +1,8 @@
 # Build outputs and local tooling
 **/bin/
 **/obj/
+__pycache__/
+*.pyc
 artifacts/
 .vs/
 .idea/

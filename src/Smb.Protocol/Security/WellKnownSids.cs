@@ -10,6 +10,8 @@ public static class WellKnownSids
 
 	public static Sid CreatorGroup { get; } = Sid.Create(3uL, 1u);
 
+	public static Sid OwnerRights { get; } = Sid.Create(3uL, 4u);
+
 	public static Sid AuthenticatedUsers { get; } = Sid.Create(5uL, 11u);
 
 	public static Sid LocalSystem { get; } = Sid.Create(5uL, 18u);

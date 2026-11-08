@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Smb.FileSystem;
+using Smb.Server.State;
 
 namespace Smb.Server.Sharing;
 
@@ -30,6 +31,15 @@ public sealed class InMemoryShareModeManager : IShareModeManager
 	{
 		lock (_gate)
 		{
+			if (owner is SmbOpen candidate && (candidate.LocalOpen?.Identity ?? candidate.AdmissionIdentity) is { } identity && access != FileAccessIntent.None)
+				foreach (var entries in _files.Values)
+					foreach (var entry in entries)
+						if (!ReferenceEquals(entry.Owner, owner) && entry.Access != FileAccessIntent.None && entry.Owner is SmbOpen existing &&
+							(existing.LocalOpen?.Identity ?? existing.AdmissionIdentity) is { } other && other.ObjectId == identity.ObjectId && other.StreamId != identity.StreamId &&
+							(identity.StreamId.Length == 0 && access.HasFlag(FileAccessIntent.Delete) && !entry.Share.HasFlag(FileShareMode.Delete) ||
+							 other.StreamId.Length == 0 && entry.Access.HasFlag(FileAccessIntent.Delete) && !share.HasFlag(FileShareMode.Delete)))
+							return false;
+
 			if (!_files.TryGetValue(fileKey, out var value))
 			{
 				value = (_files[fileKey] = new List<Entry>());
@@ -38,7 +48,8 @@ public sealed class InMemoryShareModeManager : IShareModeManager
 			{
 				foreach (var item in value)
 				{
-					if (!Compatible(access, item.Share) || !Compatible(item.Access, share))
+					if (access != FileAccessIntent.None && item.Access != FileAccessIntent.None &&
+						(!Compatible(access, item.Share) || !Compatible(item.Access, share)))
 					{
 						return false;
 					}
