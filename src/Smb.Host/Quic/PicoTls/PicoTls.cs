@@ -3,6 +3,9 @@
 // Emitted by dotcc from c.lalr.yaml + the input translation units.
 // Managed library with explicit C# callback registration.
 // </auto-generated>
+
+using System.Threading.Tasks;
+
 #pragma warning disable CS0162, CS8909, CS1717, CS0164, CS0642, CS0675, CS0219, CS0649
 #pragma warning disable CS8981
 namespace Managed.Security;
@@ -70,11 +73,11 @@ public static partial class PicoTls
         global::Managed.Security.PicoTls.Globals.log_labels__s9 = (byte**)Libc.GlobalArrayZeroed<nint>(8);
         global::Managed.Security.PicoTls.Globals.default_algos__s11 = Libc.GlobalArrayZeroed<ushort>(7);
         {
-            byte* ptls_base64_alphabet_destination = (byte*)global::Managed.Security.PicoTls.Globals.ptls_base64_alphabet;
+            var ptls_base64_alphabet_destination = (byte*)global::Managed.Security.PicoTls.Globals.ptls_base64_alphabet;
         DotCcLiterals.B7543B37FA53FDE2C84F07FD39F368555966AA1C0EB2F2FD26B294D79966E290E.CopyTo(new global::System.Span<byte>((byte*)(ptls_base64_alphabet_destination), 64));
         };
         {
-            sbyte* ptls_base64_values_destination = (sbyte*)global::Managed.Security.PicoTls.Globals.ptls_base64_values;
+            var ptls_base64_values_destination = (sbyte*)global::Managed.Security.PicoTls.Globals.ptls_base64_values;
         __DotccPrimitiveView_8CA4446725EB6772CB06B8BC20A5472913F3D689C00457BE759F586DE6970C4E.Values.CopyTo(new global::System.Span<sbyte>((sbyte*)(ptls_base64_values_destination), 128));
         };
         fixed (in6_addr* in6addr_any_destination = &global::Managed.Security.PicoTls.Globals.in6addr_any)
@@ -86,19 +89,19 @@ public static partial class PicoTls
         DotCcLiterals.B7C3CCD10BB7EC37B46D37926AE6274267F007A34AEAF15C882A715A7F3300529.CopyTo(new global::System.Span<byte>((byte*)((*in6addr_loopback_destination).__in6_u.__u6_addr8), 16));
         };
         {
-            byte* ech_info_prefix_destination = (byte*)global::Managed.Security.PicoTls.Globals.ech_info_prefix;
+            var ech_info_prefix_destination = (byte*)global::Managed.Security.PicoTls.Globals.ech_info_prefix;
         DotCcLiterals.BB958318885CCBE5A0B64331C3CA527F89BAB2736AB80725B1DEBFB46349C1EBE.CopyTo(new global::System.Span<byte>((byte*)(ech_info_prefix_destination), 8));
         };
         {
-            ushort* supported_versions_destination = (ushort*)global::Managed.Security.PicoTls.Globals.supported_versions;
+            var supported_versions_destination = (ushort*)global::Managed.Security.PicoTls.Globals.supported_versions;
         DotCcLiterals.Pushort_62C5E5F8411632EB7F39AF424DD25EAF942F18FD47264F72462BA9B498FFD337.CopyTo(new global::System.Span<ushort>((ushort*)(supported_versions_destination), 1));
         };
         {
-            byte* hello_retry_random_destination = (byte*)global::Managed.Security.PicoTls.Globals.hello_retry_random;
+            var hello_retry_random_destination = (byte*)global::Managed.Security.PicoTls.Globals.hello_retry_random;
         DotCcLiterals.B4DDDF66BF035F6ECA9C5F21404F3E8DC72D452D7CC13051DAA425BC248F0F060.CopyTo(new global::System.Span<byte>((byte*)(hello_retry_random_destination), 32));
         };
         {
-            byte* zeroes_of_max_digest_size_destination = (byte*)global::Managed.Security.PicoTls.Globals.zeroes_of_max_digest_size;
+            var zeroes_of_max_digest_size_destination = (byte*)global::Managed.Security.PicoTls.Globals.zeroes_of_max_digest_size;
         DotCcLiterals.BF5A5FD42D16A20302798EF6ED309979B43003D2320D9F0E8EA9831A92759FB4B.CopyTo(new global::System.Span<byte>((byte*)(zeroes_of_max_digest_size_destination), 64));
         };
         global::Managed.Security.PicoTls.Globals.CH__s0 = (ulong)1 << 1 + 1;
@@ -111,7 +114,7 @@ public static partial class PicoTls
         global::Managed.Security.PicoTls.Globals.logpoint__s7 = new st_ptls_log_point_t { name = (DotCcLiterals.Pointer + DotCcLiterals.S28 /*"picotls:new_secret"*/) };
         global::Managed.Security.PicoTls.Globals.x25519_key_size__s8 = 32;
         {
-            byte** log_labels__s9_destination = (byte**)global::Managed.Security.PicoTls.Globals.log_labels__s9;
+            var log_labels__s9_destination = (byte**)global::Managed.Security.PicoTls.Globals.log_labels__s9;
         log_labels__s9_destination[0] = null;
         log_labels__s9_destination[1] = (DotCcLiterals.Pointer + DotCcLiterals.S16 /*"CLIENT_EARLY_TRAFFIC_SECRET"*/);
         log_labels__s9_destination[2] = (DotCcLiterals.Pointer + DotCcLiterals.S48 /*"CLIENT_HANDSHAKE_TRAFFIC_SECRET"*/);
@@ -123,7 +126,7 @@ public static partial class PicoTls
         };
         global::Managed.Security.PicoTls.Globals.logpoint__s10 = new st_ptls_log_point_t { name = (DotCcLiterals.Pointer + DotCcLiterals.S13 /*"picotls:client_random"*/) };
         {
-            ushort* default_algos__s11_destination = (ushort*)global::Managed.Security.PicoTls.Globals.default_algos__s11;
+            var default_algos__s11_destination = (ushort*)global::Managed.Security.PicoTls.Globals.default_algos__s11;
         DotCcLiterals.Pushort_37E2C7C2A6A94CE558668C905E51B390A5477CD5E13E0CDC02C8A317F9CBCD82.CopyTo(new global::System.Span<ushort>((ushort*)(default_algos__s11_destination), 7));
         };
         global::Managed.Security.PicoTls.Globals.logpoint__s12 = new st_ptls_log_point_t { name = (DotCcLiterals.Pointer + DotCcLiterals.S0 /*"picotls:ech_selection"*/) };
@@ -1596,7 +1599,7 @@ internal static unsafe class __DotccAggregateInit_FC0D89C1F71B6D0636CD5A5306064E
     public static st_ptls_server_hello_t Create()
     {
         st_ptls_server_hello_t result = default;
-        st_ptls_server_hello_t* destination = &result;
+        var destination = &result;
         Fill_0_0(destination);
         return result;
     }
@@ -1632,7 +1635,7 @@ internal static unsafe class __DotccAggregateInit_AB31F36857ED03153AA8A5CA0CE07B
     public static st_ptls_client_hello_t Create(in Arguments args)
     {
         st_ptls_client_hello_t result = default;
-        st_ptls_client_hello_t* destination = &result;
+        var destination = &result;
         Fill_0_0(destination, in args);
         return result;
     }
@@ -1669,7 +1672,7 @@ internal static unsafe class __DotccAggregateInit_8E0F055674A7DCA441A4E133E1A509
     public static st_ptls_log_conn_state_t Create(in Arguments args)
     {
         st_ptls_log_conn_state_t result = default;
-        st_ptls_log_conn_state_t* destination = &result;
+        var destination = &result;
         Fill_0_0(destination, in args);
         return result;
     }
@@ -1979,7 +1982,7 @@ internal static unsafe class PicoTlsLiterals
         {
             Storage = GC.AllocateUninitializedArray<byte>(1227, pinned: true);
             Span<byte> storage = Storage;
-            ReadOnlySpan<byte> utf8 =
+            var utf8 =
                 "picotls:ech_selection\0shared_secret\0s hs traffic\0c hs traffic\0TLS 1.3, client CertificateVerify\0HPKE-v1\0SERVER_HANDSHAKE_TRAFFIC_SECRET\0picotls:free\0hrr ech accept confirmation\0exporter\0iv\0no compatible cipher-suite provided that matches psk.hash\0KEM\0picotls:client_random\0unexpected state\0%s\0CLIENT_EARLY_TRAFFIC_SECRET\0base_nonce\0res binder\0e exp master\0info_hash\0exp master\0\\t\0ptls0001\0CLIENT_TRAFFIC_SECRET_0\0ext binder\0HPKE\0s ap traffic\0picotls"u8 +
                 ":new_secret\0\\f\0picotls:receive_message\0\\\"\0\00123456789abcdef\0invalid state\0key expansion\0unimplemented\n\0`ptls_context_t::pre_shared_key` in inconsitent state\0res master\0derived\0picotls:new\0finished\0ech accept confirmation\0r\0\\/\0resumption\0traffic upd\0\\r\0CLIENT_HANDSHAKE_TRAFFIC_SECRET\0\0\0\0\0\0\0\0\0given cipher-suite supports TLS/1.2\0tls13 \0BEGIN\0secret\0async operation only supported on the server-side\0\\n\0eae_prk\0psk_id_hash\0EXPORTER_SECR"u8 +
                 "ET\0please set ctx->get_time to `&ptls_get_time`; see #92\0\\\\\0-----\0not supported\0key\0EARLY_EXPORTER_SECRET\0TLS 1.3, server CertificateVerify\0SERVER_TRAFFIC_SECRET_0\0c e traffic\0c ap traffic\0`ptls_context_t::pre_shared_key` in incosistent state\0state machine asserts that this message is never delivered when PSK is used\0\\b\0CERTIFICATE\0END\0FIXME\0"u8;
@@ -2080,8 +2083,8 @@ public static unsafe partial class Libc
     // blocks; the backing allocation is always paired with NativeMemory.Free,
     // including on Windows, where AlignedAlloc cannot be paired with Free.
     private readonly record struct AlignedBlock(nuint Base, nuint Size, bool Debug);
-    private static readonly Dictionary<nuint, AlignedBlock> _alignedBlocks = new();
-    private static readonly Lock _alignedLock = new();
+    private static readonly Dictionary<nuint, AlignedBlock> _alignedBlocks = new Dictionary<UIntPtr, AlignedBlock>();
+    private static readonly Lock _alignedLock = new Lock();
     private static int _alignedCount;
 
     /// <summary>POSIX aligned allocation. Returns EINVAL/ENOMEM directly,
@@ -2094,11 +2097,11 @@ public static unsafe partial class Libc
         if (alignment > nuint.MaxValue || size > nuint.MaxValue)
             return ENOMEM;
         nuint align = checked((nuint)alignment), bytes = checked((nuint)size);
-        bool debug = _dbgHeap;
-        nuint red = debug ? _dbgRed : 0;
+        var debug = _dbgHeap;
+        var red = debug ? _dbgRed : 0;
         // Allocate at least one byte, even for size zero. Guard both additions
         // before making a native allocation; no rounded-size wrap is possible.
-        nuint payload = bytes == 0 ? 1 : bytes;
+        var payload = bytes == 0 ? 1 : bytes;
         if (payload > nuint.MaxValue - (align - 1) ||
             payload + (align - 1) > nuint.MaxValue - red)
             return ENOMEM;
@@ -2108,7 +2111,7 @@ public static unsafe partial class Libc
         {
             allocation = NativeMemory.Alloc(payload + (align - 1) + red);
             if (allocation == null) return ENOMEM;
-            nuint address = ((nuint)allocation + (align - 1)) & ~(align - 1);
+            var address = ((nuint)allocation + (align - 1)) & ~(align - 1);
             if (debug) NativeMemory.Fill((byte*)address + bytes, red, _dbgCanary);
             lock (_alignedLock)
             {
@@ -2128,7 +2131,7 @@ public static unsafe partial class Libc
     private static void ValidateAlignedBlock(nuint address, AlignedBlock block, string where)
     {
         if (!block.Debug) return;
-        byte* red = (byte*)address + block.Size;
+        var red = (byte*)address + block.Size;
         for (nuint i = 0; i < _dbgRed; i++)
         {
             if (red[i] != _dbgCanary)
@@ -2178,7 +2181,7 @@ public static unsafe partial class Libc
         ValidateAlignedBlock((nuint)pointer, block, "realloc");
         replacement = AllocateHeap(size);
         if (replacement == null) return true; // Retain original on failure.
-        nuint length = block.Size < (nuint)size ? block.Size : (nuint)size;
+        var length = block.Size < (nuint)size ? block.Size : (nuint)size;
         NativeMemory.Copy(pointer, replacement, length);
         FreeAlignedBlock(pointer);
         return true;
@@ -2208,8 +2211,8 @@ public static unsafe partial class Libc
         {
             using var writer = new StringWriter(global::System.Globalization.CultureInfo.InvariantCulture);
             new PrintfBuilder(writer, format, byteOutput: true).Arguments(arguments).Done();
-            string text = writer.ToString();
-            int size = checked(text.Length + 1);
+            var text = writer.ToString();
+            var size = checked(text.Length + 1);
             allocation = (byte*)malloc(size);
             if (allocation == null) { errno = ENOMEM; return -1; }
             Encoding.Latin1.GetBytes(text.AsSpan(), new Span<byte>(allocation, text.Length));
@@ -2394,22 +2397,22 @@ public static class Atomic
     {
         if (Unsafe.SizeOf<T>() == 1)
         {
-            byte old = Interlocked.Exchange(ref Unsafe.As<T, byte>(ref loc), Unsafe.As<T, byte>(ref value));
+            var old = Interlocked.Exchange(ref Unsafe.As<T, byte>(ref loc), Unsafe.As<T, byte>(ref value));
             return Unsafe.As<byte, T>(ref old);
         }
         if (Unsafe.SizeOf<T>() == 2)
         {
-            short old = Interlocked.Exchange(ref Unsafe.As<T, short>(ref loc), Unsafe.As<T, short>(ref value));
+            var old = Interlocked.Exchange(ref Unsafe.As<T, short>(ref loc), Unsafe.As<T, short>(ref value));
             return Unsafe.As<short, T>(ref old);
         }
         if (Unsafe.SizeOf<T>() == 4)
         {
-            int old = Interlocked.Exchange(ref Unsafe.As<T, int>(ref loc), Unsafe.As<T, int>(ref value));
+            var old = Interlocked.Exchange(ref Unsafe.As<T, int>(ref loc), Unsafe.As<T, int>(ref value));
             return Unsafe.As<int, T>(ref old);
         }
         if (Unsafe.SizeOf<T>() == 8)
         {
-            long old = Interlocked.Exchange(ref Unsafe.As<T, long>(ref loc), Unsafe.As<T, long>(ref value));
+            var old = Interlocked.Exchange(ref Unsafe.As<T, long>(ref loc), Unsafe.As<T, long>(ref value));
             return Unsafe.As<long, T>(ref old);
         }
         throw new global::System.NotSupportedException("Atomic objects must be 1, 2, 4, or 8 bytes");
@@ -2421,25 +2424,25 @@ public static class Atomic
     {
         if (Unsafe.SizeOf<T>() == 1)
         {
-            byte old = Interlocked.CompareExchange(ref Unsafe.As<T, byte>(ref loc),
+            var old = Interlocked.CompareExchange(ref Unsafe.As<T, byte>(ref loc),
                 Unsafe.As<T, byte>(ref desired), Unsafe.As<T, byte>(ref comparand));
             return Unsafe.As<byte, T>(ref old);
         }
         if (Unsafe.SizeOf<T>() == 2)
         {
-            short old = Interlocked.CompareExchange(ref Unsafe.As<T, short>(ref loc),
+            var old = Interlocked.CompareExchange(ref Unsafe.As<T, short>(ref loc),
                 Unsafe.As<T, short>(ref desired), Unsafe.As<T, short>(ref comparand));
             return Unsafe.As<short, T>(ref old);
         }
         if (Unsafe.SizeOf<T>() == 4)
         {
-            int old = Interlocked.CompareExchange(ref Unsafe.As<T, int>(ref loc),
+            var old = Interlocked.CompareExchange(ref Unsafe.As<T, int>(ref loc),
                 Unsafe.As<T, int>(ref desired), Unsafe.As<T, int>(ref comparand));
             return Unsafe.As<int, T>(ref old);
         }
         if (Unsafe.SizeOf<T>() == 8)
         {
-            long old = Interlocked.CompareExchange(ref Unsafe.As<T, long>(ref loc),
+            var old = Interlocked.CompareExchange(ref Unsafe.As<T, long>(ref loc),
                 Unsafe.As<T, long>(ref desired), Unsafe.As<T, long>(ref comparand));
             return Unsafe.As<long, T>(ref old);
         }
@@ -2465,7 +2468,7 @@ public static class Atomic
     /// to expected. Weak CAS may use the same non-spurious implementation.</summary>
     public static bool CompareExchange<T>(ref T loc, ref T expected, T desired) where T : unmanaged
     {
-        T observed = ValueCompareExchange(ref loc, desired, expected);
+        var observed = ValueCompareExchange(ref loc, desired, expected);
         if (BitsEqual(observed, expected)) return true;
         expected = observed;
         return false;
@@ -2562,14 +2565,14 @@ public readonly struct CBool
     private CBool(byte v) { _v = v; }
 
     // Store-normalization: any nonzero scalar becomes 1 (C's _Bool conversion).
-    public static implicit operator CBool(int x) => new((byte)(x != 0 ? 1 : 0));
-    public static implicit operator CBool(long x) => new((byte)(x != 0 ? 1 : 0));
-    public static implicit operator CBool(double x) => new((byte)(x != 0 ? 1 : 0));
-    public static implicit operator CBool(bool b) => new((byte)(b ? 1 : 0));
+    public static implicit operator CBool(int x) => new CBool((byte)(x != 0 ? 1 : 0));
+    public static implicit operator CBool(long x) => new CBool((byte)(x != 0 ? 1 : 0));
+    public static implicit operator CBool(double x) => new CBool((byte)(x != 0 ? 1 : 0));
+    public static implicit operator CBool(bool b) => new CBool((byte)(b ? 1 : 0));
     // Pointer store: `_Bool b = p;` is `p != NULL`. A typed `T*` arrives here
     // via the standard `T* → void*` conversion (one standard + one user-defined
     // step — allowed). float reaches the `double` overload the same way.
-    public static unsafe implicit operator CBool(void* p) => new((byte)(p != null ? 1 : 0));
+    public static unsafe implicit operator CBool(void* p) => new CBool((byte)(p != null ? 1 : 0));
 
     // Reads back as int 0/1 — drives arithmetic, comparison, return, args, %d.
     public static implicit operator int(CBool b) => b._v;
@@ -2842,7 +2845,7 @@ public static unsafe partial class Libc
         if (t == null) { return -1; }
         if (UseNativeCalendar)
         {
-            long timestamp = NativeCalendarMktime(t);
+            var timestamp = NativeCalendarMktime(t);
             // -1 is also the valid second immediately before the epoch.
             // A failed native call can leave an uninitialized input tm_zone
             // untouched. Do not dereference it on failure (errno is captured
@@ -2863,7 +2866,7 @@ public static unsafe partial class Libc
                 .AddMinutes(t->tm_min)
                 .AddSeconds(t->tm_sec);
             var instant = new DateTimeOffset(dt);
-            long secs = instant.ToUnixTimeSeconds();
+            var secs = instant.ToUnixTimeSeconds();
             FillTm(t, dt, TimeZoneInfo.Local.IsDaylightSavingTime(instant) ? 1 : 0,
                 (long)instant.Offset.TotalSeconds);
             return secs;
@@ -2884,12 +2887,12 @@ public static unsafe partial class Libc
     public static byte* asctime_r(tm* t, byte* buf)
     {
         if (t == null || buf == null) { return null; }
-        string s = string.Format(CultureInfo.InvariantCulture,
+        var s = string.Format(CultureInfo.InvariantCulture,
             "{0} {1}{2,3} {3:D2}:{4:D2}:{5:D2} {6}\n",
             _wdayAbbr[Wd(t)], _monAbbr[Mo(t)], t->tm_mday,
             t->tm_hour, t->tm_min, t->tm_sec, 1900 + t->tm_year);
         var bytes = Encoding.ASCII.GetBytes(s);
-        for (int i = 0; i < bytes.Length; i++) { buf[i] = bytes[i]; }
+        for (var i = 0; i < bytes.Length; i++) { buf[i] = bytes[i]; }
         buf[bytes.Length] = 0;
         return buf;
     }
@@ -2925,7 +2928,7 @@ public static unsafe partial class Libc
         if (s == null || fmt == null || t == null || max == 0) { return 0; }
         var sb = new StringBuilder();
         var ci = CultureInfo.InvariantCulture;
-        for (byte* p = fmt; *p != 0; p++)
+        for (var p = fmt; *p != 0; p++)
         {
             if (*p != (byte)'%') { sb.Append((char)*p); continue; }
             p++;
@@ -2940,7 +2943,7 @@ public static unsafe partial class Libc
                 case (byte)'H': sb.Append(t->tm_hour.ToString("D2", ci)); break;
                 case (byte)'I':
                 {
-                    int h = t->tm_hour % 12; if (h == 0) { h = 12; }
+                    var h = t->tm_hour % 12; if (h == 0) { h = 12; }
                     sb.Append(h.ToString("D2", ci));
                     break;
                 }
@@ -2950,10 +2953,10 @@ public static unsafe partial class Libc
                 case (byte)'z':
                     if (t->tm_isdst >= 0)
                     {
-                        long offset = t->tm_gmtoff;
+                        var offset = t->tm_gmtoff;
                         // Preserve the sign for negative sub-minute offsets
                         // and avoid negating long.MinValue.
-                        ulong magnitude = offset < 0 ? (ulong)(-(offset + 1)) + 1 : (ulong)offset;
+                        var magnitude = offset < 0 ? (ulong)(-(offset + 1)) + 1 : (ulong)offset;
                         sb.Append(offset < 0 ? '-' : '+');
                         sb.Append((magnitude / 3600).ToString("D2", ci));
                         sb.Append((magnitude / 60 % 60).ToString("D2", ci));
@@ -2966,7 +2969,7 @@ public static unsafe partial class Libc
                 case (byte)'b': case (byte)'h': sb.Append(_monAbbr[Mo(t)]); break;
                 case (byte)'j': sb.Append((t->tm_yday + 1).ToString("D3", ci)); break;
                 case (byte)'w': sb.Append(Wd(t).ToString(ci)); break;
-                case (byte)'u': { int w = Wd(t); sb.Append((w == 0 ? 7 : w).ToString(ci)); break; }
+                case (byte)'u': { var w = Wd(t); sb.Append((w == 0 ? 7 : w).ToString(ci)); break; }
                 case (byte)'F':
                     sb.Append($"{1900 + t->tm_year:D4}-{t->tm_mon + 1:D2}-{t->tm_mday:D2}"); break;
                 case (byte)'T':
@@ -2984,7 +2987,7 @@ public static unsafe partial class Libc
     done:
         var bytes = Encoding.UTF8.GetBytes(sb.ToString());
         if ((ulong)bytes.Length >= max) { return 0; } // doesn't fit with the NUL
-        for (int i = 0; i < bytes.Length; i++) { s[i] = bytes[i]; }
+        for (var i = 0; i < bytes.Length; i++) { s[i] = bytes[i]; }
         s[bytes.Length] = 0;
         return (ulong)bytes.Length;
     }
@@ -3040,12 +3043,12 @@ public static unsafe partial class Libc
         // from an insufficient buffer, so long POSIX TZ names need no cap.
         fixed (byte* format = "[%Z]\0"u8)
         {
-            for (int capacity = 64; ; capacity = checked(capacity * 2))
+            for (var capacity = 64; ; capacity = checked(capacity * 2))
             {
                 var bytes = new byte[capacity];
                 fixed (byte* output = bytes)
                 {
-                    nuint length = NativeCalendarStrftime(output, (nuint)capacity, format, value);
+                    var length = NativeCalendarStrftime(output, (nuint)capacity, format, value);
                     if (length != 0) return Encoding.UTF8.GetString(bytes, 1, checked((int)length) - 2);
                 }
             }
@@ -3059,14 +3062,14 @@ public static unsafe partial class Libc
     // borrowed tm_zone pointer escapes a calendar conversion.
     private static class CalendarZoneNames
     {
-        private static readonly Dictionary<string, nint> Names = new(StringComparer.Ordinal);
+        private static readonly Dictionary<string, nint> Names = new Dictionary<string, IntPtr>(StringComparer.Ordinal);
         public static byte* Intern(string name)
         {
             lock (Names)
             {
-                if (Names.TryGetValue(name, out nint existing)) return (byte*)existing;
-                byte[] bytes = Encoding.UTF8.GetBytes(name);
-                byte* storage = (byte*)NativeMemory.Alloc((nuint)bytes.Length + 1);
+                if (Names.TryGetValue(name, out var existing)) return (byte*)existing;
+                var bytes = Encoding.UTF8.GetBytes(name);
+                var storage = (byte*)NativeMemory.Alloc((nuint)bytes.Length + 1);
                 bytes.CopyTo(new Span<byte>(storage, bytes.Length));
                 storage[bytes.Length] = 0;
                 Names.Add(name, (nint)storage);
@@ -3087,7 +3090,7 @@ public static unsafe partial class Libc
     /// <summary>Compiler-rt signed multiplication: low 32 bits plus a 0/1 overflow flag.</summary>
     public static int __mulosi4(int lhs, int rhs, int* overflow)
     {
-        long product = (long)lhs * rhs;
+        var product = (long)lhs * rhs;
         *overflow = product < int.MinValue || product > int.MaxValue ? 1 : 0;
         return unchecked((int)product);
     }
@@ -3095,7 +3098,7 @@ public static unsafe partial class Libc
     /// <summary>Compiler-rt signed multiplication: low 64 bits plus a 0/1 overflow flag.</summary>
     public static long __mulodi4(long lhs, long rhs, int* overflow)
     {
-        Int128 product = (Int128)lhs * rhs;
+        var product = (Int128)lhs * rhs;
         *overflow = product < long.MinValue || product > long.MaxValue ? 1 : 0;
         return unchecked((long)product);
     }
@@ -3110,14 +3113,14 @@ public static unsafe partial class Libc
     /// A zero divisor raises DivideByZeroException.</summary>
     public static Int128 __divti3(Int128 lhs, Int128 rhs)
     {
-        UInt128 quotient = CompilerRtMagnitude(lhs) / CompilerRtMagnitude(rhs);
+        var quotient = CompilerRtMagnitude(lhs) / CompilerRtMagnitude(rhs);
         return unchecked((Int128)((lhs < 0) != (rhs < 0) ? UInt128.Zero - quotient : quotient));
     }
 
     /// <summary>Remainder has the dividend's sign, including zero for min%-1.</summary>
     public static Int128 __modti3(Int128 lhs, Int128 rhs)
     {
-        UInt128 remainder = CompilerRtMagnitude(lhs) % CompilerRtMagnitude(rhs);
+        var remainder = CompilerRtMagnitude(lhs) % CompilerRtMagnitude(rhs);
         return unchecked((Int128)(lhs < 0 ? UInt128.Zero - remainder : remainder));
     }
 
@@ -3253,9 +3256,9 @@ public static unsafe partial class Libc
             // lifetime accounting. Reject them explicitly until implemented.
             if (source.Kind is FileSlot.K.Pipe or FileSlot.K.Socket)
             { errno = ENOTSUP; return -1; }
-            int descriptor = requested ?? _files.FindIndex(3, slot => slot == null);
+            var descriptor = requested ?? _files.FindIndex(3, slot => slot == null);
             if (descriptor < 0) descriptor = _files.Count;
-            int savedError = errno;
+            var savedError = errno;
             if (descriptor < _files.Count && _files[descriptor] is { } target)
             {
                 try { CloseSlot(target); }
@@ -3334,10 +3337,10 @@ public static partial class Libc
         {
             return (void*)NativeLibrary.GetMainProgramHandle();
         }
-        string path = Str(filename);
+        var path = Str(filename);
         // Bare sonames retain the platform loader's search rules.
         if (path.Contains('/') || OperatingSystem.IsWindows() && path.Contains('\\')) path = ResolvePath(path);
-        if (NativeLibrary.TryLoad(path, out IntPtr handle))
+        if (NativeLibrary.TryLoad(path, out var handle))
         {
             return (void*)handle;
         }
@@ -3352,8 +3355,8 @@ public static partial class Libc
     /// remarks / <c>&lt;dlfcn.h&gt;</c>).</summary>
     public static unsafe void* dlsym(void* handle, byte* symbol)
     {
-        string name = Str(symbol);
-        if (NativeLibrary.TryGetExport((IntPtr)handle, name, out IntPtr addr))
+        var name = Str(symbol);
+        if (NativeLibrary.TryGetExport((IntPtr)handle, name, out var addr))
         {
             return (void*)addr;
         }
@@ -3376,17 +3379,17 @@ public static partial class Libc
     /// message lives in a reused per-thread native buffer (stable <c>char*</c>).</summary>
     public static unsafe byte* dlerror()
     {
-        string? msg = _dlError;
+        var msg = _dlError;
         if (msg is null) { return null; }
         _dlError = null;  // POSIX: reading dlerror clears the error indicator.
-        int need = Encoding.UTF8.GetByteCount(msg) + 1;
+        var need = Encoding.UTF8.GetByteCount(msg) + 1;
         if (_dlErrBuf == null || _dlErrCap < need)
         {
             if (_dlErrBuf != null) { NativeMemory.Free(_dlErrBuf); }
             _dlErrCap = need;
             _dlErrBuf = (byte*)NativeMemory.Alloc((nuint)need);
         }
-        int n = Encoding.UTF8.GetBytes(msg, new Span<byte>(_dlErrBuf, _dlErrCap));
+        var n = Encoding.UTF8.GetBytes(msg, new Span<byte>(_dlErrBuf, _dlErrCap));
         _dlErrBuf[n] = 0;
         return _dlErrBuf;
     }
@@ -3411,7 +3414,7 @@ public static unsafe partial class Libc
         {
             while (done < length)
             {
-                int chunk = (int)Math.Min(length - done, 65536UL);
+                var chunk = (int)Math.Min(length - done, 65536UL);
                 global::System.Security.Cryptography.RandomNumberGenerator.Fill(new Span<byte>((byte*)buffer + done, chunk));
                 done += (uint)chunk;
             }
@@ -3666,10 +3669,10 @@ public static unsafe partial class Libc
     {
         if (path == null) { errno = EFAULT; return -1; }
         if (length < 0) { errno = EINVAL; return -1; }
-        int descriptor = open(path, 1);
+        var descriptor = open(path, 1);
         if (descriptor < 0) return -1;
-        int result = ftruncate(descriptor, length);
-        int error = errno;
+        var result = ftruncate(descriptor, length);
+        var error = errno;
         close(descriptor);
         if (result != 0) errno = error;
         return result;
@@ -3691,26 +3694,26 @@ public static unsafe partial class Libc
     public static int mkstemp(byte* template)
     {
         if (template == null) { errno = EFAULT; return -1; }
-        int length = strlen(template);
+        var length = strlen(template);
         if (length < 6) { errno = EINVAL; return -1; }
-        for (int i = length - 6; i < length; i++)
+        for (var i = length - 6; i < length; i++)
             if (template[i] != (byte)'X') { errno = EINVAL; return -1; }
-        string prefix = Encoding.UTF8.GetString(template, length - 6);
+        var prefix = Encoding.UTF8.GetString(template, length - 6);
         const string alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         Span<char> suffix = stackalloc char[6];
-        for (int attempt = 0; attempt < 128; attempt++)
+        for (var attempt = 0; attempt < 128; attempt++)
         {
-            for (int i = 0; i < suffix.Length; i++) suffix[i] = alphabet[global::System.Security.Cryptography.RandomNumberGenerator.GetInt32(alphabet.Length)];
-            string path = ResolvePath(prefix + new string(suffix));
+            for (var i = 0; i < suffix.Length; i++) suffix[i] = alphabet[global::System.Security.Cryptography.RandomNumberGenerator.GetInt32(alphabet.Length)];
+            var path = ResolvePath(prefix + new string(suffix));
             if (OperatingSystem.IsLinux() && RuntimeInformation.ProcessArchitecture == Architecture.X64)
             {
-                int descriptor = OpenLinuxFile(path, 2 | 0x40 | 0x80, 0x180); // O_RDWR|O_CREAT|O_EXCL, 0600
+                var descriptor = OpenLinuxFile(path, 2 | 0x40 | 0x80, 0x180); // O_RDWR|O_CREAT|O_EXCL, 0600
                 if (descriptor < 0)
                 {
                     if (errno == EEXIST) continue;
                     return -1;
                 }
-                for (int i = 0; i < suffix.Length; i++) template[length - 6 + i] = (byte)suffix[i];
+                for (var i = 0; i < suffix.Length; i++) template[length - 6 + i] = (byte)suffix[i];
                 return descriptor;
             }
             FileStream? file = null;
@@ -3720,9 +3723,9 @@ public static unsafe partial class Libc
                     Share = FileShare.ReadWrite | FileShare.Delete };
                 if (!OperatingSystem.IsWindows()) options.UnixCreateMode = UnixFileMode.UserRead | UnixFileMode.UserWrite;
                 file = new FileStream(path, options);
-                int descriptor = RegisterFileSlot(file);
+                var descriptor = RegisterFileSlot(file);
                 file = null; // Ownership transferred to the descriptor table.
-                for (int i = 0; i < suffix.Length; i++) template[length - 6 + i] = (byte)suffix[i];
+                for (var i = 0; i < suffix.Length; i++) template[length - 6 + i] = (byte)suffix[i];
                 return descriptor;
             }
             catch (IOException) when (File.Exists(path) || Directory.Exists(path)) { }
@@ -3862,7 +3865,7 @@ public static unsafe partial class Libc
         {
             // Check ownership before dereferencing a foreign or retired FILE*.
             if (!state.Handles.Contains((nint)f)) { errno = EBADF; return null; }
-            int i = f->_slot;
+            var i = f->_slot;
             return (uint)i < (uint)state.Files.Count ? state.Files[i] : null;
         }
     }
@@ -3915,7 +3918,7 @@ public static unsafe partial class Libc
                 return s.BufferedBytes < s.BufferCapacity && !(s.BufferMode == 1 && b == (byte)'\n')
                     || FlushStdioBuffer(s);
             }
-            bool result = WriteByteBacking(s, b);
+            var result = WriteByteBacking(s, b);
             if (result && s.BufferMode == 2) FlushBacking(s);
             return result;
         }
@@ -3926,7 +3929,7 @@ public static unsafe partial class Libc
     private static bool WriteByteBacking(FileSlot s, byte b)
     {
         // Socket-backed fd: one byte onto the connection (fputc on an fdopen'd socket).
-        if (s.Kind == FileSlot.K.Pipe) { bool ok = PipeWrite(s, &b, 1) == 1; if (!ok) s.Err = true; return ok; }
+        if (s.Kind == FileSlot.K.Pipe) { var ok = PipeWrite(s, &b, 1) == 1; if (!ok) s.Err = true; return ok; }
         if (s.Kind == FileSlot.K.Socket) { return SocketWriteByte(s, b); }
         // Only file-backed slots carry a Stream; the console kinds have none.
         if (s.Stream is { } st)
@@ -3946,7 +3949,7 @@ public static unsafe partial class Libc
             Span<byte> input = stackalloc byte[1] { b };
             Span<char> output = stackalloc char[2];
             s.ConsoleDecoder ??= Encoding.UTF8.GetDecoder();
-            int count = s.ConsoleDecoder.GetChars(input, output, flush: false);
+            var count = s.ConsoleDecoder.GetChars(input, output, flush: false);
             console.Write(output[..count]);
         }
         else console.Write((char)b);
@@ -3966,12 +3969,12 @@ public static unsafe partial class Libc
         if (s.Kind == FileSlot.K.Directory) { errno = EISDIR; s.Err = true; return -1; }
         // A byte pushed back by ungetc is returned before touching the stream
         // (covers fgetc / getc / getchar / fgets — the common ungetc consumers).
-        if (s.Pushback >= 0) { int p = s.Pushback; s.Pushback = -1; return p; }
+        if (s.Pushback >= 0) { var p = s.Pushback; s.Pushback = -1; return p; }
         // Socket-backed fd: one byte off the connection (fgetc on an fdopen'd socket).
         if (s.Kind == FileSlot.K.Pipe)
         {
             byte value;
-            long count = PipeRead(s, &value, 1);
+            var count = PipeRead(s, &value, 1);
             if (count == 0) s.Eof = true;
             if (count < 0) s.Err = true;
             return count == 1 ? value : -1;
@@ -4005,8 +4008,8 @@ public static unsafe partial class Libc
     internal static int ReadWideFrom(FILE* f)
     {
         if (Slot(f) is not { } s) { return -1; }
-        if (s.PendingWide >= 0) { int p = s.PendingWide; s.PendingWide = -1; return p; }
-        int b0 = ReadByteSlot(s);
+        if (s.PendingWide >= 0) { var p = s.PendingWide; s.PendingWide = -1; return p; }
+        var b0 = ReadByteSlot(s);
         if (b0 < 0) { return -1; }
         if (b0 < 0x80) { return b0; }
         int n, cp;
@@ -4014,9 +4017,9 @@ public static unsafe partial class Libc
         else if ((b0 & 0xF0) == 0xE0) { n = 2; cp = b0 & 0x0F; }
         else if ((b0 & 0xF8) == 0xF0) { n = 3; cp = b0 & 0x07; }
         else { return 0xFFFD; }                       // stray continuation / invalid lead
-        for (int i = 0; i < n; i++)
+        for (var i = 0; i < n; i++)
         {
-            int b = ReadByteSlot(s);
+            var b = ReadByteSlot(s);
             if (b < 0 || (b & 0xC0) != 0x80) { return 0xFFFD; }   // truncated / invalid
             cp = (cp << 6) | (b & 0x3F);
         }
@@ -4069,7 +4072,7 @@ public static unsafe partial class Libc
             if (opened is null) return null;
             stream = opened;
         }
-        int descriptor = -1;
+        var descriptor = -1;
         try
         {
             descriptor = RegisterFileSlot(stream);
@@ -4091,8 +4094,8 @@ public static unsafe partial class Libc
         if (mode == null || !ParseMode(mode, out _, out var access)) { errno = EINVAL; return null; }
         var slot = SlotByFd(descriptor);
         if (slot is null) { errno = EBADF; return null; }
-        int requested = access == FileAccess.Read ? 1 : access == FileAccess.Write ? 2 : 3;
-        int actual = (slot.StatusFlags & 3) == 0 ? 1 : (slot.StatusFlags & 3) == 1 ? 2 : 3;
+        var requested = access == FileAccess.Read ? 1 : access == FileAccess.Write ? 2 : 3;
+        var actual = (slot.StatusFlags & 3) == 0 ? 1 : (slot.StatusFlags & 3) == 1 ? 2 : 3;
         if ((requested & actual) != requested) { errno = EINVAL; return null; }
         FILE* handle;
         try { handle = AllocateFileHandle(descriptor); }
@@ -4134,7 +4137,7 @@ public static unsafe partial class Libc
         var newStream = OpenStdioFile(ResolvePath(path), mode, fileMode, access);
         if (newStream is null)
         {
-            int error = errno;
+            var error = errno;
             CloseSlot(slot);
             errno = error;
             return null;
@@ -4162,7 +4165,7 @@ public static unsafe partial class Libc
         // Invalidate the slot index BEFORE freeing, so a double-fclose on the
         // same FILE* won't read freed memory and corrupt a different file's slot.
         stream->_slot = -1;
-        int result = 0;
+        var result = 0;
         try { if (!FlushStdioBuffer(slot)) result = -1; }
         catch (IOException) { errno = FileIoError(slot); result = -1; }
         try { CloseSlot(slot); }
@@ -4212,7 +4215,7 @@ public static unsafe partial class Libc
         long got = 0;
         for (; (ulong)got < count; got++)
         {
-            int b = ReadByteSlot(s, stdio: false);
+            var b = ReadByteSlot(s, stdio: false);
             if (b < 0) { break; }
             dst[got] = (byte)b;
         }
@@ -4280,9 +4283,9 @@ public static unsafe partial class Libc
         // Every old FILE* must stay closed even after this fd number is reused.
         lock (_filesLock)
         {
-            int descriptor = _files.IndexOf(slot);
+            var descriptor = _files.IndexOf(slot);
             if (descriptor >= 3)
-                foreach (nint address in FileDescriptors.Handles)
+                foreach (var address in FileDescriptors.Handles)
                     if (((FILE*)address)->_slot == descriptor) ((FILE*)address)->_slot = -1;
         }
         if (slot.Kind == FileSlot.K.Pipe)
@@ -4290,7 +4293,7 @@ public static unsafe partial class Libc
             ClosePipe(slot);
             lock (_filesLock)
             {
-                int index = _files.IndexOf(slot);
+                var index = _files.IndexOf(slot);
                 if (index >= 3) _files[index] = null;
             }
             return;
@@ -4303,7 +4306,7 @@ public static unsafe partial class Libc
             slot.Socket = null;
             lock (_filesLock)
             {
-                int idx = _files.IndexOf(slot);
+                var idx = _files.IndexOf(slot);
                 if (idx >= 3) { _files[idx] = null; }
             }
             return;
@@ -4322,7 +4325,7 @@ public static unsafe partial class Libc
                     // Mark the table entry reusable even if flushing failed.
                     lock (_filesLock)
                     {
-                        int idx = _files.IndexOf(slot);
+                        var idx = _files.IndexOf(slot);
                         if (idx >= 3 || idx >= 0 && slot.Kind == FileSlot.K.Directory) { _files[idx] = null; }
                     }
                 }
@@ -4334,7 +4337,7 @@ public static unsafe partial class Libc
             (slot.Kind == FileSlot.K.Err ? Console.Error : Console.Out).Flush();
             lock (_filesLock)
             {
-                int index = _files.IndexOf(slot);
+                var index = _files.IndexOf(slot);
                 if (index >= 3) _files[index] = null;
             }
         }
@@ -4346,7 +4349,7 @@ public static unsafe partial class Libc
             StatusFlags = stream.CanRead ? (stream.CanWrite ? 2 : 0) : 1 };
         lock (_filesLock)
         {
-            for (int i = 3; i < _files.Count; i++)
+            for (var i = 3; i < _files.Count; i++)
             {
                 if (_files[i] == null) { _files[i] = slot; return i; }
             }
@@ -4360,7 +4363,7 @@ public static unsafe partial class Libc
         slot.StatusFlags = access == FileAccess.Read ? 0 : access == FileAccess.Write ? 1 : 2;
         if (*mode == (byte)'a') slot.StatusFlags |= 0x400;
         slot.DescriptorFlags = 0;
-        for (byte* p = mode + 1; *p != 0; p++) if (*p == (byte)'e') slot.DescriptorFlags = 1;
+        for (var p = mode + 1; *p != 0; p++) if (*p == (byte)'e') slot.DescriptorFlags = 1;
         slot.StdioAccess = access == FileAccess.Read ? 1 : access == FileAccess.Write ? 2 : 3;
     }
 
@@ -4368,11 +4371,11 @@ public static unsafe partial class Libc
     {
         if (OperatingSystem.IsLinux() && RuntimeInformation.ProcessArchitecture == Architecture.X64)
         {
-            int flags = access == FileAccess.Read ? 0 : access == FileAccess.Write ? 1 : 2;
+            var flags = access == FileAccess.Read ? 0 : access == FileAccess.Write ? 1 : 2;
             if (*mode == (byte)'w') flags |= 0x40 | 0x200;
             if (*mode == (byte)'a') flags |= 0x40 | 0x400;
             if (fileMode == FileMode.CreateNew) flags |= 0x80;
-            for (byte* p = mode + 1; *p != 0; p++) if (*p == (byte)'e') flags |= 0x80000;
+            for (var p = mode + 1; *p != 0; p++) if (*p == (byte)'e') flags |= 0x80000;
             var stream = OpenLinuxStream(path, flags, 0x1b6); // 0666, filtered by the kernel umask
             if (stream is { CanSeek: true } && *mode == (byte)'a' && access == FileAccess.Write)
                 stream.Seek(0, SeekOrigin.End);
@@ -4396,9 +4399,9 @@ public static unsafe partial class Libc
     {
         fileMode = FileMode.Open;
         access = FileAccess.Read;
-        byte first = *mode;
+        var first = *mode;
         bool plus = false, exclusive = false;
-        for (byte* m = mode; *m != 0; m++)
+        for (var m = mode; *m != 0; m++)
         {
             if (*m == (byte)'+') plus = true;
             if (*m == (byte)'x') exclusive = true;
@@ -4467,7 +4470,7 @@ public static unsafe partial class Libc
             errno = ESPIPE;
             return -1;
         }
-        long pos = st.Position + slot.BufferedBytes;
+        var pos = st.Position + slot.BufferedBytes;
         // Account for a byte buffered by a pending Peek().
         if (slot.Reader is { HasPushback: true }) { pos -= 1; }
         return pos;
@@ -4550,9 +4553,9 @@ public static unsafe partial class Libc
     {
         try
         {
-            int count = slot.BufferedBytes;
+            var count = slot.BufferedBytes;
             slot.BufferedBytes = 0;
-            for (int i = 0; i < count; i++)
+            for (var i = 0; i < count; i++)
                 if (!WriteByteBacking(slot, slot.UserBuffer != null ? slot.UserBuffer[i] : slot.OutputBuffer![i]))
                 { slot.Err = true; return false; }
             if (count != 0) FlushBacking(slot);
@@ -4592,8 +4595,8 @@ public static unsafe partial class Libc
                 if (_tmpnamBuf == null) { _tmpnamBuf = (byte*)NativeMemory.Alloc((nuint)LTmpnam); }
             }
         }
-        byte* dst = s != null ? s : _tmpnamBuf;
-        for (int i = 0; i < bytes.Length; i++) { dst[i] = bytes[i]; }
+        var dst = s != null ? s : _tmpnamBuf;
+        for (var i = 0; i < bytes.Length; i++) { dst[i] = bytes[i]; }
         dst[bytes.Length] = 0;
         return dst;
     }
@@ -4606,7 +4609,7 @@ public static unsafe partial class Libc
         {
             FileSlot?[] all;
             lock (_filesLock) all = _files.ToArray();
-            int result = 0;
+            var result = 0;
             foreach (var current in all)
                 if (current != null && current.BufferMode >= 0)
                 {
@@ -4652,11 +4655,11 @@ public static unsafe partial class Libc
     {
         if (size <= 0 || nmemb <= 0) { return 0; }
         var dst = (byte*)ptr;
-        long total = (long)size * nmemb;
+        var total = (long)size * nmemb;
         long got = 0;
         for (; got < total; got++)
         {
-            int b = ReadByteFrom(stream);
+            var b = ReadByteFrom(stream);
             if (b < 0) { break; }
             dst[got] = (byte)b;
         }
@@ -4672,7 +4675,7 @@ public static unsafe partial class Libc
     {
         if (size <= 0 || nmemb <= 0) { return 0; }
         var src = (byte*)ptr;
-        long total = (long)size * nmemb;
+        var total = (long)size * nmemb;
         // Stop at the first byte that can't be written (e.g. a read-only stream):
         // C's fwrite returns the count of COMPLETE elements written, and the
         // partial element is lost. errno / the error indicator are set by
@@ -4738,7 +4741,7 @@ public static unsafe partial class Libc
                 FileShare.None, bufferSize: 4096, FileOptions.DeleteOnClose);
         }
         catch (IOException) { errno = EIO; return null; }
-        int slot = RegisterFileSlot(stream);
+        var slot = RegisterFileSlot(stream);
         return AllocateFileHandle(slot);
     }
 
@@ -4763,15 +4766,15 @@ public static unsafe partial class Libc
             if (c < 0x80) { if (!WriteByteSlot(_s, (byte)c)) throw new IOException(); return; }
             Span<char> one = stackalloc char[1] { c };
             Span<byte> buf = stackalloc byte[4];
-            int n = Encoding.UTF8.GetBytes(one, buf);
-            for (int i = 0; i < n; i++) if (!WriteByteSlot(_s, buf[i])) throw new IOException();
+            var n = Encoding.UTF8.GetBytes(one, buf);
+            for (var i = 0; i < n; i++) if (!WriteByteSlot(_s, buf[i])) throw new IOException();
         }
 
         public override void Write(string? value)
         {
             if (string.IsNullOrEmpty(value)) { return; }
             var bytes = Encoding.UTF8.GetBytes(value);
-            foreach (byte b in bytes) if (!WriteByteSlot(_s, b)) throw new IOException();
+            foreach (var b in bytes) if (!WriteByteSlot(_s, b)) throw new IOException();
         }
 
         public override void Flush() { if (!FlushStdioBuffer(_s)) throw new IOException(); FlushBacking(_s); }
@@ -4832,7 +4835,7 @@ public static unsafe partial class Libc
 
         public override int Read()
         {
-            if (_pushed >= 0) { int r = _pushed; _pushed = -1; return r; }
+            if (_pushed >= 0) { var r = _pushed; _pushed = -1; return r; }
             if (!_s.CanRead) { return -1; }  // write-only stream → EOF, not a throw
             return _s.ReadByte();
         }
@@ -4849,19 +4852,19 @@ public static unsafe partial class Libc
 {
     // Keeping this table weak avoids making a runtime identity a process root.
     // RuntimeContext.Dispose releases native handles and backings deterministically.
-    private static readonly ConditionalWeakTable<RuntimeContext, DescriptorState> descriptorStates = new();
-    private static DescriptorState FileDescriptors => descriptorStates.GetValue(RuntimeState, static _ => new());
+    private static readonly ConditionalWeakTable<RuntimeContext, DescriptorState> descriptorStates = new ConditionalWeakTable<RuntimeContext, DescriptorState>();
+    private static DescriptorState FileDescriptors => descriptorStates.GetValue(RuntimeState, static _ => new DescriptorState());
 
     private sealed class DescriptorState
     {
-        internal readonly Lock Sync = new();
-        internal readonly List<FileSlot?> Files = new()
+        internal readonly Lock Sync = new Lock();
+        internal readonly List<FileSlot?> Files = new List<FileSlot?>
         {
-            new() { Kind = FileSlot.K.In },
-            new() { Kind = FileSlot.K.Out, StatusFlags = 1 },
-            new() { Kind = FileSlot.K.Err, StatusFlags = 1 },
+            new FileSlot { Kind = FileSlot.K.In },
+            new FileSlot { Kind = FileSlot.K.Out, StatusFlags = 1 },
+            new FileSlot { Kind = FileSlot.K.Err, StatusFlags = 1 },
         };
-        internal readonly HashSet<nint> Handles = new();
+        internal readonly HashSet<nint> Handles = new HashSet<IntPtr>();
         internal FILE* Stdin, Stdout, Stderr;
         internal byte* Tmpnam;
     }
@@ -4897,7 +4900,7 @@ public static unsafe partial class Libc
                 slot.Socket?.Dispose();
             }
             state.Files.Clear();
-            foreach (nint handle in state.Handles) NativeMemory.Free((void*)handle);
+            foreach (var handle in state.Handles) NativeMemory.Free((void*)handle);
             state.Handles.Clear();
             NativeMemory.Free(state.Tmpnam);
             state.Stdin = state.Stdout = state.Stderr = null;
@@ -4955,7 +4958,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     private Float128(UInt128 bits) => _bits = bits;
 
     /// <summary>Reinterpret a raw 128-bit pattern as a binary128 value.</summary>
-    public static Float128 FromBits(UInt128 bits) => new(bits);
+    public static Float128 FromBits(UInt128 bits) => new Float128(bits);
 
     /// <summary>The raw IEEE-754 binary128 bit pattern.</summary>
     public UInt128 Bits => _bits;
@@ -4971,20 +4974,20 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
          | (trailing & MantissaMask);
 
     // ── constants ──────────────────────────────────────────────────────────
-    public static Float128 Zero => new(UInt128.Zero);
-    public static Float128 NegativeZero => new(UInt128.One << SignShift);
-    public static Float128 One => new(Assemble(false, ExponentBias, UInt128.Zero));
-    public static Float128 PositiveInfinity => new(Assemble(false, MaxBiasedExponent, UInt128.Zero));
-    public static Float128 NegativeInfinity => new(Assemble(true, MaxBiasedExponent, UInt128.Zero));
+    public static Float128 Zero => new Float128(UInt128.Zero);
+    public static Float128 NegativeZero => new Float128(UInt128.One << SignShift);
+    public static Float128 One => new Float128(Assemble(false, ExponentBias, UInt128.Zero));
+    public static Float128 PositiveInfinity => new Float128(Assemble(false, MaxBiasedExponent, UInt128.Zero));
+    public static Float128 NegativeInfinity => new Float128(Assemble(true, MaxBiasedExponent, UInt128.Zero));
     // Quiet NaN: max exponent, MSB of the fraction set.
-    public static Float128 NaN => new(Assemble(false, MaxBiasedExponent, UInt128.One << (MantissaBits - 1)));
+    public static Float128 NaN => new Float128(Assemble(false, MaxBiasedExponent, UInt128.One << (MantissaBits - 1)));
 
     /// <summary>Largest finite binary128 (exponent 0x7FFE, all fraction bits set).</summary>
     private static UInt128 MaxFiniteBits => ((UInt128)(MaxBiasedExponent - 1) << ExponentShift) | MantissaMask;
-    public static Float128 MaxValue => new(MaxFiniteBits);
-    public static Float128 MinValue => new(MaxFiniteBits | (UInt128.One << SignShift));
+    public static Float128 MaxValue => new Float128(MaxFiniteBits);
+    public static Float128 MinValue => new Float128(MaxFiniteBits | (UInt128.One << SignShift));
     /// <summary>Smallest positive subnormal (.NET <c>Epsilon</c> convention).</summary>
-    public static Float128 Epsilon => new(UInt128.One);
+    public static Float128 Epsilon => new Float128(UInt128.One);
     public static Float128 Pi => FromFixedSigned(FpPi);
     public static Float128 Tau => FromFixedSigned(FpPi << 1);
     public static Float128 E => Exp(One);
@@ -4997,26 +5000,26 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     public static bool IsNegative(Float128 v) => v.SignBit;
 
     // ── sign ops ─────────────────────────────────────────────────────────────
-    public static Float128 Negate(Float128 v) => new(v._bits ^ (UInt128.One << SignShift));
-    public static Float128 Abs(Float128 v) => new(v._bits & ~(UInt128.One << SignShift));
+    public static Float128 Negate(Float128 v) => new Float128(v._bits ^ (UInt128.One << SignShift));
+    public static Float128 Abs(Float128 v) => new Float128(v._bits & ~(UInt128.One << SignShift));
 
     // ── double (binary64) → binary128 : always EXACT (no rounding) ───────────
     // binary128 has strictly more exponent range and precision than binary64,
     // so every double — normal, subnormal, zero, inf, NaN — maps exactly.
     public static Float128 FromDouble(double d)
     {
-        ulong b = BitConverter.DoubleToUInt64Bits(d);
-        bool sign = (b >> 63) != 0;
-        int exp = (int)((b >> 52) & 0x7FF);   // biased binary64 exponent
-        ulong frac = b & 0x000F_FFFF_FFFF_FFFFUL; // 52-bit fraction
+        var b = BitConverter.DoubleToUInt64Bits(d);
+        var sign = (b >> 63) != 0;
+        var exp = (int)((b >> 52) & 0x7FF);   // biased binary64 exponent
+        var frac = b & 0x000F_FFFF_FFFF_FFFFUL; // 52-bit fraction
 
         if (exp == 0x7FF)
         {
             // inf / NaN. Preserve a NaN payload (widened into the high fraction
             // bits) and the quiet bit; map infinity to infinity.
             if (frac == 0) { return sign ? NegativeInfinity : PositiveInfinity; }
-            UInt128 widenedNaN = (UInt128)frac << (MantissaBits - 52);
-            return new(Assemble(sign, MaxBiasedExponent, widenedNaN));
+            var widenedNaN = (UInt128)frac << (MantissaBits - 52);
+            return new Float128(Assemble(sign, MaxBiasedExponent, widenedNaN));
         }
         if (exp == 0)
         {
@@ -5026,30 +5029,30 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
             // up to the implicit position. (This is the case naive libraries
             // get wrong.)
             if (frac == 0) { return sign ? NegativeZero : Zero; }
-            int msb = 63 - BitOperations.LeadingZeroCount(frac); // 0..51
+            var msb = 63 - BitOperations.LeadingZeroCount(frac); // 0..51
             // Unbiased value exponent of a double subnormal: frac * 2^-1074,
             // normalised to 1.f * 2^(msb-1074).
-            int unbiased = msb - 1074;
-            int biased128 = unbiased + ExponentBias;
+            var unbiased = msb - 1074;
+            var biased128 = unbiased + ExponentBias;
             // Drop the leading bit, left-align the remaining fraction to 112 bits.
-            ulong fracNoLead = frac & ~(1UL << msb);
-            UInt128 trailing = (UInt128)fracNoLead << (MantissaBits - msb);
-            return new(Assemble(sign, biased128, trailing));
+            var fracNoLead = frac & ~(1UL << msb);
+            var trailing = (UInt128)fracNoLead << (MantissaBits - msb);
+            return new Float128(Assemble(sign, biased128, trailing));
         }
         // Normal binary64: rebias the exponent, left-align the 52-bit fraction
         // into the 112-bit field.
-        int biased = (exp - 1023) + ExponentBias;
-        UInt128 trailing128 = (UInt128)frac << (MantissaBits - 52); // <<60
-        return new(Assemble(sign, biased, trailing128));
+        var biased = (exp - 1023) + ExponentBias;
+        var trailing128 = (UInt128)frac << (MantissaBits - 52); // <<60
+        return new Float128(Assemble(sign, biased, trailing128));
     }
 
     // ── binary128 → double (binary64) : correctly rounded (nearest, ties even) ─
     public static double ToDouble(Float128 v)
     {
-        bool sign = v.SignBit;
-        ulong signBit = sign ? (1UL << 63) : 0;
-        int exp = v.BiasedExponent;
-        UInt128 trailing = v.TrailingSignificand;
+        var sign = v.SignBit;
+        var signBit = sign ? (1UL << 63) : 0;
+        var exp = v.BiasedExponent;
+        var trailing = v.TrailingSignificand;
 
         if (exp == MaxBiasedExponent)
         {
@@ -5058,7 +5061,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
                 return sign ? double.NegativeInfinity : double.PositiveInfinity;
             }
             // NaN — narrow the payload from the top fraction bits, keep it quiet.
-            ulong payload = (ulong)(trailing >> (MantissaBits - 52)) & 0x000F_FFFF_FFFF_FFFFUL;
+            var payload = (ulong)(trailing >> (MantissaBits - 52)) & 0x000F_FFFF_FFFF_FFFFUL;
             return BitConverter.UInt64BitsToDouble(signBit | 0x7FF0_0000_0000_0000UL | (1UL << 51) | payload);
         }
 
@@ -5071,8 +5074,8 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
         }
 
         // Normal binary128. Full significand = implicit 1 + 112 trailing bits.
-        int unbiased = exp - ExponentBias;
-        UInt128 significand = ImplicitBit | trailing; // 113 significant bits
+        var unbiased = exp - ExponentBias;
+        var significand = ImplicitBit | trailing; // 113 significant bits
 
         // Target a binary64 with an implicit-1 significand of 53 bits. The
         // double's unbiased exponent must land in [-1022, 1023] for a normal;
@@ -5095,7 +5098,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
         }
         else
         {
-            int extra = -1022 - unbiased;        // ≥ 1
+            var extra = -1022 - unbiased;        // ≥ 1
             dropBits = (MantissaBits - 52) + extra;
             doubleBiasedExp = 0;
             if (dropBits >= 114)
@@ -5106,7 +5109,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
             }
         }
 
-        UInt128 rounded = RoundShiftRight(significand, dropBits);
+        var rounded = RoundShiftRight(significand, dropBits);
         ulong fracOut;
         int finalExp;
         if (doubleBiasedExp == 0)
@@ -5142,7 +5145,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
             fracOut = (ulong)(rounded & ((UInt128.One << 52) - 1)); // strip implicit 1
         }
 
-        ulong bits = signBit | ((ulong)finalExp << 52) | fracOut;
+        var bits = signBit | ((ulong)finalExp << 52) | fracOut;
         return BitConverter.UInt64BitsToDouble(bits);
     }
 
@@ -5150,27 +5153,27 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     /// A binary64 intermediate can erase the sticky bit that decides a binary32 midpoint.</summary>
     public static float ToSingle(Float128 value)
     {
-        uint sign = value.SignBit ? 0x8000_0000u : 0u;
-        int exponent = value.BiasedExponent;
-        UInt128 fraction = value.TrailingSignificand;
+        var sign = value.SignBit ? 0x8000_0000u : 0u;
+        var exponent = value.BiasedExponent;
+        var fraction = value.TrailingSignificand;
         if (exponent == MaxBiasedExponent)
         {
-            uint payload = fraction == UInt128.Zero ? 0u
+            var payload = fraction == UInt128.Zero ? 0u
                 : ((uint)(fraction >> (MantissaBits - 23)) | 0x0040_0000u);
             return BitConverter.UInt32BitsToSingle(sign | 0x7F80_0000u | payload);
         }
         // Every binary128 subnormal is far below half the smallest binary32 subnormal.
         if (exponent == 0) return BitConverter.UInt32BitsToSingle(sign);
 
-        int unbiased = exponent - ExponentBias;
+        var unbiased = exponent - ExponentBias;
         if (unbiased > 127) return BitConverter.UInt32BitsToSingle(sign | 0x7F80_0000u);
         if (unbiased < -150) return BitConverter.UInt32BitsToSingle(sign);
 
-        UInt128 significand = ImplicitBit | fraction;
+        var significand = ImplicitBit | fraction;
         // Normals retain 24 bits. Subnormals use the fixed 2^-149 quantum instead.
         // Here dropBits is at most 113, so UInt128's shift never wraps at 128.
-        int dropBits = MantissaBits - 23 + Math.Max(0, -126 - unbiased);
-        UInt128 rounded = RoundShiftRight(significand, dropBits);
+        var dropBits = MantissaBits - 23 + Math.Max(0, -126 - unbiased);
+        var rounded = RoundShiftRight(significand, dropBits);
         if (unbiased < -126)
         {
             // A carry to bit 23 already encodes the minimum normal's exponent field.
@@ -5182,7 +5185,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
             unbiased++;
             if (unbiased > 127) return BitConverter.UInt32BitsToSingle(sign | 0x7F80_0000u);
         }
-        uint bits = sign | ((uint)(unbiased + 127) << 23) | ((uint)rounded & 0x007F_FFFFu);
+        var bits = sign | ((uint)(unbiased + 127) << 23) | ((uint)rounded & 0x007F_FFFFu);
         return BitConverter.UInt32BitsToSingle(bits);
     }
 
@@ -5196,10 +5199,10 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     {
         if (shift <= 0) { return value; }
 
-        UInt128 kept = value >> shift;
-        UInt128 roundBitMask = UInt128.One << (shift - 1);
-        bool roundBit = (value & roundBitMask) != UInt128.Zero;
-        bool sticky = (value & (roundBitMask - 1)) != UInt128.Zero;
+        var kept = value >> shift;
+        var roundBitMask = UInt128.One << (shift - 1);
+        var roundBit = (value & roundBitMask) != UInt128.Zero;
+        var sticky = (value & (roundBitMask - 1)) != UInt128.Zero;
 
         if (roundBit && (sticky || (kept & UInt128.One) != UInt128.Zero))
         {
@@ -5232,8 +5235,8 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     private static void Decompose(Float128 v, out bool sign, out BigInteger sig, out int q)
     {
         sign = v.SignBit;
-        int e = v.BiasedExponent;
-        UInt128 trailing = v.TrailingSignificand;
+        var e = v.BiasedExponent;
+        var trailing = v.TrailingSignificand;
         if (e == 0)
         {
             sig = ToBig(trailing);          // subnormal (or zero)
@@ -5254,15 +5257,15 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     /// </summary>
     private static Float128 RoundToBinary128(bool sign, BigInteger mag, int q, bool extraSticky)
     {
-        UInt128 signMask = sign ? (UInt128.One << SignShift) : UInt128.Zero;
+        var signMask = sign ? (UInt128.One << SignShift) : UInt128.Zero;
         if (mag.IsZero)
         {
             return new Float128(signMask); // signed zero
         }
 
-        int bitlen = (int)mag.GetBitLength();
-        int unbiased = q + bitlen - 1;            // exponent of the leading bit
-        int biased = unbiased + ExponentBias;
+        var bitlen = (int)mag.GetBitLength();
+        var unbiased = q + bitlen - 1;            // exponent of the leading bit
+        var biased = unbiased + ExponentBias;
 
         if (biased >= MaxBiasedExponent)           // overflow → ±inf
         {
@@ -5272,7 +5275,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
         if (biased >= 1)
         {
             // Normal target: keep 113 significand bits (implicit 1 + 112).
-            BigInteger kept = RoundToBits(mag, bitlen - (MantissaBits + 1), extraSticky);
+            var kept = RoundToBits(mag, bitlen - (MantissaBits + 1), extraSticky);
             if ((int)kept.GetBitLength() == MantissaBits + 2)
             {
                 // Rounding carried 1.11..1 → 10.00..0: drop a bit, bump exponent.
@@ -5283,13 +5286,13 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
                     return new Float128(signMask | ((UInt128)MaxBiasedExponent << ExponentShift));
                 }
             }
-            UInt128 trailing = ToU128(kept) & MantissaMask;   // strip implicit 1
+            var trailing = ToU128(kept) & MantissaMask;   // strip implicit 1
             return new Float128(signMask | ((UInt128)(uint)biased << ExponentShift) | trailing);
         }
 
         // Subnormal / underflow target: value goes on the fixed 2^SubnormalQuantum
         // grid, exponent field 0. frac = round(mag · 2^(q - SubnormalQuantum)).
-        BigInteger frac = RoundToBits(mag, SubnormalQuantum - q, extraSticky);
+        var frac = RoundToBits(mag, SubnormalQuantum - q, extraSticky);
         if ((int)frac.GetBitLength() >= MantissaBits + 1)
         {
             // Rounded up into the smallest normal (frac == 2^112): exponent 1, frac 0.
@@ -5307,10 +5310,10 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     private static BigInteger RoundToBits(BigInteger mag, int dropBits, bool extraSticky)
     {
         if (dropBits <= 0) { return mag << -dropBits; }
-        BigInteger kept = mag >> dropBits;
-        BigInteger rem = mag - (kept << dropBits);
-        BigInteger half = BigInteger.One << (dropBits - 1);
-        bool roundUp = rem > half
+        var kept = mag >> dropBits;
+        var rem = mag - (kept << dropBits);
+        var half = BigInteger.One << (dropBits - 1);
+        var roundUp = rem > half
             || (rem == half && (extraSticky || !kept.IsEven));
         return roundUp ? kept + BigInteger.One : kept;
     }
@@ -5334,12 +5337,12 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
         if (IsZero(a)) { return b; }
         if (IsZero(b)) { return a; }
 
-        Decompose(a, out bool sa, out BigInteger ma, out int qa);
-        Decompose(b, out bool sb, out BigInteger mb, out int qb);
-        int common = Math.Min(qa, qb);
-        BigInteger ia = (sa ? -ma : ma) << (qa - common);
-        BigInteger ib = (sb ? -mb : mb) << (qb - common);
-        BigInteger sum = ia + ib;
+        Decompose(a, out var sa, out var ma, out var qa);
+        Decompose(b, out var sb, out var mb, out var qb);
+        var common = Math.Min(qa, qb);
+        var ia = (sa ? -ma : ma) << (qa - common);
+        var ib = (sb ? -mb : mb) << (qb - common);
+        var sum = ia + ib;
         if (sum.IsZero) { return Zero; } // exact cancellation → +0 in round-nearest
         return RoundToBinary128(sum.Sign < 0, BigInteger.Abs(sum), common, extraSticky: false);
     }
@@ -5348,7 +5351,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
 
     public static Float128 Multiply(Float128 a, Float128 b)
     {
-        bool sign = a.SignBit ^ b.SignBit;
+        var sign = a.SignBit ^ b.SignBit;
         if (IsNaN(a) || IsNaN(b)) { return NaN; }
         if (IsInfinity(a) || IsInfinity(b))
         {
@@ -5358,8 +5361,8 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
         }
         if (IsZero(a) || IsZero(b)) { return sign ? NegativeZero : Zero; }
 
-        Decompose(a, out _, out BigInteger ma, out int qa);
-        Decompose(b, out _, out BigInteger mb, out int qb);
+        Decompose(a, out _, out var ma, out var qa);
+        Decompose(b, out _, out var mb, out var qb);
         // Exact product significand; round once. (qa+qb can't overflow int —
         // both are within ±~16500.)
         return RoundToBinary128(sign, ma * mb, qa + qb, extraSticky: false);
@@ -5367,7 +5370,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
 
     public static Float128 Divide(Float128 a, Float128 b)
     {
-        bool sign = a.SignBit ^ b.SignBit;
+        var sign = a.SignBit ^ b.SignBit;
         if (IsNaN(a) || IsNaN(b)) { return NaN; }
         if (IsInfinity(a))
         {
@@ -5382,14 +5385,14 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
         }
         if (IsZero(a)) { return sign ? NegativeZero : Zero; }
 
-        Decompose(a, out _, out BigInteger ma, out int qa);
-        Decompose(b, out _, out BigInteger mb, out int qb);
+        Decompose(a, out _, out var ma, out var qa);
+        Decompose(b, out _, out var mb, out var qb);
         // Quotient with ~130 significant bits + an exact remainder for sticky.
         // P keeps the scaled numerator wide enough that floor-division yields a
         // quotient with round room regardless of the operands' bit lengths.
-        int p = 130 - (int)ma.GetBitLength() + (int)mb.GetBitLength();
-        BigInteger num = ma << p;
-        BigInteger q = BigInteger.DivRem(num, mb, out BigInteger r);
+        var p = 130 - (int)ma.GetBitLength() + (int)mb.GetBitLength();
+        var num = ma << p;
+        var q = BigInteger.DivRem(num, mb, out var r);
         return RoundToBinary128(sign, q, qa - qb - p, extraSticky: r != BigInteger.Zero);
     }
 
@@ -5400,15 +5403,15 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
         if (x.SignBit) { return NaN; }               // sqrt(negative) = NaN
         if (IsInfinity(x)) { return PositiveInfinity; }
 
-        Decompose(x, out _, out BigInteger m, out int q);
+        Decompose(x, out _, out var m, out var q);
         // Make the radicand exponent even so value = sqrt(m·2^q) factors as
         // sqrt(m')·2^(q'/2) with q' even.
         if ((q & 1) != 0) { m <<= 1; q -= 1; }
         // Scale up by 2^(2k) so floor(sqrt(·)) has ~130 bits, then sqrt.
-        int k = 130 - (int)m.GetBitLength() / 2;
-        BigInteger n = m << (2 * k);
-        BigInteger s = ISqrt(n);                      // floor(sqrt(n))
-        bool inexact = s * s != n;                    // residual ⇒ sticky
+        var k = 130 - (int)m.GetBitLength() / 2;
+        var n = m << (2 * k);
+        var s = ISqrt(n);                      // floor(sqrt(n))
+        var inexact = s * s != n;                    // residual ⇒ sticky
         // value = sqrt(n)·2^(q/2 - k); sqrt(n) ∈ [s, s+1) ⇒ mag s, sticky inexact.
         return RoundToBinary128(false, s, q / 2 - k, extraSticky: inexact);
     }
@@ -5416,7 +5419,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     public static Float128 FusedMultiplyAdd(Float128 a, Float128 b, Float128 c)
     {
         if (IsNaN(a) || IsNaN(b) || IsNaN(c)) { return NaN; }
-        bool sp = a.SignBit ^ b.SignBit;             // sign of the a·b product
+        var sp = a.SignBit ^ b.SignBit;             // sign of the a·b product
         bool aInf = IsInfinity(a), bInf = IsInfinity(b);
         bool aZero = IsZero(a), bZero = IsZero(b);
         if ((aInf && bZero) || (aZero && bInf)) { return NaN; } // 0·inf invalid
@@ -5433,17 +5436,17 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
             return Add(sp ? NegativeZero : Zero, c);
         }
 
-        Decompose(a, out _, out BigInteger ma, out int qa);
-        Decompose(b, out _, out BigInteger mb, out int qb);
-        BigInteger mp = ma * mb;                      // EXACT product significand
-        int qp = qa + qb;
+        Decompose(a, out _, out var ma, out var qa);
+        Decompose(b, out _, out var mb, out var qb);
+        var mp = ma * mb;                      // EXACT product significand
+        var qp = qa + qb;
         if (IsZero(c)) { return RoundToBinary128(sp, mp, qp, extraSticky: false); }
 
-        Decompose(c, out bool sc, out BigInteger mc, out int qc);
-        int common = Math.Min(qp, qc);
-        BigInteger ip = (sp ? -mp : mp) << (qp - common);
-        BigInteger ic = (sc ? -mc : mc) << (qc - common);
-        BigInteger sum = ip + ic;                     // EXACT a·b + c
+        Decompose(c, out var sc, out var mc, out var qc);
+        var common = Math.Min(qp, qc);
+        var ip = (sp ? -mp : mp) << (qp - common);
+        var ic = (sc ? -mc : mc) << (qc - common);
+        var sum = ip + ic;                     // EXACT a·b + c
         if (sum.IsZero) { return Zero; }
         return RoundToBinary128(sum.Sign < 0, BigInteger.Abs(sum), common, extraSticky: false);
     }
@@ -5452,9 +5455,9 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     public static Float128 Truncate(Float128 x)
     {
         if (IsNaN(x) || IsInfinity(x) || IsZero(x)) { return x; }
-        Decompose(x, out bool s, out BigInteger m, out int q);
+        Decompose(x, out var s, out var m, out var q);
         if (q >= 0) { return x; }                    // already integral
-        int shift = -q;
+        var shift = -q;
         if (shift >= (int)m.GetBitLength()) { return s ? NegativeZero : Zero; } // |x| < 1
         return RoundToBinary128(s, m >> shift, 0, extraSticky: false); // drop fraction → toward 0
     }
@@ -5462,7 +5465,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     public static Float128 Floor(Float128 x)
     {
         if (IsNaN(x) || IsInfinity(x) || IsZero(x)) { return x; }
-        Float128 t = Truncate(x);
+        var t = Truncate(x);
         // Negative non-integers truncate up (toward 0), so step down to -inf.
         return (x.SignBit && t != x) ? Subtract(t, One) : t;
     }
@@ -5470,7 +5473,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     public static Float128 Ceiling(Float128 x)
     {
         if (IsNaN(x) || IsInfinity(x) || IsZero(x)) { return x; }
-        Float128 t = Truncate(x);
+        var t = Truncate(x);
         return (!x.SignBit && t != x) ? Add(t, One) : t;
     }
 
@@ -5479,14 +5482,14 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     public static Float128 Round(Float128 x)
     {
         if (IsNaN(x) || IsInfinity(x) || IsZero(x)) { return x; }
-        Decompose(x, out bool s, out BigInteger m, out int q);
+        Decompose(x, out var s, out var m, out var q);
         if (q >= 0) { return x; }
-        int shift = -q;
-        int bits = (int)m.GetBitLength();
+        var shift = -q;
+        var bits = (int)m.GetBitLength();
         if (shift > bits) { return s ? NegativeZero : Zero; } // |x| < 0.5
-        BigInteger kept = m >> shift;
-        BigInteger rem = m - (kept << shift);
-        BigInteger half = BigInteger.One << (shift - 1);
+        var kept = m >> shift;
+        var rem = m - (kept << shift);
+        var half = BigInteger.One << (shift - 1);
         if (rem > half || (rem == half && !kept.IsEven)) { kept += BigInteger.One; }
         return kept.IsZero ? (s ? NegativeZero : Zero) : RoundToBinary128(s, kept, 0, false);
     }
@@ -5494,7 +5497,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     /// <summary>Magnitude of <paramref name="x"/>, sign of <paramref name="y"/>.</summary>
     public static Float128 CopySign(Float128 x, Float128 y)
     {
-        UInt128 signMask = UInt128.One << SignShift;
+        var signMask = UInt128.One << SignShift;
         return new Float128((x._bits & ~signMask) | (y._bits & signMask));
     }
 
@@ -5503,11 +5506,11 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     {
         if (IsNaN(x) || IsNaN(y) || IsInfinity(x) || IsZero(y)) { return NaN; }
         if (IsInfinity(y) || IsZero(x)) { return x; }
-        bool s = x.SignBit;
-        Decompose(x, out _, out BigInteger mx, out int qx);
-        Decompose(y, out _, out BigInteger my, out int qy);
-        int c = Math.Min(qx, qy);
-        BigInteger r = (mx << (qx - c)) % (my << (qy - c));   // exact remainder
+        var s = x.SignBit;
+        Decompose(x, out _, out var mx, out var qx);
+        Decompose(y, out _, out var my, out var qy);
+        var c = Math.Min(qx, qy);
+        var r = (mx << (qx - c)) % (my << (qy - c));   // exact remainder
         if (r.IsZero) { return s ? NegativeZero : Zero; }
         return RoundToBinary128(s, r, c, extraSticky: false); // r exact ⇒ identity
     }
@@ -5516,13 +5519,13 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     {
         if (IsNaN(x)) { return NaN; }
         if (IsZero(x) || IsInfinity(x)) { return x; } // cbrt(±0)=±0, cbrt(±inf)=±inf
-        bool s = x.SignBit;                            // cbrt preserves sign
-        Decompose(x, out _, out BigInteger m, out int q);
+        var s = x.SignBit;                            // cbrt preserves sign
+        Decompose(x, out _, out var m, out var q);
         // Make q a multiple of 3 so value = cbrt(m')·2^(q'/3).
         while ((((q % 3) + 3) % 3) != 0) { m <<= 1; q--; }
-        int k = 130 - (int)m.GetBitLength() / 3;
-        BigInteger n = m << (3 * k);
-        BigInteger c = ICbrt(n);
+        var k = 130 - (int)m.GetBitLength() / 3;
+        var n = m << (3 * k);
+        var c = ICbrt(n);
         return RoundToBinary128(s, c, q / 3 - k, extraSticky: c * c * c != n);
     }
 
@@ -5532,16 +5535,16 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
         if (IsNaN(x) || IsNaN(y)) { return NaN; }
         if (IsZero(x)) { return Abs(y); }
         if (IsZero(y)) { return Abs(x); }
-        Decompose(x, out _, out BigInteger mx, out int qx);
-        Decompose(y, out _, out BigInteger my, out int qy);
+        Decompose(x, out _, out var mx, out var qx);
+        Decompose(y, out _, out var my, out var qy);
         // x² + y² computed EXACTLY at a common exponent, then correctly-rounded
         // sqrt — so hypot itself is correctly rounded.
-        int c = Math.Min(2 * qx, 2 * qy);
-        BigInteger sum = ((mx * mx) << (2 * qx - c)) + ((my * my) << (2 * qy - c));
+        var c = Math.Min(2 * qx, 2 * qy);
+        var sum = ((mx * mx) << (2 * qx - c)) + ((my * my) << (2 * qy - c));
         if ((c & 1) != 0) { sum <<= 1; c--; }          // even exponent for sqrt
-        int k = 130 - (int)sum.GetBitLength() / 2;
-        BigInteger n = sum << (2 * k);
-        BigInteger sq = ISqrt(n);
+        var k = 130 - (int)sum.GetBitLength() / 2;
+        var n = sum << (2 * k);
+        var sq = ISqrt(n);
         return RoundToBinary128(false, sq, c / 2 - k, extraSticky: sq * sq != n);
     }
 
@@ -5549,10 +5552,10 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     private static BigInteger ICbrt(BigInteger n)
     {
         if (n <= BigInteger.Zero) { return BigInteger.Zero; }
-        BigInteger x = BigInteger.One << (((int)n.GetBitLength() + 2) / 3);
+        var x = BigInteger.One << (((int)n.GetBitLength() + 2) / 3);
         while (true)
         {
-            BigInteger x2 = (2 * x + n / (x * x)) / 3;
+            var x2 = (2 * x + n / (x * x)) / 3;
             if (x2 >= x) { break; }
             x = x2;
         }
@@ -5565,7 +5568,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     public static Float128 ScaleB(Float128 x, int n)
     {
         if (IsNaN(x) || IsInfinity(x) || IsZero(x)) { return x; }
-        Decompose(x, out bool s, out BigInteger sig, out int q);
+        Decompose(x, out var s, out var sig, out var q);
         return RoundToBinary128(s, sig, q + n, extraSticky: false);
     }
 
@@ -5575,7 +5578,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     {
         if (IsNaN(x) || IsZero(x)) { return int.MinValue; }
         if (IsInfinity(x)) { return int.MaxValue; }
-        Decompose(x, out _, out BigInteger sig, out int q);
+        Decompose(x, out _, out var sig, out var q);
         return q + (int)sig.GetBitLength() - 1;
     }
 
@@ -5584,15 +5587,15 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     {
         if (IsNaN(x) || IsNaN(y) || IsInfinity(x) || IsZero(y)) { return NaN; }
         if (IsInfinity(y) || IsZero(x)) { return x; }
-        Decompose(x, out bool xs, out BigInteger mx, out int qx);
-        Decompose(y, out _, out BigInteger my, out int qy);
-        int c = Math.Min(qx, qy);
-        BigInteger bigX = (xs ? -mx : mx) << (qx - c);
-        BigInteger absY = my << (qy - c);
-        BigInteger n = BigInteger.DivRem(bigX, absY, out BigInteger rem);
-        BigInteger twice = BigInteger.Abs(rem) << 1;
+        Decompose(x, out var xs, out var mx, out var qx);
+        Decompose(y, out _, out var my, out var qy);
+        var c = Math.Min(qx, qy);
+        var bigX = (xs ? -mx : mx) << (qx - c);
+        var absY = my << (qy - c);
+        var n = BigInteger.DivRem(bigX, absY, out var rem);
+        var twice = BigInteger.Abs(rem) << 1;
         if (twice > absY || (twice == absY && !n.IsEven)) { n += bigX.Sign >= 0 ? 1 : -1; }
-        BigInteger r = bigX - n * absY;
+        var r = bigX - n * absY;
         if (r.IsZero) { return xs ? NegativeZero : Zero; }
         return RoundToBinary128(r.Sign < 0, BigInteger.Abs(r), c, extraSticky: false);
     }
@@ -5601,7 +5604,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     public static Float128 BitIncrement(Float128 x)
     {
         if (IsNaN(x)) { return x; }
-        UInt128 signMask = UInt128.One << SignShift;
+        var signMask = UInt128.One << SignShift;
         if (IsInfinity(x)) { return x.SignBit ? new Float128(signMask | MaxFiniteBits) : x; }
         if (IsZero(x)) { return Epsilon; }
         return x.SignBit ? new Float128(x._bits - 1) : new Float128(x._bits + 1);
@@ -5617,9 +5620,9 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
         if (n == 2) { return Sqrt(x); }
         if (n == 3) { return Cbrt(x); }
         if (IsNaN(x)) { return NaN; }
-        bool negBase = x.SignBit && !IsZero(x);
+        var negBase = x.SignBit && !IsZero(x);
         if (negBase && (n & 1) == 0) { return NaN; } // even root of a negative
-        Float128 mag = Pow(Abs(x), Divide(One, FromInt64(n)));
+        var mag = Pow(Abs(x), Divide(One, FromInt64(n)));
         return (negBase && (n & 1) == 1) ? Negate(mag) : mag;
     }
 
@@ -5628,10 +5631,10 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     private static BigInteger ISqrt(BigInteger n)
     {
         if (n <= BigInteger.Zero) { return BigInteger.Zero; }
-        BigInteger x = BigInteger.One << (((int)n.GetBitLength() + 1) / 2);
+        var x = BigInteger.One << (((int)n.GetBitLength() + 1) / 2);
         while (true)
         {
-            BigInteger y = (x + n / x) >> 1;
+            var y = (x + n / x) >> 1;
             if (y >= x) { break; }
             x = y;
         }
@@ -5657,8 +5660,8 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
         if (IsNaN(v)) { return 0; }
         if (IsInfinity(v)) { return v.SignBit ? long.MinValue : long.MaxValue; }
         if (IsZero(v)) { return 0; }
-        Decompose(v, out bool sign, out BigInteger sig, out int q);
-        BigInteger ival = q >= 0 ? sig << q : sig >> -q; // drop fraction → toward zero
+        Decompose(v, out var sign, out var sig, out var q);
+        var ival = q >= 0 ? sig << q : sig >> -q; // drop fraction → toward zero
         if (sign) { ival = -ival; }
         if (ival > long.MaxValue) { return long.MaxValue; }
         if (ival < long.MinValue) { return long.MinValue; }
@@ -5684,8 +5687,8 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     {
         if (IsNaN(v) || IsInfinity(v)) { return null; }
         if (IsZero(v)) { return BigInteger.Zero; }
-        Decompose(v, out bool sign, out BigInteger sig, out int q);
-        BigInteger ival = q >= 0 ? sig << q : sig >> -q;
+        Decompose(v, out var sign, out var sig, out var q);
+        var ival = q >= 0 ? sig << q : sig >> -q;
         return sign ? -ival : ival;
     }
 
@@ -5764,8 +5767,8 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
         if (a.SignBit != b.SignBit) { return a.SignBit ? -1 : 1; } // negatives < positives
         // Same sign: the low 127 bits (exponent then mantissa) are monotonic in
         // magnitude. For negatives, larger magnitude means smaller value.
-        UInt128 magMask = ~(UInt128.One << SignShift);
-        int cmp = (a._bits & magMask).CompareTo(b._bits & magMask);
+        var magMask = ~(UInt128.One << SignShift);
+        var cmp = (a._bits & magMask).CompareTo(b._bits & magMask);
         return a.SignBit ? -cmp : cmp;
     }
 
@@ -5799,8 +5802,8 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     /// <summary>round(a / b) to nearest, ties away (b &gt; 0; a signed).</summary>
     private static BigInteger DivNearest(BigInteger a, BigInteger b)
     {
-        BigInteger q = BigInteger.DivRem(a, b, out BigInteger r);
-        BigInteger twice = BigInteger.Abs(r) << 1;
+        var q = BigInteger.DivRem(a, b, out var r);
+        var twice = BigInteger.Abs(r) << 1;
         if (twice >= b) { q += a.Sign >= 0 ? BigInteger.One : BigInteger.MinusOne; }
         return q;
     }
@@ -5809,23 +5812,23 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     /// round(value · 2^FpBits).</summary>
     private static BigInteger ToFixed(bool neg, BigInteger mag, int q)
     {
-        int shift = q + FpBits;
-        BigInteger r = shift >= 0 ? mag << shift : DivNearest(mag, BigInteger.One << -shift);
+        var shift = q + FpBits;
+        var r = shift >= 0 ? mag << shift : DivNearest(mag, BigInteger.One << -shift);
         return neg ? -r : r;
     }
 
     /// <summary>atanh(t) in fixed-point: t + t³/3 + t⁵/5 + … (|t| small).</summary>
     private static BigInteger FpAtanh(BigInteger t)
     {
-        BigInteger tsq = FpMul(t, t);
+        var tsq = FpMul(t, t);
         BigInteger term = t, acc = t;
         // Terminate on the CONTRIBUTION reaching zero, not `term`: BigInteger
         // `>>` floors, so for negative t a tiny `term` sticks at −1 and never
         // hits 0 — `term/(2n+1)` does truncate to 0. (200-iteration backstop.)
-        for (int n = 1; n < 200; n++)
+        for (var n = 1; n < 200; n++)
         {
             term = FpMul(term, tsq);
-            BigInteger contribution = term / (2 * n + 1);
+            var contribution = term / (2 * n + 1);
             if (contribution == BigInteger.Zero) { break; }
             acc += contribution;
         }
@@ -5841,7 +5844,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     private static BigInteger FpExpSmall(BigInteger r)
     {
         BigInteger term = FpOne, acc = FpOne;
-        int n = 1;
+        var n = 1;
         while (n < 200)
         {
             term = FpMul(term, r) / n;       // term *= r/n
@@ -5855,10 +5858,10 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     /// <summary>exp(arg·2⁻ᶠᵖᴮⁱᵗˢ) → binary128, via range reduction k·ln2 + r.</summary>
     private static Float128 ExpOfFixed(BigInteger arg)
     {
-        BigInteger k = DivNearest(arg, FpLn2);             // round(arg / ln2)
+        var k = DivNearest(arg, FpLn2);             // round(arg / ln2)
         if (k > 20000) { return PositiveInfinity; }
         if (k < -20000) { return Zero; }
-        BigInteger r = arg - k * FpLn2;                    // |r| ≤ ln2/2
+        var r = arg - k * FpLn2;                    // |r| ≤ ln2/2
         return RoundToBinary128(false, FpExpSmall(r), (int)k - FpBits, extraSticky: false);
     }
 
@@ -5866,11 +5869,11 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     /// log = e·ln2 + 2·atanh((m−1)/(m+1)).</summary>
     private static BigInteger FpLogFixed(Float128 x)
     {
-        Decompose(x, out _, out BigInteger sig, out int q);
-        int bitlen = (int)sig.GetBitLength();
-        int e = q + bitlen - 1;
-        BigInteger mFixed = sig << (FpBits - bitlen + 1);
-        BigInteger t = ((mFixed - FpOne) << FpBits) / (mFixed + FpOne);
+        Decompose(x, out _, out var sig, out var q);
+        var bitlen = (int)sig.GetBitLength();
+        var e = q + bitlen - 1;
+        var mFixed = sig << (FpBits - bitlen + 1);
+        var t = ((mFixed - FpOne) << FpBits) / (mFixed + FpOne);
         return (BigInteger)e * FpLn2 + 2 * FpAtanh(t);
     }
 
@@ -5879,7 +5882,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
         if (IsNaN(x)) { return NaN; }
         if (IsInfinity(x)) { return x.SignBit ? Zero : PositiveInfinity; }
         if (IsZero(x)) { return One; }
-        Decompose(x, out bool s, out BigInteger sig, out int q);
+        Decompose(x, out var s, out var sig, out var q);
         return ExpOfFixed(ToFixed(s, sig, q));
     }
 
@@ -5888,7 +5891,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
         if (IsNaN(x)) { return NaN; }
         if (IsInfinity(x)) { return x.SignBit ? Zero : PositiveInfinity; }
         if (IsZero(x)) { return One; }
-        Decompose(x, out bool s, out BigInteger sig, out int q);
+        Decompose(x, out var s, out var sig, out var q);
         return ExpOfFixed(FpMul(ToFixed(s, sig, q), FpLn2));
     }
 
@@ -5897,7 +5900,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
         if (IsNaN(x)) { return NaN; }
         if (IsInfinity(x)) { return x.SignBit ? Zero : PositiveInfinity; }
         if (IsZero(x)) { return One; }
-        Decompose(x, out bool s, out BigInteger sig, out int q);
+        Decompose(x, out var s, out var sig, out var q);
         return ExpOfFixed(FpMul(ToFixed(s, sig, q), FpLn10));
     }
 
@@ -5906,13 +5909,13 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
         if (IsNaN(x)) { return NaN; }
         if (IsInfinity(x)) { return x.SignBit ? Negate(One) : PositiveInfinity; }
         if (IsZero(x)) { return x; }
-        Decompose(x, out bool s, out BigInteger sig, out int q);
-        BigInteger xFixed = ToFixed(s, sig, q);
-        BigInteger k = DivNearest(xFixed, FpLn2);
+        Decompose(x, out var s, out var sig, out var q);
+        var xFixed = ToFixed(s, sig, q);
+        var k = DivNearest(xFixed, FpLn2);
         if (k == BigInteger.Zero)
         {
             // |x| ≤ ln2/2: form exp(x)−1 in fixed-point (no cancellation loss).
-            BigInteger d = FpExpSmall(xFixed) - FpOne;
+            var d = FpExpSmall(xFixed) - FpOne;
             return d.IsZero ? Zero : RoundToBinary128(d.Sign < 0, BigInteger.Abs(d), -FpBits, false);
         }
         if (k > 20000) { return PositiveInfinity; }
@@ -5925,7 +5928,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
         if (IsNaN(x) || x.SignBit) { return IsZero(x) ? NegativeInfinity : NaN; }
         if (IsZero(x)) { return NegativeInfinity; }
         if (IsInfinity(x)) { return PositiveInfinity; }
-        BigInteger lf = FpLogFixed(x);
+        var lf = FpLogFixed(x);
         return lf.IsZero ? Zero : RoundToBinary128(lf.Sign < 0, BigInteger.Abs(lf), -FpBits, false);
     }
 
@@ -5934,7 +5937,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
         if (IsNaN(x) || x.SignBit) { return IsZero(x) ? NegativeInfinity : NaN; }
         if (IsZero(x)) { return NegativeInfinity; }
         if (IsInfinity(x)) { return PositiveInfinity; }
-        BigInteger l2 = DivNearest(FpLogFixed(x) << FpBits, FpLn2);
+        var l2 = DivNearest(FpLogFixed(x) << FpBits, FpLn2);
         return l2.IsZero ? Zero : RoundToBinary128(l2.Sign < 0, BigInteger.Abs(l2), -FpBits, false);
     }
 
@@ -5943,7 +5946,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
         if (IsNaN(x) || x.SignBit) { return IsZero(x) ? NegativeInfinity : NaN; }
         if (IsZero(x)) { return NegativeInfinity; }
         if (IsInfinity(x)) { return PositiveInfinity; }
-        BigInteger l10 = DivNearest(FpLogFixed(x) << FpBits, FpLn10);
+        var l10 = DivNearest(FpLogFixed(x) << FpBits, FpLn10);
         return l10.IsZero ? Zero : RoundToBinary128(l10.Sign < 0, BigInteger.Abs(l10), -FpBits, false);
     }
 
@@ -5952,15 +5955,15 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
         if (IsNaN(x)) { return NaN; }
         if (IsInfinity(x)) { return x.SignBit ? NaN : PositiveInfinity; }
         if (IsZero(x)) { return x; }
-        Float128 negOne = Negate(One);
+        var negOne = Negate(One);
         if (x <= negOne) { return x == negOne ? NegativeInfinity : NaN; }
         // For |x| < 1/2, log(1+x) = 2·atanh(x/(2+x)) keeps full precision near 0.
         if (Abs(x) < FromDouble(0.5))
         {
-            Decompose(x, out bool s, out BigInteger sig, out int q);
-            BigInteger xFixed = ToFixed(s, sig, q);
-            BigInteger t = (xFixed << FpBits) / (2 * FpOne + xFixed);
-            BigInteger lf = 2 * FpAtanh(t);
+            Decompose(x, out var s, out var sig, out var q);
+            var xFixed = ToFixed(s, sig, q);
+            var t = (xFixed << FpBits) / (2 * FpOne + xFixed);
+            var lf = 2 * FpAtanh(t);
             return lf.IsZero ? Zero : RoundToBinary128(lf.Sign < 0, BigInteger.Abs(lf), -FpBits, false);
         }
         return Log(Add(x, One));
@@ -5972,9 +5975,9 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
         if (x == One) { return One; }                      // pow(1, anything) = 1
         if (IsNaN(x) || IsNaN(y)) { return NaN; }
 
-        bool yInt = y.Equals(Truncate(y));
-        bool yOdd = yInt && Fmod(Abs(y), FromInt64(2)) == One;
-        bool xNeg = x.SignBit;
+        var yInt = y.Equals(Truncate(y));
+        var yOdd = yInt && Fmod(Abs(y), FromInt64(2)) == One;
+        var xNeg = x.SignBit;
 
         if (IsZero(x))
         {
@@ -5983,7 +5986,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
         }
         if (IsInfinity(y))
         {
-            Float128 ax = Abs(x);
+            var ax = Abs(x);
             if (ax == One) { return One; }                 // pow(±1, ±inf) = 1
             return (ax > One) != y.SignBit ? PositiveInfinity : Zero;
         }
@@ -5995,9 +5998,9 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
         if (xNeg && !yInt) { return NaN; }                 // negative base, non-integer exponent
 
         // |x|^y = exp(y · log|x|).
-        Decompose(y, out bool ys, out BigInteger ysig, out int yq);
-        BigInteger arg = FpMul(ToFixed(ys, ysig, yq), FpLogFixed(Abs(x)));
-        Float128 mag = ExpOfFixed(arg);
+        Decompose(y, out var ys, out var ysig, out var yq);
+        var arg = FpMul(ToFixed(ys, ysig, yq), FpLogFixed(Abs(x)));
+        var mag = ExpOfFixed(arg);
         return (xNeg && yOdd) ? Negate(mag) : mag;
     }
 
@@ -6017,20 +6020,20 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     /// then scale back by 2ᵏ.</summary>
     private static BigInteger FpAtan(BigInteger t)
     {
-        int k = 0;
-        BigInteger tt = t;
+        var k = 0;
+        var tt = t;
         while (BigInteger.Abs(tt) > (FpOne >> 4))      // until |tt| ≤ 1/16
         {
-            BigInteger s = FpSqrt(FpOne + FpMul(tt, tt));
+            var s = FpSqrt(FpOne + FpMul(tt, tt));
             tt = (tt << FpBits) / (FpOne + s);
             k++;
         }
         BigInteger tsq = FpMul(tt, tt), term = tt, acc = tt;
-        int sign = -1;
-        for (int n = 1; n < 200; n++)
+        var sign = -1;
+        for (var n = 1; n < 200; n++)
         {
             term = FpMul(term, tsq);
-            BigInteger c = term / (2 * n + 1);
+            var c = term / (2 * n + 1);
             if (c == BigInteger.Zero) { break; }
             acc += sign * c;
             sign = -sign;
@@ -6041,9 +6044,9 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     /// <summary>(sin r, cos r) in fixed-point for |r| ≤ π/4 via Taylor series.</summary>
     private static (BigInteger Sin, BigInteger Cos) FpSinCos(BigInteger r)
     {
-        BigInteger rsq = FpMul(r, r);
+        var rsq = FpMul(r, r);
         BigInteger sinAcc = r, cosAcc = FpOne, termS = r, termC = FpOne;
-        for (int k = 1; k < 100; k++)
+        for (var k = 1; k < 100; k++)
         {
             termC = -FpMul(termC, rsq) / ((BigInteger)(2 * k - 1) * (2 * k));
             termS = -FpMul(termS, rsq) / ((BigInteger)(2 * k) * (2 * k + 1));
@@ -6057,10 +6060,10 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     // Reduce x (fixed) to quadrant k mod 4 and r ∈ [−π/4, π/4]; return sin/cos of r.
     private static (int Quadrant, BigInteger Sin, BigInteger Cos) ReduceTrig(BigInteger xFixed)
     {
-        BigInteger k = DivNearest(xFixed, FpHalfPi);
-        BigInteger r = xFixed - k * FpHalfPi;          // |r| ≤ π/4
+        var k = DivNearest(xFixed, FpHalfPi);
+        var r = xFixed - k * FpHalfPi;          // |r| ≤ π/4
         var (sin, cos) = FpSinCos(r);
-        int quad = (int)(((k % 4) + 4) % 4);
+        var quad = (int)(((k % 4) + 4) % 4);
         return (quad, sin, cos);
     }
 
@@ -6071,7 +6074,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     {
         if (IsNaN(x) || IsInfinity(x)) { return NaN; }
         if (IsZero(x)) { return x; }
-        Decompose(x, out bool s, out BigInteger sig, out int q);
+        Decompose(x, out var s, out var sig, out var q);
         var (quad, sin, cos) = ReduceTrig(ToFixed(s, sig, q));
         return FromFixedSigned(quad switch { 0 => sin, 1 => cos, 2 => -sin, _ => -cos });
     }
@@ -6080,7 +6083,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     {
         if (IsNaN(x) || IsInfinity(x)) { return NaN; }
         if (IsZero(x)) { return One; }
-        Decompose(x, out bool s, out BigInteger sig, out int q);
+        Decompose(x, out var s, out var sig, out var q);
         var (quad, sin, cos) = ReduceTrig(ToFixed(s, sig, q));
         return FromFixedSigned(quad switch { 0 => cos, 1 => -sin, 2 => -cos, _ => sin });
     }
@@ -6089,11 +6092,11 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     {
         if (IsNaN(x) || IsInfinity(x)) { return NaN; }
         if (IsZero(x)) { return x; }
-        Decompose(x, out bool s, out BigInteger sig, out int q);
+        Decompose(x, out var s, out var sig, out var q);
         var (quad, sin, cos) = ReduceTrig(ToFixed(s, sig, q));
         // tan repeats every quadrant as sin/cos with a swap+sign on odd quadrants.
-        BigInteger num = (quad & 1) == 0 ? sin : cos;
-        BigInteger den = (quad & 1) == 0 ? cos : -sin;
+        var num = (quad & 1) == 0 ? sin : cos;
+        var den = (quad & 1) == 0 ? cos : -sin;
         if (den.IsZero) { return num.Sign < 0 ? NegativeInfinity : PositiveInfinity; }
         return FromFixedSigned((num << FpBits) / den);
     }
@@ -6103,7 +6106,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
         if (IsNaN(x)) { return NaN; }
         if (IsZero(x)) { return x; }
         if (IsInfinity(x)) { return FromFixedSigned(x.SignBit ? -FpHalfPi : FpHalfPi); }
-        Decompose(x, out bool s, out BigInteger sig, out int q);
+        Decompose(x, out var s, out var sig, out var q);
         return FromFixedSigned(FpAtan(ToFixed(s, sig, q)));
     }
 
@@ -6111,25 +6114,25 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     {
         if (IsNaN(x)) { return NaN; }
         if (IsZero(x)) { return x; }
-        Float128 ax = Abs(x);
+        var ax = Abs(x);
         if (ax > One) { return NaN; }
         if (ax == One) { return FromFixedSigned(x.SignBit ? -FpHalfPi : FpHalfPi); }
         // asin(x) = atan(x / sqrt(1 − x²)).
-        Decompose(x, out bool s, out BigInteger sig, out int q);
-        BigInteger xf = ToFixed(s, sig, q);
-        BigInteger denom = FpSqrt(FpOne - FpMul(xf, xf));
+        Decompose(x, out var s, out var sig, out var q);
+        var xf = ToFixed(s, sig, q);
+        var denom = FpSqrt(FpOne - FpMul(xf, xf));
         return FromFixedSigned(FpAtan((xf << FpBits) / denom));
     }
 
     public static Float128 Acos(Float128 x)
     {
         if (IsNaN(x)) { return NaN; }
-        Float128 ax = Abs(x);
+        var ax = Abs(x);
         if (ax > One) { return NaN; }
         // acos(x) = π/2 − asin(x), formed in fixed-point.
-        Decompose(x, out bool s, out BigInteger sig, out int q);
-        BigInteger xf = ToFixed(s, sig, q);
-        BigInteger asin = ax == One
+        Decompose(x, out var s, out var sig, out var q);
+        var xf = ToFixed(s, sig, q);
+        var asin = ax == One
             ? (x.SignBit ? -FpHalfPi : FpHalfPi)
             : FpAtan((xf << FpBits) / FpSqrt(FpOne - FpMul(xf, xf)));
         return FromFixedSigned(FpHalfPi - asin);
@@ -6151,7 +6154,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
             // Standard atan2 infinity lattice.
             if (IsInfinity(x) && IsInfinity(y))
             {
-                BigInteger oct = xs ? (3 * FpPi) >> 2 : FpPi >> 2; // 3π/4 or π/4
+                var oct = xs ? (3 * FpPi) >> 2 : FpPi >> 2; // 3π/4 or π/4
                 return FromFixedSigned(ys ? -oct : oct);
             }
             if (IsInfinity(y)) { return FromFixedSigned(ys ? -FpHalfPi : FpHalfPi); }
@@ -6159,10 +6162,10 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
             return xs ? FromFixedSigned(ys ? -FpPi : FpPi) : (ys ? NegativeZero : Zero);
         }
         // Finite, nonzero. base = atan(y/x); adjust by quadrant of x.
-        Decompose(y, out bool yds, out BigInteger ysig, out int yq);
-        Decompose(x, out bool xds, out BigInteger xsig, out int xq);
+        Decompose(y, out var yds, out var ysig, out var yq);
+        Decompose(x, out var xds, out var xsig, out var xq);
         BigInteger yf = ToFixed(yds, ysig, yq), xf = ToFixed(xds, xsig, xq);
-        BigInteger atanRatio = FpAtan((yf << FpBits) / xf);
+        var atanRatio = FpAtan((yf << FpBits) / xf);
         if (!xs) { return FromFixedSigned(atanRatio); }           // x>0
         return FromFixedSigned(ys ? atanRatio - FpPi : atanRatio + FpPi); // x<0
     }
@@ -6188,7 +6191,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
         if (IsInfinity(x)) { return x.SignBit ? Negate(One) : One; }
         if (IsZero(x)) { return x; }
         // tanh = expm1(2x) / (expm1(2x) + 2).
-        Float128 e2 = Expm1(Multiply(FromInt64(2), x));
+        var e2 = Expm1(Multiply(FromInt64(2), x));
         if (IsInfinity(e2)) { return One; }            // x large positive ⇒ +1
         return Divide(e2, Add(e2, FromInt64(2)));
     }
@@ -6196,11 +6199,11 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     public static Float128 Asinh(Float128 x)
     {
         if (IsNaN(x) || IsInfinity(x) || IsZero(x)) { return x; } // odd; ±inf→±inf
-        Float128 ax = Abs(x);
+        var ax = Abs(x);
         // asinh(x) = log1p(|x| + |x|²/(1 + sqrt(1+|x|²))), sign-applied.
-        Float128 axsq = Multiply(ax, ax);
-        Float128 u = Add(ax, Divide(axsq, Add(Sqrt(Add(axsq, One)), One)));
-        Float128 r = Log1p(u);
+        var axsq = Multiply(ax, ax);
+        var u = Add(ax, Divide(axsq, Add(Sqrt(Add(axsq, One)), One)));
+        var r = Log1p(u);
         return x.SignBit ? Negate(r) : r;
     }
 
@@ -6210,7 +6213,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
         if (x < One) { return NaN; }                   // domain x ≥ 1 (incl. negatives)
         if (IsInfinity(x)) { return PositiveInfinity; }
         // acosh(x) = log1p((x−1) + sqrt((x−1)(x+1))), accurate near x = 1.
-        Float128 xm1 = Subtract(x, One);
+        var xm1 = Subtract(x, One);
         return Log1p(Add(xm1, Sqrt(Multiply(xm1, Add(x, One)))));
     }
 
@@ -6218,7 +6221,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     {
         if (IsNaN(x)) { return NaN; }
         if (IsZero(x)) { return x; }
-        Float128 ax = Abs(x);
+        var ax = Abs(x);
         if (ax == One) { return x.SignBit ? NegativeInfinity : PositiveInfinity; }
         if (ax > One) { return NaN; }
         // atanh(x) = (log1p(x) − log1p(−x))/2.
@@ -6235,7 +6238,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     {
         if (IsNaN(x) || IsInfinity(x)) { return NaN; }
         Float128 n = Round(x), r = Subtract(x, n);     // r ∈ [−½, ½]
-        Float128 s = Sin(Multiply(Pi, r));
+        var s = Sin(Multiply(Pi, r));
         return IsOddInteger(n) ? Negate(s) : s;
     }
 
@@ -6243,7 +6246,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     {
         if (IsNaN(x) || IsInfinity(x)) { return NaN; }
         Float128 n = Round(x), r = Subtract(x, n);
-        Float128 c = Cos(Multiply(Pi, r));
+        var c = Cos(Multiply(Pi, r));
         return IsOddInteger(n) ? Negate(c) : c;
     }
 
@@ -6304,12 +6307,12 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     /// Finite, non-NaN values only.</summary>
     private BigInteger AbsScaledByPow10(int power)
     {
-        Decompose(this, out _, out BigInteger m, out int q);
+        Decompose(this, out _, out var m, out var q);
         BigInteger num = m, den = BigInteger.One;
         if (power >= 0) { num *= BigInteger.Pow(10, power); } else { den *= BigInteger.Pow(10, -power); }
         if (q >= 0) { num <<= q; } else { den <<= -q; }
-        BigInteger quo = BigInteger.DivRem(num, den, out BigInteger rem);
-        BigInteger twiceRem = rem << 1;
+        var quo = BigInteger.DivRem(num, den, out var rem);
+        var twiceRem = rem << 1;
         if (twiceRem > den || (twiceRem == den && !quo.IsEven)) { quo += BigInteger.One; }
         return quo;
     }
@@ -6318,7 +6321,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     /// scientific formatter corrects any ±1 error against the actual digits.</summary>
     private int EstimateExp10()
     {
-        Decompose(this, out _, out BigInteger m, out int q);
+        Decompose(this, out _, out var m, out var q);
         double approxLog2 = (q + m.GetBitLength() - 1);
         return (int)Math.Floor(approxLog2 * 0.30102999566398114); // log10(2)
     }
@@ -6329,8 +6332,8 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     {
         if (IsNaN(this)) { return "nan"; }
         if (IsInfinity(this)) { return SignBit ? "-inf" : "inf"; }
-        BigInteger n = AbsScaledByPow10(prec);
-        string digits = n.ToString(global::System.Globalization.CultureInfo.InvariantCulture);
+        var n = AbsScaledByPow10(prec);
+        var digits = n.ToString(global::System.Globalization.CultureInfo.InvariantCulture);
         string body;
         if (prec == 0)
         {
@@ -6339,7 +6342,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
         else
         {
             if (digits.Length <= prec) { digits = new string('0', prec - digits.Length + 1) + digits; }
-            int split = digits.Length - prec;
+            var split = digits.Length - prec;
             body = digits[..split] + "." + digits[split..];
         }
         return SignBit && n != BigInteger.Zero ? "-" + body : body;
@@ -6351,20 +6354,20 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     {
         if (IsNaN(this)) { return upper ? "NAN" : "nan"; }
         if (IsInfinity(this)) { return (SignBit ? "-" : "") + (upper ? "INF" : "inf"); }
-        char e = upper ? 'E' : 'e';
+        var e = upper ? 'E' : 'e';
         if (IsZero(this))
         {
-            string mant0 = prec == 0 ? "0" : "0." + new string('0', prec);
+            var mant0 = prec == 0 ? "0" : "0." + new string('0', prec);
             return (SignBit ? "-" : "") + mant0 + e + "+00";
         }
-        int exp = EstimateExp10();
-        BigInteger s = AbsScaledByPow10(prec - exp);
-        string ds = s.ToString(global::System.Globalization.CultureInfo.InvariantCulture);
+        var exp = EstimateExp10();
+        var s = AbsScaledByPow10(prec - exp);
+        var ds = s.ToString(global::System.Globalization.CultureInfo.InvariantCulture);
         // Correct a ±1 estimate so we land on exactly prec+1 digits.
         if (ds.Length == prec + 2) { exp++; s = AbsScaledByPow10(prec - exp); ds = s.ToString(); }
         else if (ds.Length == prec) { exp--; s = AbsScaledByPow10(prec - exp); ds = s.ToString(); }
-        string mant = prec == 0 ? ds : ds[..1] + "." + ds[1..];
-        string expStr = (exp < 0 ? "-" : "+") + Math.Abs(exp).ToString("D2", global::System.Globalization.CultureInfo.InvariantCulture);
+        var mant = prec == 0 ? ds : ds[..1] + "." + ds[1..];
+        var expStr = (exp < 0 ? "-" : "+") + Math.Abs(exp).ToString("D2", global::System.Globalization.CultureInfo.InvariantCulture);
         return (SignBit ? "-" : "") + mant + e + expStr;
     }
 
@@ -6375,15 +6378,15 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
         if (IsNaN(this)) { return upper ? "NAN" : "nan"; }
         if (IsInfinity(this)) { return (SignBit ? "-" : "") + (upper ? "INF" : "inf"); }
         if (prec == 0) { prec = 1; }
-        int exp = IsZero(this) ? 0 : EstimateExp10();
+        var exp = IsZero(this) ? 0 : EstimateExp10();
         // Refine exp via the rounded significant digits (handles the ±1 estimate).
         if (!IsZero(this))
         {
-            BigInteger probe = AbsScaledByPow10(prec - 1 - exp);
-            int len = probe.ToString().Length;
+            var probe = AbsScaledByPow10(prec - 1 - exp);
+            var len = probe.ToString().Length;
             if (len == prec + 1) { exp++; } else if (len == prec - 1) { exp--; }
         }
-        string s = (exp < -4 || exp >= prec)
+        var s = (exp < -4 || exp >= prec)
             ? ToScientificString(prec - 1, upper)
             : ToFixedString(prec - 1 - exp);
         return StripTrailingZeros(s, upper);
@@ -6391,9 +6394,9 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
 
     private static string StripTrailingZeros(string s, bool upper)
     {
-        int e = s.IndexOf(upper ? 'E' : 'e');
-        string mant = e < 0 ? s : s[..e];
-        string suffix = e < 0 ? "" : s[e..];
+        var e = s.IndexOf(upper ? 'E' : 'e');
+        var mant = e < 0 ? s : s[..e];
+        var suffix = e < 0 ? "" : s[e..];
         if (mant.Contains('.'))
         {
             mant = mant.TrimEnd('0').TrimEnd('.');
@@ -6415,7 +6418,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     public static Float128 AdditiveIdentity => Zero;
     public static Float128 MultiplicativeIdentity => One;
     public static Float128 NegativeOne => FromInt64(-1);
-    public static Float128 AllBitsSet => new(~UInt128.Zero);
+    public static Float128 AllBitsSet => new Float128(~UInt128.Zero);
 
     public static bool IsCanonical(Float128 v) => true;
     public static bool IsComplexNumber(Float128 v) => false;
@@ -6427,7 +6430,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     public static bool IsPow2(Float128 v)
     {
         if (v.SignBit || !IsFinite(v) || IsZero(v)) { return false; }
-        Decompose(v, out _, out BigInteger sig, out _);
+        Decompose(v, out _, out var sig, out _);
         return (sig & (sig - BigInteger.One)) == BigInteger.Zero; // single bit set
     }
 
@@ -6439,10 +6442,10 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     public static Float128 Log(Float128 x, Float128 newBase) => Divide(Log(x), Log(newBase));
 
     // Bitwise / increment / decrement / modulus operators.
-    public static Float128 operator &(Float128 a, Float128 b) => new(a._bits & b._bits);
-    public static Float128 operator |(Float128 a, Float128 b) => new(a._bits | b._bits);
-    public static Float128 operator ^(Float128 a, Float128 b) => new(a._bits ^ b._bits);
-    public static Float128 operator ~(Float128 v) => new(~v._bits);
+    public static Float128 operator &(Float128 a, Float128 b) => new Float128(a._bits & b._bits);
+    public static Float128 operator |(Float128 a, Float128 b) => new Float128(a._bits | b._bits);
+    public static Float128 operator ^(Float128 a, Float128 b) => new Float128(a._bits ^ b._bits);
+    public static Float128 operator ~(Float128 v) => new Float128(~v._bits);
     public static Float128 operator ++(Float128 v) => Add(v, One);
     public static Float128 operator --(Float128 v) => Subtract(v, One);
     public static Float128 operator %(Float128 a, Float128 b) => Fmod(a, b);
@@ -6455,7 +6458,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     {
         if (!IsFinite(v)) { return v; }
         if (digits == 0) { return RoundToInteger(v, mode); }
-        Float128 scale = Pow(FromInt64(10), FromInt64(digits));
+        var scale = Pow(FromInt64(10), FromInt64(digits));
         return Divide(RoundToInteger(Multiply(v, scale), mode), scale);
     }
 
@@ -6471,11 +6474,11 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     private static Float128 RoundHalfAway(Float128 x)
     {
         if (IsNaN(x) || IsInfinity(x) || IsZero(x)) { return x; }
-        Decompose(x, out bool s, out BigInteger m, out int q);
+        Decompose(x, out var s, out var m, out var q);
         if (q >= 0) { return x; }
         int shift = -q, bits = (int)m.GetBitLength();
         if (shift > bits) { return s ? NegativeZero : Zero; } // |x| < 0.5
-        BigInteger kept = m >> shift;
+        var kept = m >> shift;
         if (m - (kept << shift) >= (BigInteger.One << (shift - 1))) { kept += BigInteger.One; }
         return kept.IsZero ? (s ? NegativeZero : Zero) : RoundToBinary128(s, kept, 0, false);
     }
@@ -6490,7 +6493,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     private int FieldExponent()
     {
         if (!IsFinite(this) || IsZero(this)) { return 0; }
-        Decompose(this, out _, out _, out int q);
+        Decompose(this, out _, out _, out var q);
         return q;
     }
     private UInt128 FieldSignificand()
@@ -6512,7 +6515,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     {
         written = 0;
         if (dst.Length < sizeof(short)) { return false; }
-        short e = (short)FieldExponent();
+        var e = (short)FieldExponent();
         if (bigEndian) { dst[0] = (byte)(e >> 8); dst[1] = (byte)e; }
         else { dst[0] = (byte)e; dst[1] = (byte)(e >> 8); }
         written = sizeof(short);
@@ -6522,8 +6525,8 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     {
         written = 0;
         if (dst.Length < 16) { return false; }
-        UInt128 s = FieldSignificand();
-        for (int i = 0; i < 16; i++)
+        var s = FieldSignificand();
+        for (var i = 0; i < 16; i++)
         {
             dst[bigEndian ? 15 - i : i] = (byte)(s >> (8 * i));
         }
@@ -6550,7 +6553,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
         result = Zero;
         s = s.Trim();
         if (s.IsEmpty) { return false; }
-        bool neg = false;
+        var neg = false;
         if (s[0] is '+' or '-') { neg = s[0] == '-'; s = s[1..]; }
         if (s.Equals("inf", StringComparison.OrdinalIgnoreCase) || s.Equals("infinity", StringComparison.OrdinalIgnoreCase))
         {
@@ -6559,13 +6562,13 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
         }
         if (s.Equals("nan", StringComparison.OrdinalIgnoreCase)) { result = NaN; return true; }
 
-        BigInteger mant = BigInteger.Zero;
-        int decExp = 0;
+        var mant = BigInteger.Zero;
+        var decExp = 0;
         bool any = false, dot = false;
-        int i = 0;
+        var i = 0;
         for (; i < s.Length; i++)
         {
-            char ch = s[i];
+            var ch = s[i];
             if (ch is >= '0' and <= '9') { mant = mant * 10 + (ch - '0'); any = true; if (dot) { decExp--; } }
             else if (ch == '.' && !dot) { dot = true; }
             else if (ch is 'e' or 'E') { break; }
@@ -6575,7 +6578,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
         if (i < s.Length)                                // exponent part
         {
             var exp = s[(i + 1)..];
-            if (!int.TryParse(exp, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out int e10)) { return false; }
+            if (!int.TryParse(exp, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var e10)) { return false; }
             decExp += e10;
         }
         result = DecimalToBinary128(neg, mant, decExp);
@@ -6589,9 +6592,9 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
         {
             return RoundToBinary128(neg, mant * BigInteger.Pow(10, exp10), 0, extraSticky: false);
         }
-        int e = -exp10;
-        int g = 160 + (int)Math.Ceiling(e * 3.321928094887362);   // ~log2(10) bits per decimal place + margin
-        BigInteger q = BigInteger.DivRem(mant << g, BigInteger.Pow(10, e), out BigInteger r);
+        var e = -exp10;
+        var g = 160 + (int)Math.Ceiling(e * 3.321928094887362);   // ~log2(10) bits per decimal place + margin
+        var q = BigInteger.DivRem(mant << g, BigInteger.Pow(10, e), out var r);
         return RoundToBinary128(neg, q, -g, extraSticky: r != BigInteger.Zero);
     }
 
@@ -6599,9 +6602,9 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
     public string ToString(string? format, IFormatProvider? provider)
     {
         if (string.IsNullOrEmpty(format)) { return ToString(); }
-        char kind = char.ToUpperInvariant(format[0]);
-        int prec = format.Length > 1 && int.TryParse(format[1..], out int p) ? p : (kind == 'G' ? 36 : 6);
-        bool upper = char.IsUpper(format[0]);
+        var kind = char.ToUpperInvariant(format[0]);
+        var prec = format.Length > 1 && int.TryParse(format[1..], out var p) ? p : (kind == 'G' ? 36 : 6);
+        var upper = char.IsUpper(format[0]);
         return kind switch
         {
             'F' => ToFixedString(prec),
@@ -6612,7 +6615,7 @@ public readonly struct Float128 : IEquatable<Float128>, IComparable<Float128>,
 
     public bool TryFormat(Span<char> dst, out int written, ReadOnlySpan<char> format, IFormatProvider? provider)
     {
-        string s = ToString(format.IsEmpty ? null : format.ToString(), provider);
+        var s = ToString(format.IsEmpty ? null : format.ToString(), provider);
         if (s.Length > dst.Length) { written = 0; return false; }
         s.AsSpan().CopyTo(dst);
         written = s.Length;
@@ -6681,7 +6684,7 @@ public static unsafe partial class Libc
     /// <summary>Linux glob with C-locale byte matching, using the bound runtime's filesystem and heap.</summary>
     public static int glob(byte* pattern, int flags, delegate*<byte*, int, int> error, void* result)
     {
-        nint address = (nint)error;
+        var address = (nint)error;
         return GlobCore(pattern, flags, address == 0 ? null : (path, code) =>
         {
             fixed (byte* bytes = Encoding.UTF8.GetBytes(path + "\0"))
@@ -6695,7 +6698,7 @@ public static unsafe partial class Libc
     {
         ArgumentNullException.ThrowIfNull(instance);
         using var binding = instance.__DotCcRuntime.Enter();
-        nint address = (nint)error;
+        var address = (nint)error;
         return GlobCore(pattern, flags, address == 0 ? null : (path, code) =>
         {
             fixed (byte* bytes = Encoding.UTF8.GetBytes(path + "\0"))
@@ -6730,59 +6733,59 @@ public static unsafe partial class Libc
         if ((flags & ~GlobSupportedFlags) != 0) { errno = ENOTSUP; return 2; }
         try
         {
-            string text = Str(pattern);
-            bool noEscape = (flags & 64) != 0;
+            var text = Str(pattern);
+            var noEscape = (flags & 64) != 0;
             var prefixes = new List<string> { "" };
-            bool magic = false;
-            int position = 0;
+            var magic = false;
+            var position = 0;
             while (position < text.Length)
             {
-                int separatorStart = position;
+                var separatorStart = position;
                 while (position < text.Length && text[position] == '/') position++;
-                string separator = text.Substring(separatorStart, position - separatorStart);
-                int start = position;
+                var separator = text.Substring(separatorStart, position - separatorStart);
+                var start = position;
                 while (position < text.Length && text[position] != '/') position++;
-                string component = text.Substring(start, position - start);
-                bool final = position == text.Length;
-                byte[] match = Encoding.UTF8.GetBytes(component);
-                bool wildcard = GlobHasMagic(match, noEscape);
+                var component = text.Substring(start, position - start);
+                var final = position == text.Length;
+                var match = Encoding.UTF8.GetBytes(component);
+                var wildcard = GlobHasMagic(match, noEscape);
                 magic |= wildcard;
                 var next = new List<string>();
-                foreach (string prefix in prefixes)
+                foreach (var prefix in prefixes)
                 {
-                    string logicalBase = prefix + separator;
+                    var logicalBase = prefix + separator;
                     if (!wildcard)
                     {
-                        string candidate = logicalBase + GlobUnescape(component, noEscape);
+                        var candidate = logicalBase + GlobUnescape(component, noEscape);
                         if (component.Length == 0 ? Directory.Exists(ResolvePath(candidate)) :
                             !final || GlobPathExists(candidate)) next.Add(candidate);
                         continue;
                     }
-                    string directory = logicalBase.Length == 0 ? "." : logicalBase.TrimEnd('/');
+                    var directory = logicalBase.Length == 0 ? "." : logicalBase.TrimEnd('/');
                     if (directory.Length == 0) directory = "/";
-                    string physical = ResolvePath(directory);
+                    var physical = ResolvePath(directory);
                     // glibc treats a non-directory prefix as no matches, without errfunc.
                     if (File.Exists(physical) && !Directory.Exists(physical)) continue;
                     string[] entries;
                     try { entries = Directory.GetFileSystemEntries(physical); }
                     catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
                     {
-                        int code = exception is UnauthorizedAccessException ? EACCES :
+                        var code = exception is UnauthorizedAccessException ? EACCES :
                             exception is DirectoryNotFoundException ? ENOENT : EIO;
                         errno = code;
                         if ((error?.Invoke(directory, code) ?? 0) != 0 || (flags & 1) != 0) return 2;
                         continue;
                     }
-                    bool dots = (flags & 128) != 0 || (match.Length > 0 && match[0] == (byte)'.') ||
+                    var dots = (flags & 128) != 0 || (match.Length > 0 && match[0] == (byte)'.') ||
                         (!noEscape && match.Length > 1 && match[0] == (byte)'\\' && match[1] == (byte)'.');
                     var names = new List<string>();
                     if (dots) { names.Add("."); names.Add(".."); }
-                    foreach (string entry in entries) names.Add(global::System.IO.Path.GetFileName(entry));
-                    foreach (string name in names)
+                    foreach (var entry in entries) names.Add(global::System.IO.Path.GetFileName(entry));
+                    foreach (var name in names)
                     {
                         if (name.StartsWith('.') && !dots) continue;
                         if (!GlobMatch(match, Encoding.UTF8.GetBytes(name), noEscape)) continue;
-                        string candidate = logicalBase + name;
+                        var candidate = logicalBase + name;
                         if ((!final || (flags & 8192) != 0) && !Directory.Exists(ResolvePath(candidate))) continue;
                         next.Add(candidate);
                     }
@@ -6797,16 +6800,16 @@ public static unsafe partial class Libc
                 prefixes.Add(text);
             }
             if ((flags & 2) != 0)
-                for (int i = 0; i < prefixes.Count; i++)
+                for (var i = 0; i < prefixes.Count; i++)
                     if (!prefixes[i].EndsWith('/') && Directory.Exists(ResolvePath(prefixes[i]))) prefixes[i] += "/";
             if ((flags & 4) == 0) prefixes.Sort(static (left, right) =>
                 Encoding.UTF8.GetBytes(left).AsSpan().SequenceCompareTo(Encoding.UTF8.GetBytes(right)));
             output->Paths = (byte**)AllocateHeap(checked((nuint)(prefixes.Count + 1) * (nuint)sizeof(byte*)), true);
             if (output->Paths == null) { errno = ENOMEM; return 1; }
-            foreach (string path in prefixes)
+            foreach (var path in prefixes)
             {
-                byte[] bytes = Encoding.UTF8.GetBytes(path);
-                byte* value = (byte*)AllocateHeap((nuint)bytes.Length + 1);
+                var bytes = Encoding.UTF8.GetBytes(path);
+                var value = (byte*)AllocateHeap((nuint)bytes.Length + 1);
                 if (value == null) { globfree(result); errno = ENOMEM; return 1; }
                 bytes.CopyTo(new Span<byte>(value, bytes.Length)); value[bytes.Length] = 0;
                 output->Paths[output->Count++] = value;
@@ -6827,7 +6830,7 @@ public static unsafe partial class Libc
     {
         if (noEscape) return pattern;
         var result = new StringBuilder();
-        for (int i = 0; i < pattern.Length; i++)
+        for (var i = 0; i < pattern.Length; i++)
         {
             if (pattern[i] == '\\' && i + 1 < pattern.Length) i++;
             result.Append(pattern[i]);
@@ -6836,7 +6839,7 @@ public static unsafe partial class Libc
     }
     private static bool GlobHasMagic(byte[] pattern, bool noEscape)
     {
-        for (int i = 0; i < pattern.Length; i++)
+        for (var i = 0; i < pattern.Length; i++)
         {
             if (!noEscape && pattern[i] == '\\') { i++; continue; }
             if (pattern[i] == '*' || pattern[i] == '?' || pattern[i] == '[') return true;
@@ -6849,7 +6852,7 @@ public static unsafe partial class Libc
         while (n < name.Length)
         {
             if (p < pattern.Length && pattern[p] == '*') { star = ++p; retry = n; continue; }
-            int end = p;
+            var end = p;
             if (GlobAtom(pattern, ref end, name[n], noEscape)) { p = end; n++; continue; }
             if (star < 0) return false;
             p = star; n = ++retry;
@@ -6860,13 +6863,13 @@ public static unsafe partial class Libc
     private static bool GlobAtom(byte[] pattern, ref int p, byte value, bool noEscape)
     {
         if (p >= pattern.Length) return false;
-        byte atom = pattern[p++];
+        var atom = pattern[p++];
         if (atom == '?') return true;
         if (atom == '\\' && !noEscape)
             return p < pattern.Length && pattern[p++] == value;
         if (atom != '[') return atom == value;
-        int begin = p;
-        bool negate = p < pattern.Length && (pattern[p] == '!' || pattern[p] == '^');
+        var begin = p;
+        var negate = p < pattern.Length && (pattern[p] == '!' || pattern[p] == '^');
         if (negate) p++;
         bool matched = false, first = true;
         while (p < pattern.Length && (pattern[p] != ']' || first))
@@ -6883,9 +6886,9 @@ public static unsafe partial class Libc
                     continue;
                 }
             }
-            byte lo = pattern[p++];
+            var lo = pattern[p++];
             if (lo == '\\' && !noEscape && p < pattern.Length) lo = pattern[p++];
-            byte hi = lo;
+            var hi = lo;
             if (p + 1 < pattern.Length && pattern[p] == '-' && pattern[p + 1] != ']')
             {
                 p++; hi = pattern[p++];
@@ -6900,7 +6903,7 @@ public static unsafe partial class Libc
     private static bool GlobCharacterClass(string name, byte value)
     {
         bool upper = value >= 'A' && value <= 'Z', lower = value >= 'a' && value <= 'z';
-        bool digit = value >= '0' && value <= '9';
+        var digit = value >= '0' && value <= '9';
         return name switch
         {
             "alnum" => upper || lower || digit,
@@ -6940,7 +6943,7 @@ public static unsafe partial class Libc
 // held in a static list for the program's life.
 public static unsafe partial class Libc
 {
-    private static readonly List<object> _globalArrayRoots = new();
+    private static readonly List<object> _globalArrayRoots = new List<object>();
 
     private static T* PinAndRoot<T>(T[] arr) where T : unmanaged
     {
@@ -6992,7 +6995,7 @@ public static unsafe partial class Libc
     }
 
     // Pinned delegate* arrays + their GCHandles (delegate* can't be a generic arg).
-    private static readonly List<(GCHandle Handle, Array Arr)> _fnPtrArrays = new();
+    private static readonly List<(GCHandle Handle, Array Arr)> _fnPtrArrays = new List<(GCHandle Handle, Array Arr)>();
 
     /// <summary>
     /// Pin a delegate*-element array and return a stable void* to element 0.
@@ -7057,7 +7060,7 @@ public static class GnuAtomic
     {
         Order(success);
         Order(failure, load: true);
-        bool allowed = failure switch
+        var allowed = failure switch
         {
             0 => true,
             1 => success is 1 or 2 or 4 or 5,
@@ -7116,7 +7119,7 @@ public static unsafe partial class Libc
 
     internal sealed class GuestSignalState
     {
-        internal readonly object Gate = new();
+        internal readonly object Gate = new object();
         internal readonly int Thread = Environment.CurrentManagedThreadId;
         internal readonly GuestSignalAction[] Actions = new GuestSignalAction[64];
         internal ulong Mask, Pending;
@@ -7248,8 +7251,7 @@ public static unsafe partial class Libc
         public void Dispose() => active = false;
     }
 
-    public static SignalJumpActivation ArmSignalJumpBuffer(ulong* buffer, int saveMask)
-        => new(buffer, saveMask);
+    public static SignalJumpActivation ArmSignalJumpBuffer(ulong* buffer, int saveMask) => new SignalJumpActivation(buffer, saveMask);
 
     private static int GuestSigaction(int sig, void* action, void* previous)
     {
@@ -7278,7 +7280,7 @@ public static unsafe partial class Libc
     private static int GuestSigprocmask(int how, ulong* set, ulong* previous)
     {
         if (!TryGuestSignals(out var state)) return -1;
-        ulong requested = set == null ? 0 : *set;
+        var requested = set == null ? 0 : *set;
         if (set != null && (how < 0 || how > 2)) { errno = EINVAL; return -1; }
         lock (state.Gate)
         {
@@ -7328,12 +7330,12 @@ public static unsafe partial class Libc
     /// positive return values and never replace errno.</summary>
     public static int sigwait(ulong* set, int* signal)
     {
-        int savedError = errno;
+        var savedError = errno;
         try
         {
             if (!TryGuestSignals(out var state)) return errno;
             if (set == null || signal == null) return EFAULT;
-            ulong requested = *set;
+            var requested = *set;
             if (requested == 0 || (requested & UnmaskableGuestSignals) != 0) return EINVAL;
             const ulong alarm = 1UL << 13;
             while (true)
@@ -7343,12 +7345,12 @@ public static unsafe partial class Libc
                 {
                     if (state.Stopped) return EINVAL;
                     if ((requested & ~state.Mask) != 0) return EINVAL;
-                    long now = global::System.Diagnostics.Stopwatch.GetTimestamp();
+                    var now = global::System.Diagnostics.Stopwatch.GetTimestamp();
                     ObserveGuestTimer(state, now);
-                    ulong ready = state.Pending & requested;
+                    var ready = state.Pending & requested;
                     if (ready != 0)
                     {
-                        int selected = global::System.Numerics.BitOperations.TrailingZeroCount(ready);
+                        var selected = global::System.Numerics.BitOperations.TrailingZeroCount(ready);
                         state.Pending &= ~(1UL << selected);
                         *signal = selected + 1;
                         return 0;
@@ -7359,7 +7361,7 @@ public static unsafe partial class Libc
                 }
                 // Do not hold the signal gate while waiting. Terminal owner
                 // cleanup may cancel the timer and is observed on the next pass.
-                int milliseconds = (int)Math.Clamp(decimal.Ceiling(
+                var milliseconds = (int)Math.Clamp(decimal.Ceiling(
                     (decimal)remaining * 1000 / global::System.Diagnostics.Stopwatch.Frequency), 1, 20);
                 global::System.Threading.Thread.Sleep(milliseconds);
             }
@@ -7374,7 +7376,7 @@ public static unsafe partial class Libc
         if (state.Interval == 0) state.Due = 0;
         else
         {
-            long remainder = (now - state.Due) % state.Interval;
+            var remainder = (now - state.Due) % state.Interval;
             state.Due = now > long.MaxValue - state.Interval ? long.MaxValue : now + state.Interval - remainder;
         }
     }
@@ -7383,7 +7385,7 @@ public static unsafe partial class Libc
     {
         if (state.Delivering) return;
         state.Delivering = true;
-        int savedError = errno;
+        var savedError = errno;
         try
         {
             while (true)
@@ -7395,7 +7397,7 @@ public static unsafe partial class Libc
                 {
                     if (state.Stopped) return;
                     ObserveGuestTimer(state, global::System.Diagnostics.Stopwatch.GetTimestamp());
-                    ulong ready = state.Pending & ~state.Mask;
+                    var ready = state.Pending & ~state.Mask;
                     if (ready == 0) return;
                     sig = global::System.Numerics.BitOperations.TrailingZeroCount(ready) + 1;
                     state.Pending &= ~(1UL << (sig - 1));
@@ -7405,7 +7407,7 @@ public static unsafe partial class Libc
                     state.Mask |= 1UL << (sig - 1);
                     if ((unchecked((uint)action.Flags) & 0x80000000U) != 0) state.Actions[sig - 1] = default;
                 }
-                bool restoreMask = true;
+                var restoreMask = true;
                 try
                 {
                     if (action.Handler == 1) continue;
@@ -7454,18 +7456,18 @@ public static unsafe partial class Libc
         if (value == null) { errno = EFAULT; return -1; }
         if (!TryGuestSignals(out var state)) return -1;
         var requested = *(GuestIntervalTimer*)value;
-        if (!GuestTimerTicks(requested.IntervalSeconds, requested.IntervalMicroseconds, out long interval) ||
-            !GuestTimerTicks(requested.ValueSeconds, requested.ValueMicroseconds, out long delay))
+        if (!GuestTimerTicks(requested.IntervalSeconds, requested.IntervalMicroseconds, out var interval) ||
+            !GuestTimerTicks(requested.ValueSeconds, requested.ValueMicroseconds, out var delay))
         { errno = EINVAL; return -1; }
         lock (state.Gate)
         {
             if (state.Stopped) { errno = EINVAL; return -1; }
-            long now = global::System.Diagnostics.Stopwatch.GetTimestamp();
+            var now = global::System.Diagnostics.Stopwatch.GetTimestamp();
             if (delay > long.MaxValue - now) { errno = EINVAL; return -1; }
             ObserveGuestTimer(state, now);
             if (previous != null)
             {
-                long remaining = state.Due == 0 ? 0 : Math.Max(0, state.Due - now);
+                var remaining = state.Due == 0 ? 0 : Math.Max(0, state.Due - now);
                 *(GuestIntervalTimer*)previous = GuestTimerValue(state.Interval, remaining);
             }
             state.Interval = interval;
@@ -7476,9 +7478,9 @@ public static unsafe partial class Libc
 
     private static uint GuestAlarm(uint seconds)
     {
-        GuestIntervalTimer requested = new() { ValueSeconds = seconds }, previous = default;
+        GuestIntervalTimer requested = new GuestIntervalTimer { ValueSeconds = seconds }, previous = default;
         if (GuestSetitimer(0, &requested, &previous) != 0) return uint.MaxValue;
-        long secondsLeft = previous.ValueSeconds + (previous.ValueMicroseconds == 0 ? 0 : 1);
+        var secondsLeft = previous.ValueSeconds + (previous.ValueMicroseconds == 0 ? 0 : 1);
         return (uint)Math.Min(secondsLeft, uint.MaxValue);
     }
 
@@ -7490,9 +7492,9 @@ public static unsafe partial class Libc
         lock (state.Gate)
         {
             if (state.Stopped) { errno = EINVAL; return -1; }
-            long now = global::System.Diagnostics.Stopwatch.GetTimestamp();
+            var now = global::System.Diagnostics.Stopwatch.GetTimestamp();
             ObserveGuestTimer(state, now);
-            long remaining = state.Due == 0 ? 0 : Math.Max(0, state.Due - now);
+            var remaining = state.Due == 0 ? 0 : Math.Max(0, state.Due - now);
             *(GuestIntervalTimer*)value = GuestTimerValue(state.Interval, remaining);
         }
         return 0;
@@ -7500,8 +7502,8 @@ public static unsafe partial class Libc
 
     private static GuestIntervalTimer GuestTimerValue(long interval, long remaining)
     {
-        long micros = (long)decimal.Ceiling((decimal)remaining * 1000000 / global::System.Diagnostics.Stopwatch.Frequency);
-        long intervalMicros = (long)((decimal)interval * 1000000 / global::System.Diagnostics.Stopwatch.Frequency);
+        var micros = (long)decimal.Ceiling((decimal)remaining * 1000000 / global::System.Diagnostics.Stopwatch.Frequency);
+        var intervalMicros = (long)((decimal)interval * 1000000 / global::System.Diagnostics.Stopwatch.Frequency);
         return new GuestIntervalTimer
         {
             IntervalSeconds = intervalMicros / 1000000,
@@ -7528,8 +7530,8 @@ public static unsafe partial class Libc
     // it; owners retain their exact allocation set for deterministic reclamation.
     private enum HeapAllocationKind { Plain, Debug, Aligned }
     private readonly record struct OwnedHeapBlock(RuntimeContext Owner, nuint Size, HeapAllocationKind Kind);
-    private static readonly Lock ownedHeapLock = new();
-    private static readonly Dictionary<nuint, OwnedHeapBlock> ownedHeapBlocks = new();
+    private static readonly Lock ownedHeapLock = new Lock();
+    private static readonly Dictionary<nuint, OwnedHeapBlock> ownedHeapBlocks = new Dictionary<UIntPtr, OwnedHeapBlock>();
 
     private static void ReserveOwnedHeapEntry(RuntimeContext owner)
     {
@@ -7542,7 +7544,7 @@ public static unsafe partial class Libc
 
     private static void RegisterOwnedHeapBlock(void* pointer, RuntimeContext owner, nuint size, HeapAllocationKind kind)
     {
-        ownedHeapBlocks.Add((nuint)pointer, new(owner, size, kind));
+        ownedHeapBlocks.Add((nuint)pointer, new OwnedHeapBlock(owner, size, kind));
         owner.NativeAllocations.Add((nuint)pointer);
     }
 
@@ -7553,14 +7555,14 @@ public static unsafe partial class Libc
     private static void* AllocateHeap(nuint size, bool zero = false)
     {
         var owner = RuntimeContext.Current;
-        bool debug = _dbgHeap;
+        var debug = _dbgHeap;
         try
         {
             if (owner is null) return AllocateHeapRaw(size, zero, debug);
             lock (ownedHeapLock)
             {
                 ReserveOwnedHeapEntry(owner);
-                void* pointer = AllocateHeapRaw(size, zero, debug);
+                var pointer = AllocateHeapRaw(size, zero, debug);
                 if (pointer != null)
                     RegisterOwnedHeapBlock(pointer, owner, size, debug ? HeapAllocationKind.Debug : HeapAllocationKind.Plain);
                 return pointer;
@@ -7629,7 +7631,7 @@ public static unsafe partial class Libc
             // C permits this zero-size convention. Applying it explicitly also
             // avoids treating realloc's NULL-after-free result as an OOM failure.
             if (size == 0) { ReleaseOwnedHeapBlock(pointer, block); return null; }
-            nuint bytes = (nuint)size;
+            var bytes = (nuint)size;
             void* replacement;
             var kind = block.Kind;
             try
@@ -7639,7 +7641,7 @@ public static unsafe partial class Libc
                 {
                     lock (_alignedLock)
                         ValidateAlignedBlock((nuint)pointer, _alignedBlocks[(nuint)pointer], "realloc");
-                    bool debug = _dbgHeap;
+                    var debug = _dbgHeap;
                     replacement = AllocateHeapRaw(bytes, false, debug);
                     if (replacement == null) return null;
                     NativeMemory.Copy(pointer, replacement, block.Size < bytes ? block.Size : bytes);
@@ -7669,7 +7671,7 @@ public static unsafe partial class Libc
             try { ReserveOwnedHeapEntry(owner); }
             catch (OutOfMemoryException) { return ENOMEM; }
             void* pointer = null;
-            int status = AllocateAlignedRaw(&pointer, alignment, size);
+            var status = AllocateAlignedRaw(&pointer, alignment, size);
             if (status != 0) return status;
             RegisterOwnedHeapBlock(pointer, owner, (nuint)size, HeapAllocationKind.Aligned);
             *memptr = pointer;
@@ -7684,7 +7686,7 @@ public static unsafe partial class Libc
     {
         lock (ownedHeapLock)
         {
-            foreach (nuint address in owner.NativeAllocations)
+            foreach (var address in owner.NativeAllocations)
             {
                 var block = ownedHeapBlocks[address];
                 FreeHeapRaw((void*)address, block.Kind);
@@ -7710,8 +7712,8 @@ public static unsafe partial class Libc
         if (name == null) { errno = EFAULT; return -1; }
         try
         {
-            byte[] value = Encoding.UTF8.GetBytes(Dns.GetHostName());
-            int count = (int)Math.Min(length, (ulong)value.Length);
+            var value = Encoding.UTF8.GetBytes(Dns.GetHostName());
+            var count = (int)Math.Min(length, (ulong)value.Length);
             value.AsSpan(0, count).CopyTo(new Span<byte>(name, count));
             if (length <= (ulong)value.Length) { errno = ENAMETOOLONG; return -1; }
             name[value.Length] = 0;
@@ -7730,9 +7732,9 @@ public static unsafe partial class Libc
         if (name == null) return EFAULT;
         try
         {
-            string username = Environment.UserName;
+            var username = Environment.UserName;
             if (username.Length == 0) return ENOENT;
-            byte[] value = Encoding.UTF8.GetBytes(username);
+            var value = Encoding.UTF8.GetBytes(username);
             if (length <= (ulong)value.Length) return ERANGE;
             value.AsSpan().CopyTo(new Span<byte>(name, value.Length));
             name[value.Length] = 0;
@@ -7743,8 +7745,8 @@ public static unsafe partial class Libc
         catch (InvalidOperationException) { return EIO; }
     }
 
-    private static readonly object RandomGate = new();
-    private static Random PosixRandom = new(1);
+    private static readonly object RandomGate = new object();
+    private static Random PosixRandom = new Random(1);
 
     /// <summary>Owner-scoped 31-bit noncryptographic PRNG, process-wide when unbound. Seed repeatability
     /// and range match random(); sequences are not glibc-compatible.</summary>
@@ -7897,7 +7899,7 @@ public static unsafe partial class Libc
     // Live blocks are threaded through a singly-linked list in their headers
     // (no managed collection — embed/AOT clean): header = [magic|size|next|pad].
     private static byte* _dbgHead = null;
-    private static readonly Lock _dbgLock = new();
+    private static readonly Lock _dbgLock = new Lock();
 
     /// <summary>Allocate a checked block and return the user pointer.</summary>
     internal static void* DbgAlloc(nuint size, bool zero)
@@ -8056,12 +8058,12 @@ public static unsafe partial class Libc
     /// </summary>
     public static double strtod(byte* nptr, byte** endptr)
     {
-        byte* p = nptr;
+        var p = nptr;
         // Skip leading whitespace (C "C"-locale isspace: ' ' \t \n \v \f \r).
         while (*p == (byte)' ' || (*p >= 9 && *p <= 13)) { p++; }
-        byte* start = p;
+        var start = p;
 
-        bool neg = false;
+        var neg = false;
         if (*p == (byte)'+' || *p == (byte)'-') { neg = *p == (byte)'-'; p++; }
 
         // C99 hex float: 0x<hex> [. <hex>] p[+-]<dec> — delegated to
@@ -8070,7 +8072,7 @@ public static unsafe partial class Libc
         {
             p += 2; // skip 0x
             // Integer part: required hex digits.
-            byte* afterInt = p;
+            var afterInt = p;
             while ((*afterInt >= (byte)'0' && *afterInt <= (byte)'9')
                 || (*afterInt >= (byte)'a' && *afterInt <= (byte)'f')
                 || (*afterInt >= (byte)'A' && *afterInt <= (byte)'F'))
@@ -8086,7 +8088,7 @@ public static unsafe partial class Libc
             // runs (e.g. "0x3." + 1000 zeros; 3 × 16^1000 >> DBL_MAX).
             // Beyond the cap we count the skipped digits and fold them into
             // the binary exponent — they contribute nothing to the mantissa.
-            double sig = 0.0; int fracHex = 0; int skipped = 0; bool sawHex = false;
+            var sig = 0.0; var fracHex = 0; var skipped = 0; var sawHex = false;
             const double SigCap = 1e250;
             while (p < afterInt)
             {
@@ -8119,12 +8121,12 @@ public static unsafe partial class Libc
             // If 'p' is present but not followed by a digit (or +/- digit), the
             // parse stops *before* the 'p' (C11 7.22.1.3: the exponent must have
             // at least one digit).
-            int exp = 0;
+            var exp = 0;
             if (*p == (byte)'p' || *p == (byte)'P')
             {
-                byte* expStart = p;
+                var expStart = p;
                 p++;
-                bool expNeg = false;
+                var expNeg = false;
                 if (*p == (byte)'+' || *p == (byte)'-') { expNeg = *p == (byte)'-'; p++; }
                 if (*p < (byte)'0' || *p > (byte)'9')
                 {
@@ -8144,7 +8146,7 @@ public static unsafe partial class Libc
             exp += 4 * skipped;  // cap-skipped digits: restore the exponent
             // Compute: sig * 2^exp. ScaleB handles the power-of-two multiply
             // and produces the correctly-rounded double result.
-            double hexVal = double.IsNaN(sig) ? sig : global::System.Math.ScaleB(sig, exp);
+            var hexVal = double.IsNaN(sig) ? sig : global::System.Math.ScaleB(sig, exp);
             if (endptr != null) { *endptr = p; }
             return neg ? -hexVal : hexVal;
         }
@@ -8170,7 +8172,7 @@ public static unsafe partial class Libc
         }
 
         // Decimal mantissa: digits, optional '.', digits.
-        bool sawDigit = false;
+        var sawDigit = false;
         while (*p >= (byte)'0' && *p <= (byte)'9') { p++; sawDigit = true; }
         if (*p == (byte)'.')
         {
@@ -8180,7 +8182,7 @@ public static unsafe partial class Libc
         // Optional exponent — only consumed if followed by digits.
         if (sawDigit && (*p == (byte)'e' || *p == (byte)'E'))
         {
-            byte* e = p + 1;
+            var e = p + 1;
             if (*e == (byte)'+' || *e == (byte)'-') { e++; }
             if (*e >= (byte)'0' && *e <= (byte)'9')
             {
@@ -8196,7 +8198,7 @@ public static unsafe partial class Libc
         }
 
         var s = Encoding.ASCII.GetString(start, (int)(p - start));
-        double val = double.Parse(s, NumberStyles.Float, CultureInfo.InvariantCulture);
+        var val = double.Parse(s, NumberStyles.Float, CultureInfo.InvariantCulture);
         if (endptr != null) { *endptr = p; }
         return val;
     }
@@ -8219,9 +8221,9 @@ public static unsafe partial class Libc
     /// <summary>Case-insensitive ASCII prefix match of a lowercase literal.</summary>
     private static bool MatchCI(byte* p, string lower)
     {
-        for (int i = 0; i < lower.Length; i++)
+        for (var i = 0; i < lower.Length; i++)
         {
-            byte b = p[i];
+            var b = p[i];
             if (b == 0 || (b | 0x20) != lower[i]) { return false; }
         }
         return true;
@@ -8237,7 +8239,7 @@ public static unsafe partial class Libc
     /// </summary>
     public static int strlen(byte* s)
     {
-        int n = 0;
+        var n = 0;
         while (s[n] != 0) { n++; }
         return n;
     }
@@ -8291,7 +8293,7 @@ public static unsafe partial class Libc
     /// </summary>
     public static byte* strcpy(byte* dst, byte* src)
     {
-        byte* p = dst;
+        var p = dst;
         while ((*p++ = *src++) != 0) { }
         return dst;
     }
@@ -8325,7 +8327,7 @@ public static unsafe partial class Libc
     /// redirection holds; file → an unbuffered UTF-8 writer over the stream).
     /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static PrintfBuilder fprintf(FILE* stream, byte* fmt) => new(WriterFor(stream), fmt);
+    public static PrintfBuilder fprintf(FILE* stream, byte* fmt) => new PrintfBuilder(WriterFor(stream), fmt);
 
     /// <summary><c>printf(fmt)</c> ≡ <c>fprintf(stdout, fmt)</c>.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -8349,7 +8351,7 @@ public static unsafe partial class Libc
             w.Write("(null)");
             return 6;
         }
-        int len = strlen(s);
+        var len = strlen(s);
         // For a file-backed stream WriterFor returns an unbuffered UTF-8
         // writer, so decode→write round-trips back to the original bytes.
         w.Write(global::System.Text.Encoding.UTF8.GetString(s, len));
@@ -8362,7 +8364,7 @@ public static unsafe partial class Libc
     /// </summary>
     public static int puts(byte* s)
     {
-        int n = fputs(s, stdout);
+        var n = fputs(s, stdout);
         WriteByteTo(stdout, (byte)'\n');
         return n + 1;
     }
@@ -8374,7 +8376,7 @@ public static unsafe partial class Libc
     /// <paramref name="dst"/>.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static SprintfBuilder sprintf(byte* dst, byte* fmt) => new(dst, fmt, capacity: -1);
+    public static SprintfBuilder sprintf(byte* dst, byte* fmt) => new SprintfBuilder(dst, fmt, capacity: -1);
 
     /// <summary>
     /// <c>snprintf(dst, n, fmt, ...)</c> — like <see cref="sprintf"/> but
@@ -8384,7 +8386,7 @@ public static unsafe partial class Libc
     /// truncated, matching C99.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static SprintfBuilder snprintf(byte* dst, int n, byte* fmt) => new(dst, fmt, capacity: n <= 0 ? 0 : n - 1, terminate: n > 0);
+    public static SprintfBuilder snprintf(byte* dst, int n, byte* fmt) => new SprintfBuilder(dst, fmt, capacity: n <= 0 ? 0 : n - 1, terminate: n > 0);
 
     /// <summary>
     /// <c>fscanf(stream, fmt)</c> — start a fluent scan chain reading from
@@ -8395,7 +8397,7 @@ public static unsafe partial class Libc
     /// returns the count of successful matches.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ScanfReader fscanf(FILE* stream, byte* fmt) => new(ReaderFor(stream), fmt);
+    public static ScanfReader fscanf(FILE* stream, byte* fmt) => new ScanfReader(ReaderFor(stream), fmt);
 
     /// <summary><c>scanf(fmt)</c> ≡ <c>fscanf(stdin, fmt)</c>.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -8409,7 +8411,7 @@ public static unsafe partial class Libc
     /// </summary>
     public static ScanfReader sscanf(byte* src, byte* fmt)
     {
-        int len = strlen(src);
+        var len = strlen(src);
         var s = global::System.Text.Encoding.UTF8.GetString(src, len);
         return new ScanfReader(new StringReader(s), fmt);
     }
@@ -8435,8 +8437,7 @@ public static unsafe partial class Libc
     // Instead pin its UTF-16 data on the Pinned Object Heap ONCE, cached per
     // distinct literal — a program-lifetime pool, mirroring how C places string
     // literals in .rodata. Pinning per use would leak a frame under a loop.
-    private static readonly global::System.Collections.Concurrent.ConcurrentDictionary<string, IntPtr> _u16Literals =
-        new(StringComparer.Ordinal);
+    private static readonly global::System.Collections.Concurrent.ConcurrentDictionary<string, IntPtr> _u16Literals = new ConcurrentDictionary<string, IntPtr>(StringComparer.Ordinal);
 
     /// <summary><c>L16("…")</c> — return a stable <c>char*</c> (= char16_t*) to a
     /// pinned, NUL-terminated copy of a C11 <c>u"…"</c> literal's UTF-16 data. The
@@ -8461,8 +8462,7 @@ public static unsafe partial class Libc
 
     // char32_t (UTF-32) string-literal pool — the 32-bit sibling of the L16 pool.
     // C# has no `u32` literal; pin UTF-32 data on the POH once per distinct literal.
-    private static readonly global::System.Collections.Concurrent.ConcurrentDictionary<string, IntPtr> _u32Literals =
-        new(StringComparer.Ordinal);
+    private static readonly global::System.Collections.Concurrent.ConcurrentDictionary<string, IntPtr> _u32Literals = new ConcurrentDictionary<string, IntPtr>(StringComparer.Ordinal);
 
     /// <summary><c>L32("…")</c> — return a stable <c>uint*</c> (= char32_t*) to a
     /// pinned, NUL-terminated copy of a C11 <c>U"…"</c> literal's UTF-32 data. The
@@ -8495,7 +8495,7 @@ public static unsafe partial class Libc
         public void Dispose() => lease.Dispose();
     }
 
-    private static readonly object signalGate = new();
+    private static readonly object signalGate = new object();
     private static SignalRegistration? sigintRegistration;
     private static bool sigintSubscribed;
     [ThreadStatic] private static bool deliveringSigint;
@@ -8511,7 +8511,7 @@ public static unsafe partial class Libc
         // Other signals have never had a managed signal() handler backend.
         // Report unsupported registration instead of false SIG_DFL success.
         if (sig != 2 || (nint)func == -1) { errno = EINVAL; return (delegate*<int, void>)(nint)(-1); }
-        SignalRegistration? next = func == null ? null : new(func, RuntimeState);
+        var next = func == null ? null : new SignalRegistration(func, RuntimeState);
         SignalRegistration? previous;
         try
         {
@@ -8661,7 +8661,7 @@ public static unsafe partial class Libc
 
         static LiteralPool()
         {
-            int length = RuntimeLength;
+            var length = RuntimeLength;
             Storage = GC.AllocateUninitializedArray<byte>(length, pinned: true);
             RuntimeBytes.CopyTo(Storage);
             Pointer = (byte*)Unsafe.AsPointer(ref MemoryMarshal.GetArrayDataReference(Storage));
@@ -8747,7 +8747,7 @@ public static unsafe partial class Libc
     // modify). Native memory so the pointer never moves; the string members
     // point into the rooted pinned literal pool.
     private static lconv* _lconv;
-    private static readonly Lock _lconvLock = new();
+    private static readonly Lock _lconvLock = new Lock();
 
     /// <summary><c>localeconv()</c> — the current locale's numeric/monetary
     /// formatting conventions. dotcc is always the "C" locale: decimal point
@@ -8765,7 +8765,7 @@ public static unsafe partial class Libc
         {
             if (_lconv != null) { return _lconv; }
             var p = (lconv*)NativeMemory.AllocZeroed((nuint)sizeof(lconv));
-            byte* empty = (LiteralPool.Pointer + LiteralPool.Empty);
+            var empty = (LiteralPool.Pointer + LiteralPool.Empty);
             p->decimal_point     = (LiteralPool.Pointer + LiteralPool.DecimalPoint);
             p->thousands_sep     = empty;
             p->grouping          = empty;
@@ -8796,7 +8796,7 @@ public static unsafe partial class Libc
     /// formatting locale names fail with NULL.</summary>
     public static byte* setlocale(int category, byte* locale)
     {
-        bool ctype = category == 0 || category == 6;
+        var ctype = category == 0 || category == 6;
         if (locale == null) return ctype && Volatile.Read(ref RuntimeState.Utf8MultibyteLocale) ? Utf8LocaleName : LiteralPool.Pointer + LiteralPool.LocaleC;
         var name = Encoding.UTF8.GetString(locale, (int)strlen(locale));
         if (name is "" or "C" or "POSIX")
@@ -8835,16 +8835,16 @@ public static unsafe partial class Libc
 
     private sealed class LocaleProcessState
     {
-        internal readonly object Gate = new();
-        internal readonly Dictionary<nint, LocaleChild> Children = new();
+        internal readonly object Gate = new object();
+        internal readonly Dictionary<nint, LocaleChild> Children = new Dictionary<IntPtr, LocaleChild>();
     }
-    private static readonly ConditionalWeakTable<RuntimeContext, LocaleProcessState> localeProcessStates = new();
-    private static LocaleProcessState LocaleProcesses => localeProcessStates.GetValue(RuntimeState, static _ => new());
+    private static readonly ConditionalWeakTable<RuntimeContext, LocaleProcessState> localeProcessStates = new ConditionalWeakTable<RuntimeContext, LocaleProcessState>();
+    private static LocaleProcessState LocaleProcesses => localeProcessStates.GetValue(RuntimeState, static _ => new LocaleProcessState());
 
     private static bool LocaleInventoryCommand(byte* command)
     {
-        ReadOnlySpan<byte> expected = "locale -a\0"u8;
-        for (int i = 0; i < expected.Length; i++)
+        var expected = "locale -a\0"u8;
+        for (var i = 0; i < expected.Length; i++)
             if (command[i] != expected[i]) return false;
         return true;
     }
@@ -8852,7 +8852,7 @@ public static unsafe partial class Libc
     private static FILE* OpenLocaleInventory(byte* mode)
     {
         // Use a fixed OS utility, never PATH, a shell, or caller-supplied argv.
-        string executable = File.Exists("/usr/bin/locale") ? "/usr/bin/locale" : "/bin/locale";
+        var executable = File.Exists("/usr/bin/locale") ? "/usr/bin/locale" : "/bin/locale";
         return OpenLocaleUtility(executable, mode);
     }
 
@@ -8863,7 +8863,7 @@ public static unsafe partial class Libc
         if (!OperatingSystem.IsLinux() || RuntimeInformation.ProcessArchitecture != Architecture.X64)
         { errno = ENOTSUP; return null; }
         LocaleChild? child = null;
-        int descriptor = -1;
+        var descriptor = -1;
         FILE* stream = null;
         try
         {
@@ -8886,7 +8886,7 @@ public static unsafe partial class Libc
         catch (UnauthorizedAccessException) { errno = EACCES; }
         catch (IOException) { errno = EIO; }
         catch (OutOfMemoryException) { errno = ENOMEM; }
-        int error = errno;
+        var error = errno;
         if (stream != null) fclose(stream);
         else if (descriptor >= 0) CloseSlot(SlotByFd(descriptor)!);
         child?.Abandon();
@@ -8906,13 +8906,13 @@ public static unsafe partial class Libc
             { errno = ECHILD; return -1; }
             processes.Children.Remove((nint)stream);
         }
-        int closed = fclose(stream);
-        int closeError = errno;
-        int status = child.Wait(terminate: false);
-        int waitError = errno;
+        var closed = fclose(stream);
+        var closeError = errno;
+        var status = child.Wait(terminate: false);
+        var waitError = errno;
         try
         {
-            byte[] errors = child.ReadErrors();
+            var errors = child.ReadErrors();
             fixed (byte* bytes = errors)
                 if (errors.Length != 0 && fwrite(bytes, 1, errors.Length, stderr) != errors.Length)
                     return -1;
@@ -8965,7 +8965,7 @@ public static unsafe partial class Libc
                 do { result = LocaleWaitPid(pid, &status, 0); }
                 while (result < 0 && Marshal.GetLastPInvokeError() == EINTR);
             }
-            int error = result < 0 ? Marshal.GetLastPInvokeError() : 0;
+            var error = result < 0 ? Marshal.GetLastPInvokeError() : 0;
             if (result > 0 || error == ECHILD) pid = 0;
             if (result < 0) { if (reportError) errno = error; return -1; }
             return status;
@@ -9002,25 +9002,25 @@ public static unsafe partial class Libc
             Values = (byte**)NativeMemory.AllocZeroed((nuint)(values.Length + 1), (nuint)sizeof(byte*));
             try
             {
-                for (int i = 0; i < values.Length; i++)
+                for (var i = 0; i < values.Length; i++)
                     Values[i] = (byte*)(strings[i] = Marshal.StringToCoTaskMemUTF8(values[i]));
             }
             catch { Dispose(); throw; }
         }
         public void Dispose()
         {
-            foreach (nint value in strings) Marshal.FreeCoTaskMem(value);
+            foreach (var value in strings) Marshal.FreeCoTaskMem(value);
             NativeMemory.Free(Values);
         }
     }
 
     private static LocaleChild? StartLocaleChild(string executable)
     {
-        int* output = stackalloc int[2] { -1, -1 };
-        int* errors = stackalloc int[2] { -1, -1 };
+        var output = stackalloc int[2] { -1, -1 };
+        var errors = stackalloc int[2] { -1, -1 };
         LocaleSpawnActions actions = default;
-        bool initialized = false;
-        int pid = 0;
+        var initialized = false;
+        var pid = 0;
         FileStream? stdoutStream = null, stderrStream = null;
         try
         {
@@ -9028,17 +9028,17 @@ public static unsafe partial class Libc
             { errno = Marshal.GetLastPInvokeError(); return null; }
             // Descriptor actions must not close a stdio destination that was
             // also returned by pipe2 on a host with closed standard handles.
-            for (int i = 0; i < 2; i++)
+            for (var i = 0; i < 2; i++)
                 if (output[i] <= 2 || errors[i] <= 2) { errno = ENOTSUP; return null; }
-            int result = LocaleActionsInit(&actions);
+            var result = LocaleActionsInit(&actions);
             if (result != 0) { errno = result; return null; }
             initialized = true;
             fixed (byte* devnull = "/dev/null\0"u8)
                 result = LocaleActionsOpen(&actions, 0, devnull, 0, 0);
             if (result == 0) result = LocaleActionsDup(&actions, output[1], 1);
             if (result == 0) result = LocaleActionsDup(&actions, errors[1], 2);
-            for (int i = 0; result == 0 && i < 2; i++) result = LocaleActionsClose(&actions, output[i]);
-            for (int i = 0; result == 0 && i < 2; i++) result = LocaleActionsClose(&actions, errors[i]);
+            for (var i = 0; result == 0 && i < 2; i++) result = LocaleActionsClose(&actions, output[i]);
+            for (var i = 0; result == 0 && i < 2; i++) result = LocaleActionsClose(&actions, errors[i]);
             if (result != 0) { errno = result; return null; }
             var environment = new List<string>();
             foreach (global::System.Collections.DictionaryEntry item in Environment.GetEnvironmentVariables())
@@ -9065,7 +9065,7 @@ public static unsafe partial class Libc
         finally
         {
             if (initialized) LocaleActionsDestroy(&actions);
-            for (int i = 0; i < 2; i++)
+            for (var i = 0; i < 2; i++)
             {
                 if (output[i] >= 0) LocaleClose(output[i]);
                 if (errors[i] >= 0) LocaleClose(errors[i]);
@@ -9186,11 +9186,11 @@ public static unsafe partial class Libc
         // Compensated summation bounds rounding while the series converges
         // rapidly on this interval (successive terms shrink by at least 4).
         double term = x, sum = x, correction = 0;
-        for (int n = 2; n <= 32; n++)
+        for (var n = 2; n <= 32; n++)
         {
             term *= x / n;
-            double adjusted = term - correction;
-            double next = sum + adjusted;
+            var adjusted = term - correction;
+            var next = sum + adjusted;
             correction = (next - sum) - adjusted;
             if (next == sum) break;
             sum = next;
@@ -9204,7 +9204,7 @@ public static unsafe partial class Libc
         if (x == 0 || double.IsPositiveInfinity(x)) return x;
         if (x == -1) return double.NegativeInfinity;
         if (x < -1 || double.IsNaN(x)) return double.NaN;
-        double sum = 1 + x;
+        var sum = 1 + x;
         if (sum == 1) return x;
         return Math.Log(sum) - ((sum - 1) - x) / sum;
     }
@@ -9241,7 +9241,7 @@ public static unsafe partial class Libc
     {
         if (double.IsNaN(value) || double.IsNaN(target)) return value + target;
         if (value == target) return target;
-        double result = target > value ? Math.BitIncrement(value) : Math.BitDecrement(value);
+        var result = target > value ? Math.BitIncrement(value) : Math.BitDecrement(value);
         if (double.IsFinite(value) && (double.IsInfinity(result) || double.IsSubnormal(result)
             || result == 0)) errno = ERANGE;
         return result;
@@ -9251,7 +9251,7 @@ public static unsafe partial class Libc
     /// Does not lower to a separately rounded multiplication and addition.</summary>
     public static double fma(double x, double y, double z)
     {
-        double result = Math.FusedMultiplyAdd(x, y, z);
+        var result = Math.FusedMultiplyAdd(x, y, z);
         if (double.IsNaN(result) && !double.IsNaN(x) && !double.IsNaN(y) && !double.IsNaN(z)) errno = EDOM;
         else if (double.IsInfinity(result) && double.IsFinite(x) && double.IsFinite(y) && double.IsFinite(z)) errno = ERANGE;
         return result;
@@ -9259,7 +9259,7 @@ public static unsafe partial class Libc
 
     public static double exp2(double value)
     {
-        double result = double.Exp2(value);
+        var result = double.Exp2(value);
         if (double.IsFinite(value) && (double.IsInfinity(result) || result == 0)) errno = ERANGE;
         return result;
     }
@@ -9270,8 +9270,8 @@ public static unsafe partial class Libc
     public static double erf(double value)
     {
         if (!OperatingSystem.IsLinux()) { errno = ENOTSUP; return double.NaN; }
-        double result = PosixErf(value);
-        int error = Marshal.GetLastPInvokeError();
+        var result = PosixErf(value);
+        var error = Marshal.GetLastPInvokeError();
         if (error != 0) errno = error;
         return result;
     }
@@ -9279,8 +9279,8 @@ public static unsafe partial class Libc
     public static double erfc(double value)
     {
         if (!OperatingSystem.IsLinux()) { errno = ENOTSUP; return double.NaN; }
-        double result = PosixErfc(value);
-        int error = Marshal.GetLastPInvokeError();
+        var result = PosixErfc(value);
+        var error = Marshal.GetLastPInvokeError();
         if (error != 0) errno = error;
         return result;
     }
@@ -9558,7 +9558,7 @@ public static unsafe partial class Libc
     public static double frexp(double x, int* exp)
     {
         if (x == 0.0 || double.IsNaN(x) || double.IsInfinity(x)) { *exp = 0; return x; }
-        int e = Math.ILogB(x) + 1;
+        var e = Math.ILogB(x) + 1;
         *exp = e;
         return Math.ScaleB(x, -e);
     }
@@ -9567,7 +9567,7 @@ public static unsafe partial class Libc
     public static float frexp(float x, int* exp)
     {
         if (x == 0f || float.IsNaN(x) || float.IsInfinity(x)) { *exp = 0; return x; }
-        int e = MathF.ILogB(x) + 1;
+        var e = MathF.ILogB(x) + 1;
         *exp = e;
         return MathF.ScaleB(x, -e);
     }
@@ -9775,7 +9775,7 @@ public static unsafe partial class Libc
     public static int madvise(void* address, ulong length, int advice)
     {
         if (!OperatingSystem.IsLinux() || IntPtr.Size != 8) { errno = ENOTSUP; return -1; }
-        int result = PosixMadvise(address, length, advice);
+        var result = PosixMadvise(address, length, advice);
         if (result != 0) errno = Marshal.GetLastPInvokeError();
         return result;
     }
@@ -9783,7 +9783,7 @@ public static unsafe partial class Libc
     public static int mlock(void* address, ulong length)
     {
         if (!OperatingSystem.IsLinux() || IntPtr.Size != 8) { errno = ENOTSUP; return -1; }
-        int result = PosixMlock(address, length);
+        var result = PosixMlock(address, length);
         if (result != 0) errno = Marshal.GetLastPInvokeError();
         return result;
     }
@@ -9791,14 +9791,14 @@ public static unsafe partial class Libc
     public static int munlock(void* address, ulong length)
     {
         if (!OperatingSystem.IsLinux() || IntPtr.Size != 8) { errno = ENOTSUP; return -1; }
-        int result = PosixMunlock(address, length);
+        var result = PosixMunlock(address, length);
         if (result != 0) errno = Marshal.GetLastPInvokeError();
         return result;
     }
 
     private readonly record struct PosixMapping(ulong Start, ulong End, RuntimeContext? Owner);
-    private static readonly Lock mappingGate = new();
-    private static readonly List<PosixMapping> posixMappings = new();
+    private static readonly Lock mappingGate = new Lock();
+    private static readonly List<PosixMapping> posixMappings = new List<PosixMapping>();
 
     /// <summary>Linux LP64 mapping service, including real anonymous pymalloc
     /// arenas. File descriptors are translated through the owner's descriptor
@@ -9808,21 +9808,21 @@ public static unsafe partial class Libc
     {
         if (!OperatingSystem.IsLinux() || IntPtr.Size != 8 || (flags & 0x10) != 0)
         { errno = ENOTSUP; return (void*)(nint)(-1); }
-        bool anonymous = (flags & 0x20) != 0;
-        FileStream? file = anonymous ? null : SlotByFd(descriptor)?.Stream as FileStream;
+        var anonymous = (flags & 0x20) != 0;
+        var file = anonymous ? null : SlotByFd(descriptor)?.Stream as FileStream;
         if (!anonymous && file is null) { errno = EBADF; return (void*)(nint)(-1); }
-        bool retained = false;
+        var retained = false;
         try
         {
             if (file != null) file.SafeFileHandle.DangerousAddRef(ref retained);
-            int nativeFd = file is null ? -1 : checked((int)file.SafeFileHandle.DangerousGetHandle());
+            var nativeFd = file is null ? -1 : checked((int)file.SafeFileHandle.DangerousGetHandle());
             lock (mappingGate)
             {
                 posixMappings.EnsureCapacity(checked(posixMappings.Count + 1));
-                void* result = PosixMmap(address, length, protection, flags, nativeFd, offset);
+                var result = PosixMmap(address, length, protection, flags, nativeFd, offset);
                 if (result == (void*)(nint)(-1)) { errno = Marshal.GetLastPInvokeError(); return result; }
-                ulong rounded = RoundMappingLength(length);
-                posixMappings.Add(new((ulong)result, (ulong)result + rounded, RuntimeContext.Current));
+                var rounded = RoundMappingLength(length);
+                posixMappings.Add(new PosixMapping((ulong)result, (ulong)result + rounded, RuntimeContext.Current));
                 return result;
             }
         }
@@ -9833,7 +9833,7 @@ public static unsafe partial class Libc
 
     private static ulong RoundMappingLength(ulong length)
     {
-        ulong page = (ulong)Environment.SystemPageSize;
+        var page = (ulong)Environment.SystemPageSize;
         return (length + page - 1) & ~(page - 1);
     }
 
@@ -9845,7 +9845,7 @@ public static unsafe partial class Libc
         ulong start = (ulong)address, rounded = RoundMappingLength(length);
         if (length == 0 || rounded == 0 || start > ulong.MaxValue - rounded
             || start % (ulong)Environment.SystemPageSize != 0) { errno = EINVAL; return -1; }
-        ulong end = start + rounded;
+        var end = start + rounded;
         lock (mappingGate)
         {
             foreach (var mapping in posixMappings)
@@ -9853,9 +9853,9 @@ public static unsafe partial class Libc
                 { errno = EINVAL; return -1; }
             try { posixMappings.EnsureCapacity(checked(posixMappings.Count + 1)); }
             catch (OutOfMemoryException) { errno = ENOMEM; return -1; }
-            int result = PosixMunmap(address, length);
+            var result = PosixMunmap(address, length);
             if (result != 0) { errno = Marshal.GetLastPInvokeError(); return result; }
-            for (int i = posixMappings.Count - 1; i >= 0; i--)
+            for (var i = posixMappings.Count - 1; i >= 0; i--)
             {
                 var mapping = posixMappings[i];
                 if (mapping.Start >= end || start >= mapping.End) continue;
@@ -9870,7 +9870,7 @@ public static unsafe partial class Libc
     private static void DisposeOwnedMappings(RuntimeContext owner)
     {
         lock (mappingGate)
-            for (int i = posixMappings.Count - 1; i >= 0; i--)
+            for (var i = posixMappings.Count - 1; i >= 0; i--)
                 if (ReferenceEquals(posixMappings[i].Owner, owner))
                 {
                     var mapping = posixMappings[i];
@@ -9904,7 +9904,7 @@ public static unsafe partial class Libc
     // its obligation, just as in native C. Never truncate size_t to int.
     private static nuint ValidateMemoryRange(void* pointer, ulong length)
     {
-        nuint count = checked((nuint)length);
+        var count = checked((nuint)length);
         if (count > (nuint)nint.MaxValue) throw new ArgumentOutOfRangeException(nameof(length), "Memory extent exceeds the native signed address range.");
         if (count != 0)
         {
@@ -9917,7 +9917,7 @@ public static unsafe partial class Libc
 
     public static void* memset(void* dst, int value, ulong count)
     {
-        nuint length = ValidateMemoryRange(dst, count);
+        var length = ValidateMemoryRange(dst, count);
         if (length != 0) NativeMemory.Fill(dst, length, (byte)value);
         return dst;
     }
@@ -9936,16 +9936,16 @@ public static unsafe partial class Libc
     }
     public static int memcmp(void* a, void* b, ulong count)
     {
-        nuint length = ValidateMemoryRange(a, count); ValidateMemoryRange(b, count);
-        byte* left = (byte*)a; byte* right = (byte*)b;
+        var length = ValidateMemoryRange(a, count); ValidateMemoryRange(b, count);
+        var left = (byte*)a; var right = (byte*)b;
         for (nuint i = 0; i < length; i++)
             if (left[i] != right[i]) return left[i] - right[i];
         return 0;
     }
     public static void* memchr(void* s, int value, ulong count)
     {
-        nuint length = ValidateMemoryRange(s, count);
-        byte* data = (byte*)s; byte needle = (byte)value;
+        var length = ValidateMemoryRange(s, count);
+        var data = (byte*)s; var needle = (byte)value;
         for (nuint i = 0; i < length; i++)
             if (data[i] == needle) return data + i;
         return null;
@@ -9966,7 +9966,7 @@ public static unsafe partial class Libc
     private static readonly nint utf8CodesetStorage = Marshal.StringToCoTaskMemUTF8("UTF-8");
     private static readonly nint asciiCodesetStorage = Marshal.StringToCoTaskMemUTF8("ANSI_X3.4-1968");
     private static byte* Utf8LocaleName => (byte*)utf8LocaleStorage;
-    private static readonly Lazy<global::System.Collections.Generic.Dictionary<int, nint>> cLanginfo = new(CreateCLanginfo);
+    private static readonly Lazy<global::System.Collections.Generic.Dictionary<int, nint>> cLanginfo = new Lazy<Dictionary<int, IntPtr>>(CreateCLanginfo);
 
     private static global::System.Collections.Generic.Dictionary<int, nint> CreateCLanginfo()
     {
@@ -9975,12 +9975,12 @@ public static unsafe partial class Libc
         // header, checked against the native oracle with all bytes retained.
         var result = new global::System.Collections.Generic.Dictionary<int, nint>();
         void Add(int item, string value) => result.Add(item, Marshal.StringToCoTaskMemUTF8(value));
-        for (int i = 0; i < 7; i++) { Add(131072 + i, _wdayAbbr[i]); Add(131079 + i, _wdayFull[i]); }
-        for (int i = 0; i < 12; i++) { Add(131086 + i, _monAbbr[i]); Add(131098 + i, _monFull[i]); }
+        for (var i = 0; i < 7; i++) { Add(131072 + i, _wdayAbbr[i]); Add(131079 + i, _wdayFull[i]); }
+        for (var i = 0; i < 12; i++) { Add(131086 + i, _monAbbr[i]); Add(131098 + i, _monFull[i]); }
         Add(131110, "AM"); Add(131111, "PM");
         Add(131112, "%a %b %e %H:%M:%S %Y"); Add(131113, "%m/%d/%y");
         Add(131114, "%H:%M:%S"); Add(131115, "%I:%M:%S %p");
-        foreach (int item in new[] { 131116, 131118, 131119, 131120, 131121, 65537 }) Add(item, "");
+        foreach (var item in new[] { 131116, 131118, 131119, 131120, 131121, 65537 }) Add(item, "");
         Add(262159, "-"); // C CRNCYSTR: symbol precedes the value; symbol itself is empty.
         Add(65536, "."); Add(327680, "^[yY]"); Add(327681, "^[nN]");
         return result;
@@ -9989,7 +9989,7 @@ public static unsafe partial class Libc
     public static byte* nl_langinfo(int item)
     {
         if (item == 14) return (byte*)(Utf8MultibyteLocale ? utf8CodesetStorage : asciiCodesetStorage);
-        if (cLanginfo.Value.TryGetValue(item, out nint value)) return (byte*)value;
+        if (cLanginfo.Value.TryGetValue(item, out var value)) return (byte*)value;
         errno = ENOTSUP;
         return LiteralPool.Pointer + LiteralPool.Empty;
     }
@@ -10000,7 +10000,7 @@ public static unsafe partial class Libc
     public static ulong mbstowcs(char* destination, byte* source, ulong length)
     {
         if (source == null) { errno = EFAULT; return ulong.MaxValue; }
-        bool utf8 = Utf8MultibyteLocale;
+        var utf8 = Utf8MultibyteLocale;
         ulong written = 0;
         while (destination == null || written < length)
         {
@@ -10012,14 +10012,14 @@ public static unsafe partial class Libc
             int scalar = *source, consumed = 1;
             if (scalar >= 128 && (!utf8 || !DecodeMultibyteScalar(source, out scalar, out consumed)))
             { errno = EILSEQ; return ulong.MaxValue; }
-            int units = scalar > 0xffff ? 2 : 1;
+            var units = scalar > 0xffff ? 2 : 1;
             if (destination != null && (ulong)units > length - written) return written;
             if (destination != null)
             {
                 if (units == 1) destination[written] = (char)scalar;
                 else
                 {
-                    int value = scalar - 0x10000;
+                    var value = scalar - 0x10000;
                     destination[written] = (char)(0xd800 + (value >> 10));
                     destination[written + 1] = (char)(0xdc00 + (value & 1023));
                 }
@@ -10036,7 +10036,7 @@ public static unsafe partial class Libc
         consumed = lead is >= 0xc2 and <= 0xdf ? 2 : lead is >= 0xe0 and <= 0xef ? 3 : lead is >= 0xf0 and <= 0xf4 ? 4 : 0;
         scalar = consumed == 2 ? lead & 31 : consumed == 3 ? lead & 15 : lead & 7;
         if (consumed == 0) return false;
-        for (int i = 1; i < consumed; i++)
+        for (var i = 1; i < consumed; i++)
         {
             int next = source[i];
             // NUL fails here, before any later byte can be read.
@@ -10053,7 +10053,7 @@ public static unsafe partial class Libc
     public static ulong wcstombs(byte* destination, char* source, ulong length)
     {
         if (source == null) { errno = EFAULT; return ulong.MaxValue; }
-        bool utf8 = Utf8MultibyteLocale;
+        var utf8 = Utf8MultibyteLocale;
         ulong written = 0;
         while (destination == null || written < length)
         {
@@ -10063,7 +10063,7 @@ public static unsafe partial class Libc
                 if (destination != null) destination[written] = 0;
                 return written;
             }
-            int units = 1;
+            var units = 1;
             if (scalar is >= 0xd800 and <= 0xdbff)
             {
                 int low = source[1];
@@ -10073,7 +10073,7 @@ public static unsafe partial class Libc
             }
             else if (scalar is >= 0xdc00 and <= 0xdfff) { errno = EILSEQ; return ulong.MaxValue; }
             if (!utf8 && scalar >= 128) { errno = EILSEQ; return ulong.MaxValue; }
-            int count = scalar < 128 ? 1 : scalar < 0x800 ? 2 : scalar < 0x10000 ? 3 : 4;
+            var count = scalar < 128 ? 1 : scalar < 0x800 ? 2 : scalar < 0x10000 ? 3 : 4;
             if (destination != null)
             {
                 if ((ulong)count > length - written) return written;
@@ -10081,7 +10081,7 @@ public static unsafe partial class Libc
                 else
                 {
                     destination[written] = (byte)((count == 2 ? 0xc0 : count == 3 ? 0xe0 : 0xf0) | (scalar >> (6 * (count - 1))));
-                    for (int i = 1; i < count; i++)
+                    for (var i = 1; i < count; i++)
                         destination[written + (ulong)i] = (byte)(0x80 | ((scalar >> (6 * (count - 1 - i))) & 63));
                 }
             }
@@ -10212,7 +10212,7 @@ public static unsafe partial class Libc
             (hint.SocketType == SOCK_DGRAM && hint.Protocol == IPPROTO_TCP)) return -7;
         if (node == null && service == null) return -2;
         string host = Str(node), serviceName = Str(service);
-        int port = 0;
+        var port = 0;
         if (service != null && !int.TryParse(serviceName, global::System.Globalization.NumberStyles.None,
             global::System.Globalization.CultureInfo.InvariantCulture, out port))
         {
@@ -10228,7 +10228,7 @@ public static unsafe partial class Libc
         try
         {
             IPAddress[] addresses;
-            string canonicalHost = host;
+            var canonicalHost = host;
             if (node == null)
                 addresses = (hint.Flags & passive) != 0
                     ? [IPAddress.IPv6Any, IPAddress.Any] : [IPAddress.IPv6Loopback, IPAddress.Loopback];
@@ -10259,7 +10259,7 @@ public static unsafe partial class Libc
                     }
                 }
             }
-            bool hasV6 = Array.Exists(addresses, a => a.AddressFamily == AddressFamily.InterNetworkV6);
+            var hasV6 = Array.Exists(addresses, a => a.AddressFamily == AddressFamily.InterNetworkV6);
             var seen = new HashSet<IPAddress>();
             foreach (var original in addresses)
             {
@@ -10268,17 +10268,17 @@ public static unsafe partial class Libc
                     original.AddressFamily == AddressFamily.InterNetworkV6 && !ipv6) continue;
                 if (hint.Family == AF_INET6 && original.AddressFamily == AddressFamily.InterNetwork &&
                     (hint.Flags & mapped) != 0 && (!hasV6 || (hint.Flags & all) != 0)) address = original.MapToIPv6();
-                int family = address.AddressFamily == AddressFamily.InterNetwork ? AF_INET : AF_INET6;
+                var family = address.AddressFamily == AddressFamily.InterNetwork ? AF_INET : AF_INET6;
                 if (hint.Family != 0 && family != hint.Family || !seen.Add(address)) continue;
-                foreach (int kind in new[] { SOCK_STREAM, SOCK_DGRAM })
+                foreach (var kind in new[] { SOCK_STREAM, SOCK_DGRAM })
                 {
-                    int protocol = kind == SOCK_STREAM ? IPPROTO_TCP : IPPROTO_UDP;
+                    var protocol = kind == SOCK_STREAM ? IPPROTO_TCP : IPPROTO_UDP;
                     if (hint.SocketType != 0 && hint.SocketType != kind || hint.Protocol != 0 && hint.Protocol != protocol) continue;
-                    uint length = family == AF_INET ? 16U : 28U;
-                    byte[]? canonical = (hint.Flags & canon) != 0 && head == null && node != null
+                    var length = family == AF_INET ? 16U : 28U;
+                    var canonical = (hint.Flags & canon) != 0 && head == null && node != null
                         ? Encoding.UTF8.GetBytes(canonicalHost) : null;
                     var bytes = address.GetAddressBytes();
-                    int size = checked(sizeof(ResolverInfo) + (int)length + (canonical?.Length + 1 ?? 0));
+                    var size = checked(sizeof(ResolverInfo) + (int)length + (canonical?.Length + 1 ?? 0));
                     var current = (ResolverInfo*)calloc(1, size);
                     if (current == null) { freeaddrinfo(head); return -10; }
                     current->Flags = hint.Flags;
@@ -10345,7 +10345,7 @@ public static unsafe partial class Libc
             "Service unsupported", "Address family unavailable", "Resolver out of memory", "Resolver system error",
             "Resolver result overflow", "Unknown resolver error"];
         var pointers = new nint[messages.Length];
-        for (int i = 0; i < messages.Length; i++)
+        for (var i = 0; i < messages.Length; i++)
             pointers[i] = Marshal.StringToCoTaskMemUTF8(messages[i]);
         return pointers;
     }
@@ -10389,7 +10389,7 @@ public static unsafe partial class Libc
         *integral = global::System.Math.Truncate(value);
         if (double.IsNaN(value)) return value;
         if (double.IsInfinity(value)) return global::System.Math.CopySign(0.0, value);
-        double fraction = value - *integral;
+        var fraction = value - *integral;
         return fraction == 0.0 ? global::System.Math.CopySign(0.0, value) : fraction;
     }
 
@@ -10409,13 +10409,13 @@ public static unsafe partial class Libc
     public static double strtold(byte* input, byte** endptr)
     {
         byte* end;
-        double value = strtod(input, &end);
+        var value = strtod(input, &end);
         if (endptr != null) *endptr = end;
         if (end == input) return value;
-        byte* digits = input;
+        var digits = input;
         while (*digits == (byte)' ' || (*digits >= 9 && *digits <= 13)) digits++;
         if (*digits == (byte)'+' || *digits == (byte)'-') digits++;
-        bool numeric = *digits == (byte)'.' || (*digits >= (byte)'0' && *digits <= (byte)'9');
+        var numeric = *digits == (byte)'.' || (*digits >= (byte)'0' && *digits <= (byte)'9');
         if (numeric && (double.IsInfinity(value) || double.IsSubnormal(value)
             || value == 0.0 && NumericMantissaNonzero(digits, end))) errno = ERANGE;
         return value;
@@ -10423,11 +10423,11 @@ public static unsafe partial class Libc
 
     private static bool NumericMantissaNonzero(byte* digits, byte* end)
     {
-        bool hex = end - digits >= 2 && digits[0] == (byte)'0' && (digits[1] == (byte)'x' || digits[1] == (byte)'X');
+        var hex = end - digits >= 2 && digits[0] == (byte)'0' && (digits[1] == (byte)'x' || digits[1] == (byte)'X');
         if (hex) digits += 2;
         for (; digits < end; digits++)
         {
-            byte c = *digits;
+            var c = *digits;
             if (hex ? c == (byte)'p' || c == (byte)'P' : c == (byte)'e' || c == (byte)'E') break;
             if (c >= (byte)'1' && c <= (byte)'9'
                 || hex && ((c >= (byte)'a' && c <= (byte)'f') || (c >= (byte)'A' && c <= (byte)'F'))) return true;
@@ -10506,7 +10506,7 @@ public static unsafe partial class Libc
         // overwrite or move the lookup key while NSS is reading it.
         try
         {
-            byte[] key = new ReadOnlySpan<byte>(name, checked(strlen(name) + 1)).ToArray();
+            var key = new ReadOnlySpan<byte>(name, checked(strlen(name) + 1)).ToArray();
             fixed (byte* copy = key) return LookupPasswd(0, copy);
         }
         catch (OutOfMemoryException) { errno = ENOMEM; return null; }
@@ -10517,12 +10517,12 @@ public static unsafe partial class Libc
         if (!OperatingSystem.IsLinux() || IntPtr.Size != 8) { errno = ENOTSUP; return null; }
         var paths = OwnedPaths;
         // The dictionary is owner-scoped; one buffer per actual managed thread.
-        int thread = Environment.CurrentManagedThreadId;
+        var thread = Environment.CurrentManagedThreadId;
         lock (paths.Sync)
         {
             if (!paths.Passwd.TryGetValue(thread, out var storage))
-                paths.Passwd.Add(thread, storage = new());
-            ulong capacity = storage.Capacity == 0 ? 1024 : storage.Capacity;
+                paths.Passwd.Add(thread, storage = new PasswdStorage());
+            var capacity = storage.Capacity == 0 ? 1024 : storage.Capacity;
             while (true)
             {
                 if (capacity != storage.Capacity)
@@ -10535,7 +10535,7 @@ public static unsafe partial class Libc
                 }
                 LinuxPasswd* result = null;
                 var record = (LinuxPasswd*)storage.Block;
-                int error = name == null
+                var error = name == null
                     ? PosixGetpwuidR(uid, record, storage.Block + sizeof(LinuxPasswd), capacity, &result)
                     : PosixGetpwnamR(name, record, storage.Block + sizeof(LinuxPasswd), capacity, &result);
                 if (error == ERANGE)
@@ -10572,7 +10572,7 @@ public static unsafe partial class Libc
     {
         if (path == null || *path == 0) return LiteralPool.Pointer + LiteralPool.DecimalPoint;
 
-        byte* end = path;
+        var end = path;
         while (*end != 0) end++;
         while (end > path && end[-1] == (byte)'/') end--;
         if (end == path)
@@ -10582,7 +10582,7 @@ public static unsafe partial class Libc
         }
 
         *end = 0;
-        byte* component = end;
+        var component = end;
         while (component > path && component[-1] != (byte)'/') component--;
         return component;
     }
@@ -10596,11 +10596,11 @@ public static unsafe partial class Libc
     {
         if (path == null || *path == 0) return LiteralPool.Pointer + LiteralPool.DecimalPoint;
 
-        byte* end = path;
+        var end = path;
         while (*end != 0) end++;
         while (end > path && end[-1] == (byte)'/') end--;
 
-        byte* separator = end;
+        var separator = end;
         while (separator > path && separator[-1] != (byte)'/') separator--;
         if (separator == path && end != path)
             return LiteralPool.Pointer + LiteralPool.DecimalPoint;
@@ -10609,7 +10609,7 @@ public static unsafe partial class Libc
         if (separator == path)
         {
             // path[2] is read only when the first two bytes are slashes.
-            int rootLength = path[1] == (byte)'/' && path[2] != (byte)'/' ? 2 : 1;
+            var rootLength = path[1] == (byte)'/' && path[2] != (byte)'/' ? 2 : 1;
             path[rootLength] = 0;
         }
         else *separator = 0;
@@ -10627,13 +10627,13 @@ public static unsafe partial class Libc
 {
     private sealed class PathState
     {
-        internal readonly Lock Sync = new();
-        internal readonly Dictionary<nint, DirState> Directories = new();
-        internal readonly Dictionary<int, PasswdStorage> Passwd = new();
+        internal readonly Lock Sync = new Lock();
+        internal readonly Dictionary<nint, DirState> Directories = new Dictionary<IntPtr, DirState>();
+        internal readonly Dictionary<int, PasswdStorage> Passwd = new Dictionary<int, PasswdStorage>();
     }
 
-    private static readonly ConditionalWeakTable<RuntimeContext, PathState> pathStates = new();
-    private static PathState OwnedPaths => pathStates.GetValue(RuntimeState, static _ => new());
+    private static readonly ConditionalWeakTable<RuntimeContext, PathState> pathStates = new ConditionalWeakTable<RuntimeContext, PathState>();
+    private static PathState OwnedPaths => pathStates.GetValue(RuntimeState, static _ => new PathState());
 
     private static string CurrentWorkingDirectory
     {
@@ -10655,14 +10655,14 @@ public static unsafe partial class Libc
 
     private static string? PhysicalDirectory(string path)
     {
-        string root = global::System.IO.Path.GetPathRoot(path)!;
-        string current = root;
+        var root = global::System.IO.Path.GetPathRoot(path)!;
+        var current = root;
         // Resolve directory symlinks before consuming '..', as chdir does.
-        foreach (string part in path[root.Length..].Split(new[] { global::System.IO.Path.DirectorySeparatorChar, global::System.IO.Path.AltDirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries))
+        foreach (var part in path[root.Length..].Split(new[] { global::System.IO.Path.DirectorySeparatorChar, global::System.IO.Path.AltDirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries))
         {
             if (part == ".") continue;
             if (part == "..") { current = global::System.IO.Path.GetDirectoryName(current) ?? root; continue; }
-            string next = global::System.IO.Path.Combine(current, part);
+            var next = global::System.IO.Path.Combine(current, part);
             if (!Directory.Exists(next)) { errno = File.Exists(next) ? ENOTDIR : ENOENT; return null; }
             var directory = new DirectoryInfo(next);
             current = directory.LinkTarget is null ? next : directory.ResolveLinkTarget(true)!.FullName;
@@ -10702,7 +10702,7 @@ public static unsafe partial class Libc
     // Descriptors and endpoints belong to the current runtime, as files do.
     private sealed class ManagedPipe
     {
-        internal readonly object Sync = new();
+        internal readonly object Sync = new object();
         internal readonly byte[] Bytes = new byte[65536];
         internal int Head, Count;
         internal bool ReaderOpen = true, WriterOpen = true;
@@ -10754,13 +10754,13 @@ public static unsafe partial class Libc
         {
             int Register(FileSlot slot)
             {
-                for (int i = 3; i < state.Files.Count; i++)
+                for (var i = 3; i < state.Files.Count; i++)
                     if (state.Files[i] is null) { state.Files[i] = slot; return i; }
                 state.Files.Add(slot);
                 return state.Files.Count - 1;
             }
-            pipefd[0] = Register(new() { Kind = FileSlot.K.Pipe, Pipe = backing });
-            pipefd[1] = Register(new() { Kind = FileSlot.K.Pipe, Pipe = backing, StatusFlags = 1 });
+            pipefd[0] = Register(new FileSlot { Kind = FileSlot.K.Pipe, Pipe = backing });
+            pipefd[1] = Register(new FileSlot { Kind = FileSlot.K.Pipe, Pipe = backing, StatusFlags = 1 });
         }
         return 0;
     }
@@ -10782,9 +10782,9 @@ public static unsafe partial class Libc
                 Monitor.Wait(pipe.Sync);
             }
             if (!pipe.ReaderOpen) return FcntlError(EBADF);
-            int length = (int)Math.Min(count, (ulong)pipe.Count);
+            var length = (int)Math.Min(count, (ulong)pipe.Count);
             var output = new Span<byte>(destination, length);
-            int first = Math.Min(length, pipe.Bytes.Length - pipe.Head);
+            var first = Math.Min(length, pipe.Bytes.Length - pipe.Head);
             pipe.Bytes.AsSpan(pipe.Head, first).CopyTo(output);
             pipe.Bytes.AsSpan(0, length - first).CopyTo(output[first..]);
             pipe.Head = (pipe.Head + length) % pipe.Bytes.Length;
@@ -10809,8 +10809,8 @@ public static unsafe partial class Libc
             {
                 if (!pipe.WriterOpen) return written != 0 ? (long)written : FcntlError(EBADF);
                 if (!pipe.ReaderOpen) return written != 0 ? (long)written : FcntlError(EPIPE);
-                int available = pipe.Bytes.Length - pipe.Count;
-                bool atomic = count <= 4096;
+                var available = pipe.Bytes.Length - pipe.Count;
+                var atomic = count <= 4096;
                 if (available == 0 || atomic && (ulong)available < count)
                 {
                     if ((slot.StatusFlags & 0x800) != 0)
@@ -10818,9 +10818,9 @@ public static unsafe partial class Libc
                     Monitor.Wait(pipe.Sync);
                     continue;
                 }
-                int length = (int)Math.Min((ulong)available, count - written);
-                int tail = (pipe.Head + pipe.Count) % pipe.Bytes.Length;
-                int first = Math.Min(length, pipe.Bytes.Length - tail);
+                var length = (int)Math.Min((ulong)available, count - written);
+                var tail = (pipe.Head + pipe.Count) % pipe.Bytes.Length;
+                var first = Math.Min(length, pipe.Bytes.Length - tail);
                 var input = new ReadOnlySpan<byte>((byte*)source + written, length);
                 input[..first].CopyTo(pipe.Bytes.AsSpan(tail, first));
                 input[first..].CopyTo(pipe.Bytes.AsSpan(0, length - first));
@@ -10891,14 +10891,14 @@ public static unsafe partial class Libc
         {
             native = BackendNativeBacktraceSymbols(buffer, count);
             if (native == null) { errno = Marshal.GetLastPInvokeError(); return null; }
-            ulong bytes = checked((ulong)count * (ulong)sizeof(byte*));
-            for (int i = 0; i < count; i++) bytes = checked(bytes + (ulong)strlen(native[i]) + 1);
-            byte** result = (byte**)malloc(bytes);
+            var bytes = checked((ulong)count * (ulong)sizeof(byte*));
+            for (var i = 0; i < count; i++) bytes = checked(bytes + (ulong)strlen(native[i]) + 1);
+            var result = (byte**)malloc(bytes);
             if (result == null) { errno = ENOMEM; return null; }
-            byte* destination = (byte*)result + (ulong)count * (ulong)sizeof(byte*);
-            for (int i = 0; i < count; i++)
+            var destination = (byte*)result + (ulong)count * (ulong)sizeof(byte*);
+            for (var i = 0; i < count; i++)
             {
-                ulong length = (ulong)strlen(native[i]) + 1;
+                var length = (ulong)strlen(native[i]) + 1;
                 result[i] = destination;
                 NativeMemory.Copy(native[i], destination, (nuint)length);
                 destination += length;
@@ -10913,17 +10913,17 @@ public static unsafe partial class Libc
 
     public static void backtrace_symbols_fd(void* buffer, int count, int descriptor)
     {
-        byte** symbols = backtrace_symbols(buffer, count);
+        var symbols = backtrace_symbols(buffer, count);
         if (symbols == null) return;
         try
         {
-            for (int i = 0; i < count; i++)
+            for (var i = 0; i < count; i++)
             {
-                byte* text = symbols[i];
-                ulong remaining = (ulong)strlen(text);
+                var text = symbols[i];
+                var remaining = (ulong)strlen(text);
                 while (remaining != 0)
                 {
-                    long written = write(descriptor, text, remaining);
+                    var written = write(descriptor, text, remaining);
                     if (written < 0 && errno == EINTR) continue;
                     if (written <= 0) return;
                     text += written; remaining -= (ulong)written;
@@ -10993,7 +10993,7 @@ public static unsafe partial class Libc
             LinuxX64Stat metadata;
             if (HostFStat(descriptor, &metadata) != 0)
             {
-                int error = Marshal.GetLastPInvokeError();
+                var error = Marshal.GetLastPInvokeError();
                 handle.Dispose(); errno = error; return null;
             }
             if ((metadata.Mode & 0xf000) == S_IFDIR) return new BackendDirectoryStream(handle);
@@ -11035,7 +11035,7 @@ public static unsafe partial class Libc
     {
         try
         {
-            long result = BackendNativeDirectorySeek(directory.Handle, offset, whence);
+            var result = BackendNativeDirectorySeek(directory.Handle, offset, whence);
             if (result < 0) errno = Marshal.GetLastPInvokeError();
             return result;
         }
@@ -11066,8 +11066,8 @@ public static unsafe partial class Libc
         try
         {
             int sign;
-            double result = BackendNativeLgamma(value, &sign);
-            int error = Marshal.GetLastPInvokeError();
+            var result = BackendNativeLgamma(value, &sign);
+            var error = Marshal.GetLastPInvokeError();
             if (error != 0) errno = error;
             return result;
         }
@@ -11080,8 +11080,8 @@ public static unsafe partial class Libc
         if (!OperatingSystem.IsLinux()) { errno = ENOTSUP; return double.NaN; }
         try
         {
-            double result = BackendNativeTgamma(value);
-            int error = Marshal.GetLastPInvokeError();
+            var result = BackendNativeTgamma(value);
+            var error = Marshal.GetLastPInvokeError();
             if (error != 0) errno = error;
             return result;
         }
@@ -11105,8 +11105,8 @@ public static unsafe partial class Libc
 {
     public sealed partial class RuntimeContext
     {
-        internal readonly object BackendHostGate = new();
-        internal readonly HashSet<nint> BackendInterfaceLists = new();
+        internal readonly object BackendHostGate = new object();
+        internal readonly HashSet<nint> BackendInterfaceLists = new HashSet<IntPtr>();
     }
 
     /// <summary>Return the real Linux LP64 interface list. Only this runtime
@@ -11153,7 +11153,7 @@ public static unsafe partial class Libc
     {
         lock (owner.BackendHostGate)
         {
-            foreach (nint list in owner.BackendInterfaceLists) BackendNativeFreeifaddrs((void*)list);
+            foreach (var list in owner.BackendInterfaceLists) BackendNativeFreeifaddrs((void*)list);
             owner.BackendInterfaceLists.Clear();
         }
     }
@@ -11174,7 +11174,7 @@ public static unsafe partial class Libc
 {
     public sealed partial class RuntimeContext
     {
-        internal readonly object CreationMaskGate = new();
+        internal readonly object CreationMaskGate = new object();
         internal uint? CreationMask;
     }
 
@@ -11184,13 +11184,13 @@ public static unsafe partial class Libc
     private static uint ReadBackendHostCreationMask()
     {
         if (!OperatingSystem.IsLinux()) throw new PlatformNotSupportedException();
-        foreach (string line in File.ReadLines("/proc/self/status"))
+        foreach (var line in File.ReadLines("/proc/self/status"))
         {
             if (!line.StartsWith("Umask:", StringComparison.Ordinal)) continue;
-            string value = line[6..].Trim();
+            var value = line[6..].Trim();
             uint mask = 0;
             if (value.Length == 0) break;
-            foreach (char digit in value)
+            foreach (var digit in value)
             {
                 if (digit < '0' || digit > '7' || mask > 0x3f)
                     throw new IOException("Invalid host creation mask in /proc/self/status.");
@@ -11221,7 +11221,7 @@ public static unsafe partial class Libc
         {
             try
             {
-                uint previous = owner.CreationMask ?? ReadBackendHostCreationMask();
+                var previous = owner.CreationMask ?? ReadBackendHostCreationMask();
                 owner.CreationMask = mask & 0x1ff;
                 return previous;
             }
@@ -11239,7 +11239,7 @@ public static unsafe partial class Libc
         if (limit == null) { errno = EFAULT; return -1; }
         if (!OperatingSystem.IsLinux() || RuntimeInformation.ProcessArchitecture != Architecture.X64)
         { errno = ENOTSUP; return -1; }
-        ulong* result = stackalloc ulong[2];
+        var result = stackalloc ulong[2];
         try
         {
             if (BackendNativeGetrlimit(resource, result) != 0)
@@ -11277,15 +11277,15 @@ public static unsafe partial class Libc
         catch (PlatformNotSupportedException) { errno = ENOTSUP; return -1; }
         catch (UnauthorizedAccessException) { errno = EACCES; return -1; }
         catch (IOException) { errno = EIO; return -1; }
-        string current = path;
-        int links = 0;
-        for (int attempt = 0; attempt < 64; attempt++)
+        var current = path;
+        var links = 0;
+        for (var attempt = 0; attempt < 64; attempt++)
         {
-            int descriptor = BackendOpenPath(current, flags | exclusive, desired);
+            var descriptor = BackendOpenPath(current, flags | exclusive, desired);
             if (descriptor >= 0)
             {
                 if (BackendNativeFchmod(descriptor, desired) == 0) return descriptor;
-                int error = Marshal.GetLastPInvokeError();
+                var error = Marshal.GetLastPInvokeError();
                 BackendNativeClose(descriptor);
                 errno = error;
                 return -1;
@@ -11298,7 +11298,7 @@ public static unsafe partial class Libc
             // '..' components for the kernel to resolve through directory links.
             try
             {
-                string? target = new FileInfo(current).LinkTarget;
+                var target = new FileInfo(current).LinkTarget;
                 if (target is null) continue; // concurrent unlink; bounded retry
                 if (++links > 40) { errno = ELOOP; return -1; }
                 current = global::System.IO.Path.IsPathRooted(target) ? target :
@@ -11324,19 +11324,19 @@ public static unsafe partial class Libc
         if (path == null) { errno = EFAULT; return -1; }
         try
         {
-            string resolved = ResolvePath(path);
-            uint desired = ApplyCreationMode(mode) & 0xfff;
+            var resolved = ResolvePath(path);
+            var desired = ApplyCreationMode(mode) & 0xfff;
             fixed (byte* name = Encoding.UTF8.GetBytes(resolved + "\0"))
                 if (BackendNativeMkdir(name, desired) != 0)
                 { errno = Marshal.GetLastPInvokeError(); return -1; }
             // O_PATH|O_DIRECTORY|O_NOFOLLOW pins the directory even for mode
             // 0000. chmod through procfs follows this owned descriptor, never
             // a later path replacement. A failed mode application stays an error.
-            int descriptor = BackendOpenPath(resolved, 0x200000 | 0x10000 | 0x20000 | 0x80000, 0);
+            var descriptor = BackendOpenPath(resolved, 0x200000 | 0x10000 | 0x20000 | 0x80000, 0);
             if (descriptor < 0) return -1;
             try
             {
-                string descriptorPath = "/proc/self/fd/" + descriptor.ToString(global::System.Globalization.CultureInfo.InvariantCulture);
+                var descriptorPath = "/proc/self/fd/" + descriptor.ToString(global::System.Globalization.CultureInfo.InvariantCulture);
                 fixed (byte* name = Encoding.UTF8.GetBytes(descriptorPath + "\0"))
                     if (BackendNativeChmod(name, desired) != 0)
                     { errno = Marshal.GetLastPInvokeError(); return -1; }
@@ -11399,9 +11399,9 @@ public static unsafe partial class Libc
             // FileStream tracks its logical cursor independently of the OS fd
             // cursor. Use explicit native offsets, then update only the cursors
             // that the C call requested. Supplied offset pointers do not seek.
-            long from = inputOffset == null ? reader.Position : *inputOffset;
-            long to = outputOffset == null ? writer.Position : *outputOffset;
-            long result = BackendNativeCopyFileRange(reader.SafeFileHandle, &from, writer.SafeFileHandle, &to, count, flags);
+            var from = inputOffset == null ? reader.Position : *inputOffset;
+            var to = outputOffset == null ? writer.Position : *outputOffset;
+            var result = BackendNativeCopyFileRange(reader.SafeFileHandle, &from, writer.SafeFileHandle, &to, count, flags);
             if (result < 0) errno = Marshal.GetLastPInvokeError();
             else
             {
@@ -11421,7 +11421,7 @@ public static unsafe partial class Libc
     /// file. POSIX returns the error number directly and preserves errno.</summary>
     public static int posix_fallocate(int descriptor, long offset, long length)
     {
-        int savedError = errno;
+        var savedError = errno;
         try
         {
             if (offset < 0 || length <= 0) return EINVAL;
@@ -11507,12 +11507,24 @@ public static unsafe partial class Libc
     public static int towlower(int c) => !EffectivePosixUtf8Locale || c < 128 ? tolower(c) : MapPosixWide(c, false);
     public static int towupper(int c) => !EffectivePosixUtf8Locale || c < 128 ? toupper(c) : MapPosixWide(c, true);
 
-    private static readonly Lazy<nint> backendNumericLocale = new(() =>
+    private static readonly Lazy<nint> backendNumericLocale = new Lazy<IntPtr>(() =>
     {
-        if (!OperatingSystem.IsLinux()) return 0;
-        try { fixed (byte* name = "C\0"u8) return PosixNativeNewlocale(2, name, 0); }
-        catch (EntryPointNotFoundException) { return 0; }
-        catch (DllNotFoundException) { return 0; }
+	    if (!OperatingSystem.IsLinux())
+		    return 0;
+
+	    try
+	    {
+		    fixed (byte* name = "C\0"u8)
+			    return PosixNativeNewlocale(2, name, 0);
+	    }
+	    catch (EntryPointNotFoundException)
+	    {
+		    return 0;
+	    }
+	    catch (DllNotFoundException)
+	    {
+		    return 0;
+	    }
     });
 
     /// <summary>Correctly rounded binary32 parsing in the runtime's C numeric
@@ -11521,12 +11533,12 @@ public static unsafe partial class Libc
     public static float strtof(byte* text, byte** end)
     {
         if (text == null) { if (end != null) *end = null; errno = EFAULT; return 0; }
-        nint locale = backendNumericLocale.Value;
+        var locale = backendNumericLocale.Value;
         if (locale == 0) { if (end != null) *end = text; errno = ENOTSUP; return float.NaN; }
         try
         {
-            float value = BackendNativeStrtof(text, end, locale);
-            int error = Marshal.GetLastPInvokeError();
+            var value = BackendNativeStrtof(text, end, locale);
+            var error = Marshal.GetLastPInvokeError();
             if (error != 0) errno = error;
             return value;
         }
@@ -11554,7 +11566,7 @@ public static unsafe partial class Libc
         if (clockId != CLOCK_REALTIME && clockId != CLOCK_MONOTONIC) { errno = EINVAL; return -1; }
         if (resolution != null)
         {
-            long nanos = clockId == CLOCK_REALTIME ? 100
+            var nanos = clockId == CLOCK_REALTIME ? 100
                 : (long)(((global::System.Int128)1_000_000_000 + global::System.Diagnostics.Stopwatch.Frequency - 1)
                     / global::System.Diagnostics.Stopwatch.Frequency);
             resolution->tv_sec = nanos / 1_000_000_000;
@@ -11580,8 +11592,8 @@ public static unsafe partial class Libc
         }
         else
         {
-            long ticks = global::System.Diagnostics.Stopwatch.GetTimestamp();
-            long frequency = global::System.Diagnostics.Stopwatch.Frequency;
+            var ticks = global::System.Diagnostics.Stopwatch.GetTimestamp();
+            var frequency = global::System.Diagnostics.Stopwatch.Frequency;
             value->tv_sec = ticks / frequency;
             value->tv_nsec = (long)((global::System.Int128)(ticks % frequency) * 1_000_000_000 / frequency);
         }
@@ -11598,8 +11610,8 @@ public static unsafe partial class Libc
         if (seconds < 0 || nanoseconds < 0 || nanoseconds >= 1_000_000_000) { errno = EINVAL; return -1; }
         // Int128 retains the full valid time_t range without overflowing when
         // converting seconds to nanoseconds or rounding the sleep chunk up.
-        global::System.Int128 duration = (global::System.Int128)seconds * 1_000_000_000 + nanoseconds;
-        long started = global::System.Diagnostics.Stopwatch.GetTimestamp();
+        var duration = (global::System.Int128)seconds * 1_000_000_000 + nanoseconds;
+        var started = global::System.Diagnostics.Stopwatch.GetTimestamp();
         try
         {
             while (true)
@@ -11748,10 +11760,10 @@ public static unsafe partial class Libc
             {
                 // .NET clears native errno before a SetLastError call, so
                 // a null result distinguishes clean EOF from a read failure.
-                byte* entry = HostReadDirectory(directory);
+                var entry = HostReadDirectory(directory);
                 if (entry == null)
                 {
-                    int error = Marshal.GetLastPInvokeError();
+                    var error = Marshal.GetLastPInvokeError();
                     if (error != 0) { errno = error; return null; }
                     break;
                 }
@@ -11870,7 +11882,7 @@ public static unsafe partial class Libc
         if (stream is null) return -1;
         try
         {
-            int fd = RegisterFileSlot(stream);
+            var fd = RegisterFileSlot(stream);
             var slot = SlotByFd(fd)!;
             slot.StatusFlags = flags & (3 | 0x400 | 0x800);
             slot.DescriptorFlags = (flags & 0x80000) != 0 ? 1 : 0;
@@ -11884,7 +11896,7 @@ public static unsafe partial class Libc
     // path or acquires a .NET sharing flock. No synthetic fd reaches the OS.
     private static Stream? OpenLinuxStream(string path, int flags, int mode)
     {
-        int descriptor = OpenLinuxCreatedDescriptor(path, flags, (uint)mode);
+        var descriptor = OpenLinuxCreatedDescriptor(path, flags, (uint)mode);
         if (descriptor < 0) return null;
         return AdoptBackendLinuxStream(descriptor, flags);
     }
@@ -11941,16 +11953,16 @@ public static unsafe partial class Libc
             {
                 lock (OwnedPaths.Sync)
                 {
-                    string p = ResolvePath(path);
+                    var p = ResolvePath(path);
                     if (p.Length == 0) { errno = ENOENT; return -1; }
-                    string? physical = PhysicalDirectory(p);
+                    var physical = PhysicalDirectory(p);
                     if (physical is null) return -1;
                     owner.WorkingDirectory = physical;
                 }
             }
             else
             {
-                string p = Str(path);
+                var p = Str(path);
                 if (!Directory.Exists(p)) { errno = File.Exists(p) ? ENOTDIR : ENOENT; return -1; }
                 Directory.SetCurrentDirectory(p);
             }
@@ -11973,7 +11985,7 @@ public static unsafe partial class Libc
         {
             // A deleted process cwd makes GetCurrentDirectory throw. Contain
             // that failure at the C boundary, before allocating any output.
-            string cwd = CurrentWorkingDirectory;
+            var cwd = CurrentWorkingDirectory;
             if (RuntimeContext.Current is not null)
             {
                 // Explicit owners have a path-based virtual cwd, not a host
@@ -11982,9 +11994,9 @@ public static unsafe partial class Libc
                 if ((File.GetAttributes(cwd) & FileAttributes.Directory) == 0)
                 { errno = ENOTDIR; return null; }
             }
-            int length = Encoding.UTF8.GetByteCount(cwd);
-            ulong need = (ulong)length + 1;
-            ulong capacity = buf == null && size == 0 ? need : size;
+            var length = Encoding.UTF8.GetByteCount(cwd);
+            var need = (ulong)length + 1;
+            var capacity = buf == null && size == 0 ? need : size;
             if (need > capacity) { errno = ERANGE; return null; }
             if (buf == null)
             {
@@ -12027,10 +12039,10 @@ public static unsafe partial class Libc
         {
             if (OperatingSystem.IsLinux() && RuntimeInformation.ProcessArchitecture == Architecture.X64)
             {
-                byte[]? name = linkpath == null ? null : Encoding.UTF8.GetBytes(ResolvePath(linkpath) + "\0");
+                var name = linkpath == null ? null : Encoding.UTF8.GetBytes(ResolvePath(linkpath) + "\0");
                 fixed (byte* path = name)
                 {
-                    int result = PosixSymbolicLink(target, path);
+                    var result = PosixSymbolicLink(target, path);
                     if (result < 0) errno = Marshal.GetLastPInvokeError();
                     return result;
                 }
@@ -12061,10 +12073,10 @@ public static unsafe partial class Libc
         {
             if (OperatingSystem.IsLinux() && RuntimeInformation.ProcessArchitecture == Architecture.X64)
             {
-                byte[]? name = path == null ? null : Encoding.UTF8.GetBytes(ResolvePath(path) + "\0");
+                var name = path == null ? null : Encoding.UTF8.GetBytes(ResolvePath(path) + "\0");
                 fixed (byte* p = name)
                 {
-                    long result = PosixReadLink(p, buf, bufsiz);
+                    var result = PosixReadLink(p, buf, bufsiz);
                     if (result < 0) errno = Marshal.GetLastPInvokeError();
                     return result;
                 }
@@ -12072,10 +12084,10 @@ public static unsafe partial class Libc
             if (bufsiz == 0) { errno = EINVAL; return -1; }
             if (path == null || buf == null) { errno = EFAULT; return -1; }
             var namePath = ResolvePath(path);
-            string? target = (File.Exists(namePath) ? new FileInfo(namePath) : (FileSystemInfo)new DirectoryInfo(namePath)).LinkTarget;
+            var target = (File.Exists(namePath) ? new FileInfo(namePath) : (FileSystemInfo)new DirectoryInfo(namePath)).LinkTarget;
             if (target == null) { errno = EINVAL; return -1; }
             var bytes = Encoding.UTF8.GetBytes(target);
-            int n = (int)Math.Min((ulong)bytes.Length, bufsiz);
+            var n = (int)Math.Min((ulong)bytes.Length, bufsiz);
             new ReadOnlySpan<byte>(bytes, 0, n).CopyTo(new Span<byte>(buf, n));
             return n;
         }
@@ -12238,7 +12250,7 @@ public static unsafe partial class Libc
             }
             else
             {
-                long position = st.Position;
+                var position = st.Position;
                 st.SetLength(length);
                 if (st.Position != position) st.Position = position;
             }
@@ -12312,7 +12324,7 @@ public static unsafe partial class Libc
     {
         if (name == null) { errno = EFAULT; return false; }
         if (name[0] != (byte)'/' || name[1] == 0) { errno = EINVAL; return false; }
-        int length = 1;
+        var length = 1;
         for (; length <= 256 && name[length] != 0; length++)
             if (name[length] == (byte)'/') { errno = EINVAL; return false; }
         if (length > 256) { errno = ENAMETOOLONG; return false; }
@@ -12330,14 +12342,14 @@ public static unsafe partial class Libc
         const int allowed = 2 | 0x40 | 0x80 | 0x200 | 0x80000;
         if ((flags & ~allowed) != 0) { errno = EINVAL; return -1; }
         if (!PosixHostAbi) { errno = ENOTSUP; return -1; }
-        int descriptor = HostSharedMemoryOpen(name, flags, mode);
+        var descriptor = HostSharedMemoryOpen(name, flags, mode);
         if (descriptor < 0) { errno = Marshal.GetLastPInvokeError(); return -1; }
         var handle = new SafeFileHandle((IntPtr)descriptor, ownsHandle: true);
         FileStream? stream = null;
         try
         {
             stream = new FileStream(handle, (flags & 3) == 2 ? FileAccess.ReadWrite : FileAccess.Read, bufferSize: 1);
-            int guest = RegisterFileSlot(stream);
+            var guest = RegisterFileSlot(stream);
             SlotByFd(guest)!.DescriptorFlags = 1; // shm_open always sets FD_CLOEXEC
             return guest;
         }
@@ -12355,7 +12367,7 @@ public static unsafe partial class Libc
     {
         if (!SharedMemoryName(name)) return -1;
         if (!PosixHostAbi) { errno = ENOTSUP; return -1; }
-        int result = HostSharedMemoryUnlink(name);
+        var result = HostSharedMemoryUnlink(name);
         if (result < 0) errno = Marshal.GetLastPInvokeError();
         return result;
     }
@@ -12380,7 +12392,7 @@ public static unsafe partial class Libc
             {
                 // fd 0/1/2 may have been freopen'd or replaced by an owned
                 // pipe/file. Only genuine console kinds use OS std handles.
-                int native = slot.Kind switch
+                var native = slot.Kind switch
                 {
                     FileSlot.K.In when descriptor == 0 => 0,
                     FileSlot.K.Out when descriptor == 1 => 1,
@@ -12464,7 +12476,7 @@ public static unsafe partial class Libc
             // Linux also retains its documented O_APPEND pwrite behavior.
             if (OperatingSystem.IsLinux())
             {
-                long result = writing ? PositionedLinuxWrite(file.SafeFileHandle, buffer, count, offset) :
+                var result = writing ? PositionedLinuxWrite(file.SafeFileHandle, buffer, count, offset) :
                     PositionedLinuxRead(file.SafeFileHandle, buffer, count, offset);
                 if (result < 0) errno = Marshal.GetLastPInvokeError();
                 return result;
@@ -12492,33 +12504,33 @@ public static unsafe partial class Libc
         if (file is null) return -1;
         var entries = (VectorIoEntry*)vectors;
         ulong total = 0;
-        for (int i = 0; i < count; i++)
+        for (var i = 0; i < count; i++)
         {
             if (entries[i].Length > (ulong)long.MaxValue - total) { errno = EINVAL; return -1; }
             if (entries[i].Base == null && entries[i].Length != 0) { errno = EFAULT; return -1; }
             total += entries[i].Length;
         }
-        int capacity = (int)Math.Min(total, PositionedTransferLimit);
+        var capacity = (int)Math.Min(total, PositionedTransferLimit);
         if (capacity > long.MaxValue - offset) { errno = EINVAL; return -1; }
         try
         {
             if (OperatingSystem.IsLinux())
             {
-                long result = writing ? PositionedLinuxWriteVector(file.SafeFileHandle, vectors, count, offset) :
+                var result = writing ? PositionedLinuxWriteVector(file.SafeFileHandle, vectors, count, offset) :
                     PositionedLinuxReadVector(file.SafeFileHandle, vectors, count, offset);
                 if (result < 0) errno = Marshal.GetLastPInvokeError();
                 return result;
             }
             if (capacity == 0) return TransferPositioned(descriptor, null, 0, offset, writing);
-            byte[] buffer = global::System.Buffers.ArrayPool<byte>.Shared.Rent(capacity);
+            var buffer = global::System.Buffers.ArrayPool<byte>.Shared.Rent(capacity);
             try
             {
                 if (writing)
                 {
-                    int cursor = 0;
-                    for (int i = 0; i < count && cursor < capacity; i++)
+                    var cursor = 0;
+                    for (var i = 0; i < count && cursor < capacity; i++)
                     {
-                        int size = (int)Math.Min(entries[i].Length, (ulong)(capacity - cursor));
+                        var size = (int)Math.Min(entries[i].Length, (ulong)(capacity - cursor));
                         new ReadOnlySpan<byte>(entries[i].Base, size).CopyTo(buffer.AsSpan(cursor, size));
                         cursor += size;
                     }
@@ -12527,10 +12539,10 @@ public static unsafe partial class Libc
                 fixed (byte* data = buffer) result = TransferPositioned(descriptor, data, (ulong)capacity, offset, writing);
                 if (!writing && result > 0)
                 {
-                    int cursor = 0;
-                    for (int i = 0; i < count && cursor < result; i++)
+                    var cursor = 0;
+                    for (var i = 0; i < count && cursor < result; i++)
                     {
-                        int size = (int)Math.Min(entries[i].Length, (ulong)(result - cursor));
+                        var size = (int)Math.Min(entries[i].Length, (ulong)(result - cursor));
                         buffer.AsSpan(cursor, size).CopyTo(new Span<byte>(entries[i].Base, size));
                         cursor += size;
                     }
@@ -12564,7 +12576,7 @@ public static unsafe partial class Libc
         if (!OperatingSystem.IsLinux()) { errno = ENOTSUP; return -1; }
         try
         {
-            int result = filesystem ? PositionedLinuxSyncFilesystem(file.SafeFileHandle) :
+            var result = filesystem ? PositionedLinuxSyncFilesystem(file.SafeFileHandle) :
                 PositionedLinuxSyncRange(file.SafeFileHandle, offset, count, flags);
             if (result < 0) errno = Marshal.GetLastPInvokeError();
             return result;
@@ -12699,7 +12711,7 @@ public static unsafe partial class Libc
                 // actual owning handle across the syscall, including rename,
                 // unlink and concurrent close; never reopen its old pathname.
                 SafeHandle? handle = null;
-                bool retained = false;
+                var retained = false;
                 try
                 {
                     handle = file.SafeFileHandle;
@@ -12828,9 +12840,9 @@ public static unsafe partial class Libc
         // struct rusage as longs: [0]=ru_utime.tv_sec [1]=.tv_usec
         // [2]=ru_stime.tv_sec [3]=.tv_usec [4]=ru_maxrss, rest 0.
         new Span<byte>(usage, 144).Clear();
-        long* ru = (long*)usage;
-        IntPtr self = GetCurrentProcess();   // pseudo-handle (-1); no close needed
-        if (GetProcessTimes(self, out _, out _, out long kernel100ns, out long user100ns))
+        var ru = (long*)usage;
+        var self = GetCurrentProcess();   // pseudo-handle (-1); no close needed
+        if (GetProcessTimes(self, out _, out _, out var kernel100ns, out var user100ns))
         {
             (ru[0], ru[1]) = Ticks100nsToTimeval(user100ns);    // ru_utime
             (ru[2], ru[3]) = Ticks100nsToTimeval(kernel100ns);  // ru_stime
@@ -12847,7 +12859,7 @@ public static unsafe partial class Libc
     /// <c>timeval</c> (seconds, microseconds).</summary>
     private static (long Sec, long Usec) Ticks100nsToTimeval(long ticks100ns)
     {
-        long usec = ticks100ns / 10;            // 100ns -> microseconds
+        var usec = ticks100ns / 10;            // 100ns -> microseconds
         return (usec / 1_000_000, usec % 1_000_000);
     }
 
@@ -12949,19 +12961,19 @@ public static unsafe partial class Libc
             var reads = new List<Socket>();
             var writes = new List<Socket>();
             var errors = new List<Socket>();
-            int ready = 0;
-            for (int i = 0; i < (int)nfds; i++)
+            var ready = 0;
+            for (var i = 0; i < (int)nfds; i++)
             {
-                byte* p = (byte*)fds + i * 8;
-                int fd = *(int*)p;
-                short events = *(short*)(p + 4);
+                var p = (byte*)fds + i * 8;
+                var fd = *(int*)p;
+                var events = *(short*)(p + 4);
                 *(short*)(p + 6) = 0;
                 if (fd < 0) continue;
                 var slot = SlotByFd(fd);
                 if (slot is null) { *(short*)(p + 6) = 0x20; ready++; continue; }
                 if (slot.Kind == FileSlot.K.Pipe)
                 {
-                    short result = PollPipe(slot, events);
+                    var result = PollPipe(slot, events);
                     *(short*)(p + 6) = result;
                     if (result != 0) ready++;
                     continue;
@@ -12981,8 +12993,8 @@ public static unsafe partial class Libc
                 *(short*)(p + 6) = (short)(events & 5);
                 if (*(short*)(p + 6) != 0) ready++;
             }
-            long remaining = timeout < 0 ? long.MaxValue : Math.Max(0, (long)timeout - started.ElapsedMilliseconds);
-            int waitMilliseconds = ready > 0 ? 0 : (int)Math.Min(remaining, 50);
+            var remaining = timeout < 0 ? long.MaxValue : Math.Max(0, (long)timeout - started.ElapsedMilliseconds);
+            var waitMilliseconds = ready > 0 ? 0 : (int)Math.Min(remaining, 50);
             if (reads.Count + writes.Count + errors.Count == 0)
             {
                 if (ready > 0) return ready;
@@ -12993,10 +13005,10 @@ public static unsafe partial class Libc
             try
             {
                 Socket.Select(reads, writes, errors, waitMilliseconds * 1000);
-                for (int i = 0; i < (int)nfds; i++)
+                for (var i = 0; i < (int)nfds; i++)
                 {
-                    byte* p = (byte*)fds + i * 8;
-                    int fd = *(int*)p;
+                    var p = (byte*)fds + i * 8;
+                    var fd = *(int*)p;
                     if (fd < 0) continue;
                     var slot = SlotByFd(fd);
                     // Pipes may change readiness while Socket.Select blocks.
@@ -13004,7 +13016,7 @@ public static unsafe partial class Libc
                     if (slot is null || slot.Kind == FileSlot.K.Pipe)
                     {
                         if (*(short*)(p + 6) != 0) ready--;
-                        short pipeResult = slot is null ? (short)32 : PollPipe(slot, *(short*)(p + 4));
+                        var pipeResult = slot is null ? (short)32 : PollPipe(slot, *(short*)(p + 4));
                         *(short*)(p + 6) = pipeResult;
                         if (pipeResult != 0) ready++;
                         continue;
@@ -13064,9 +13076,9 @@ public static unsafe partial class Libc
     }
     public sealed partial class RuntimeContext
     {
-        internal readonly object PosixLocaleGate = new();
-        internal readonly Dictionary<nint, PosixLocale> PosixLocales = new();
-        internal readonly ConditionalWeakTable<Thread, PosixLocaleSelection> PosixLocaleThreads = new();
+        internal readonly object PosixLocaleGate = new object();
+        internal readonly Dictionary<nint, PosixLocale> PosixLocales = new Dictionary<IntPtr, PosixLocale>();
+        internal readonly ConditionalWeakTable<Thread, PosixLocaleSelection> PosixLocaleThreads = new ConditionalWeakTable<Thread, PosixLocaleSelection>();
     }
 
     // Handles are non-dereferenceable monotonically assigned tokens. No native
@@ -13076,7 +13088,7 @@ public static unsafe partial class Libc
     private static void* AllocatePosixLocale(RuntimeContext owner, bool utf8)
     {
         if (utf8 && posixUnicodeService.Value == null) { errno = ENOTSUP; return null; }
-        long identity = Interlocked.Increment(ref nextPosixLocale);
+        var identity = Interlocked.Increment(ref nextPosixLocale);
         if (identity <= 0 || (IntPtr.Size == 4 && identity > int.MaxValue))
         { errno = ENOMEM; return null; }
         owner.PosixLocales.Add((nint)identity, new PosixLocale(utf8));
@@ -13142,8 +13154,8 @@ public static unsafe partial class Libc
         { errno = EINVAL; return null; }
         try
         {
-            string value = Encoding.UTF8.GetString(name, strlen(name));
-            bool utf8 = value is "C.UTF-8" or "C.utf8";
+            var value = Encoding.UTF8.GetString(name, strlen(name));
+            var utf8 = value is "C.UTF-8" or "C.utf8";
             if (!utf8 && value is not ("" or "C" or "POSIX")) { errno = ENOENT; return null; }
             var owner = RuntimeState;
             lock (owner.PosixLocaleGate)
@@ -13185,7 +13197,7 @@ public static unsafe partial class Libc
         lock (owner.PosixLocaleGate)
         {
             var current = owner.PosixLocaleThreads.GetValue(Thread.CurrentThread, static _ => new PosixLocaleSelection());
-            nint previous = current.Handle;
+            var previous = current.Handle;
             if (locale == null) return (void*)previous;
             if ((nint)locale != posixGlobalLocale && !owner.PosixLocales.ContainsKey((nint)locale))
             { errno = EINVAL; return null; }
@@ -13210,20 +13222,20 @@ public static unsafe partial class Libc
 
     public static byte* nl_langinfo_l(int item, void* locale)
     {
-        if (!TryPosixLocale(locale, out bool utf8)) return null;
+        if (!TryPosixLocale(locale, out var utf8)) return null;
         if (item == 14) return (byte*)(utf8 ? utf8CodesetStorage : asciiCodesetStorage);
         // glibc extended monetary/numeric nl_item values. Keep the numeric
         // sentinel consistent with localeconv and dotcc's unsigned char ABI.
         if (item is >= 262144 and <= 262150 || item == 65538) return LiteralPool.Pointer + LiteralPool.Empty;
         if (item is >= 262151 and <= 262158 or >= 262160 and <= 262165) return (byte*)posixUnavailableMonetary;
-        if (cLanginfo.Value.TryGetValue(item, out nint value)) return (byte*)value;
+        if (cLanginfo.Value.TryGetValue(item, out var value)) return (byte*)value;
         errno = ENOTSUP;
         return LiteralPool.Pointer + LiteralPool.Empty;
     }
     private static readonly nint posixUnavailableMonetary = CreatePosixUnavailableMonetary();
     private static nint CreatePosixUnavailableMonetary()
     {
-        byte* value = (byte*)NativeMemory.Alloc(2);
+        var value = (byte*)NativeMemory.Alloc(2);
         value[0] = 255; value[1] = 0;
         return (nint)value;
     }
@@ -13248,7 +13260,7 @@ public static unsafe partial class Libc
         if (format == null || time == null || (destination == null && n != 0)) { errno = EFAULT; return 0; }
         // CalendarLib implements this C formatting subset. Do not turn an
         // unimplemented specifier into a successful literal "%x" response.
-        for (byte* p = format; *p != 0; p++)
+        for (var p = format; *p != 0; p++)
         {
             if (*p != '%') continue;
             p++;
@@ -13276,7 +13288,7 @@ public static unsafe partial class Libc
     private enum PosixWideClass { Alnum, Alpha, Blank, Control, Digit, Graph, Lower, Print, Punct, Space, Upper, Xdigit }
     private static int ClassifyPosixWide(int c, void* locale, PosixWideClass kind)
     {
-        if (!TryPosixLocale(locale, out bool utf8)) return 0;
+        if (!TryPosixLocale(locale, out var utf8)) return 0;
         if (c < 128 || !utf8)
         {
             return kind switch
@@ -13308,13 +13320,13 @@ public static unsafe partial class Libc
     public static int iswxdigit_l(int c, void* locale) => ClassifyPosixWide(c, locale, PosixWideClass.Xdigit);
     public static int towlower_l(int c, void* locale)
     {
-        if (!TryPosixLocale(locale, out bool utf8)) return c;
+        if (!TryPosixLocale(locale, out var utf8)) return c;
         if (!utf8 || c < 128) return tolower(c);
         return MapPosixWide(c, false);
     }
     public static int towupper_l(int c, void* locale)
     {
-        if (!TryPosixLocale(locale, out bool utf8)) return c;
+        if (!TryPosixLocale(locale, out var utf8)) return c;
         if (!utf8 || c < 128) return toupper(c);
         return MapPosixWide(c, true);
     }
@@ -13334,7 +13346,7 @@ public static unsafe partial class Libc
         internal readonly nint Locale = locale, Lower = lower, Upper = upper;
         internal readonly ulong[] Classes = classes;
     }
-    private static readonly Lazy<PosixUnicodeService?> posixUnicodeService = new(CreatePosixUnicodeService);
+    private static readonly Lazy<PosixUnicodeService?> posixUnicodeService = new Lazy<PosixUnicodeService?>(CreatePosixUnicodeService);
     private static PosixUnicodeService? CreatePosixUnicodeService()
     {
         if (!OperatingSystem.IsLinux() || IntPtr.Size != 8) return null;
@@ -13345,9 +13357,9 @@ public static unsafe partial class Libc
             if (locale == 0) return null;
             string[] names = ["alnum", "alpha", "blank", "cntrl", "digit", "graph", "lower", "print", "punct", "space", "upper", "xdigit"];
             var classes = new ulong[names.Length];
-            for (int i = 0; i < names.Length; i++)
+            for (var i = 0; i < names.Length; i++)
             {
-                byte[] name = Encoding.ASCII.GetBytes(names[i] + "\0");
+                var name = Encoding.ASCII.GetBytes(names[i] + "\0");
                 fixed (byte* text = name) classes[i] = PosixNativeWctype(text, locale);
                 if (classes[i] == 0) return null;
             }
@@ -13407,8 +13419,8 @@ public static unsafe partial class Libc
     public static int strerror_r(int error, byte* buffer, ulong length)
     {
         if (buffer == null) return EINVAL;
-        byte* message = strerror(error);
-        ulong count = (ulong)strlen(message);
+        var message = strerror(error);
+        var count = (ulong)strlen(message);
         if (length <= count)
         {
             if (length != 0) { memcpy(buffer, message, length - 1); buffer[length - 1] = 0; }
@@ -13422,9 +13434,9 @@ public static unsafe partial class Libc
     public static int uname(void* output)
     {
         if (output == null) { errno = EFAULT; return -1; }
-        string system = OperatingSystem.IsLinux() ? "Linux" : OperatingSystem.IsMacOS() ? "Darwin" :
+        var system = OperatingSystem.IsLinux() ? "Linux" : OperatingSystem.IsMacOS() ? "Darwin" :
             OperatingSystem.IsFreeBSD() ? "FreeBSD" : "Windows";
-        string machine = global::System.Runtime.InteropServices.RuntimeInformation.OSArchitecture switch
+        var machine = global::System.Runtime.InteropServices.RuntimeInformation.OSArchitecture switch
         {
             global::System.Runtime.InteropServices.Architecture.X64 => "x86_64", global::System.Runtime.InteropServices.Architecture.X86 => "i686",
             global::System.Runtime.InteropServices.Architecture.Arm64 => "aarch64", global::System.Runtime.InteropServices.Architecture.Arm => "arm",
@@ -13432,8 +13444,8 @@ public static unsafe partial class Libc
         };
         string[] fields = [system, Environment.MachineName, Environment.OSVersion.Version.ToString(),
             global::System.Runtime.InteropServices.RuntimeInformation.OSDescription, machine, ""];
-        byte* target = (byte*)output;
-        for (int i = 0; i < fields.Length; i++)
+        var target = (byte*)output;
+        for (var i = 0; i < fields.Length; i++)
         {
             var buffer = new Span<byte>(target + 65 * i, 65);
             buffer.Clear();
@@ -13460,8 +13472,8 @@ public static unsafe partial class Libc
     }
     public sealed partial class RuntimeContext
     {
-        internal readonly object PosixSemaphoreGate = new();
-        internal readonly Dictionary<nint, PosixSemaphore> posixSemaphores = new();
+        internal readonly object PosixSemaphoreGate = new object();
+        internal readonly Dictionary<nint, PosixSemaphore> posixSemaphores = new Dictionary<IntPtr, PosixSemaphore>();
     }
 
     public static int sem_init(void* address, int shared, uint value)
@@ -13473,9 +13485,9 @@ public static unsafe partial class Libc
         lock (owner.PosixSemaphoreGate)
         {
             if (owner.posixSemaphores.ContainsKey((nint)address)) { errno = EBUSY; return -1; }
-            void* storage = NativeMemory.AllocZeroed(32);
+            var storage = NativeMemory.AllocZeroed(32);
             if (storage == null) { errno = ENOMEM; return -1; }
-            int result = HostSemInit(storage, shared, value);
+            var result = HostSemInit(storage, shared, value);
             if (result != 0) { errno = Marshal.GetLastPInvokeError(); NativeMemory.Free(storage); return -1; }
             owner.posixSemaphores.Add((nint)address, new PosixSemaphore((nint)storage));
             return 0;
@@ -13488,7 +13500,7 @@ public static unsafe partial class Libc
         {
             if (!owner.posixSemaphores.TryGetValue((nint)address, out var item)) { errno = EINVAL; return -1; }
             if (item.Users != 0) { errno = EBUSY; return -1; }
-            int result = HostSemDestroy((void*)item.Native);
+            var result = HostSemDestroy((void*)item.Native);
             if (result != 0) { errno = Marshal.GetLastPInvokeError(); return -1; }
             owner.posixSemaphores.Remove((nint)address);
             NativeMemory.Free((void*)item.Native);
@@ -13514,7 +13526,7 @@ public static unsafe partial class Libc
         }
         try
         {
-            int result = operation switch
+            var result = operation switch
             {
                 0 => HostSemWait((void*)item.Native),
                 1 => HostSemTryWait((void*)item.Native),
@@ -13568,7 +13580,7 @@ public static unsafe partial class Libc
         if (!OperatingSystem.IsLinux() || IntPtr.Size != 8) { errno = ENOTSUP; return -1; }
         fixed (byte* resolved = Encoding.UTF8.GetBytes(ResolvePath(path) + "\0"))
         {
-            int result = PosixUtime(resolved, times);
+            var result = PosixUtime(resolved, times);
             if (result != 0) errno = Marshal.GetLastPInvokeError();
             return result;
         }
@@ -13661,7 +13673,7 @@ public unsafe ref partial struct PrintfBuilder
     {
         if (v == 0) { return "0"; }
         Span<char> buf = stackalloc char[22]; // 64-bit octal is ≤ 22 digits
-        int i = buf.Length;
+        var i = buf.Length;
         while (v != 0) { buf[--i] = (char)('0' + (int)(v & 7)); v >>= 3; }
         return new string(buf[i..]);
     }
@@ -13729,7 +13741,7 @@ public unsafe ref partial struct PrintfBuilder
     /// <summary>Apply precision to an integer or unsigned string.</summary>
     private static string PadInt(long v, Spec spec, CultureInfo ci)
     {
-        string sign = "";
+        var sign = "";
         ulong abs;
         if (v < 0) { sign = "-"; abs = unchecked((ulong)(-v)); }
         else if (spec.Plus) { sign = "+"; abs = (ulong)v; }
@@ -13737,7 +13749,7 @@ public unsafe ref partial struct PrintfBuilder
         else { abs = (ulong)v; }
         // Precision 0 with value 0 → empty string (C99 §7.21.6.1).
         if (spec.Precision == 0 && abs == 0) return sign;
-        string s = abs.ToString(ci);
+        var s = abs.ToString(ci);
         if (spec.Precision > s.Length)
             s = s.PadLeft(spec.Precision, '0');
         return sign + s;
@@ -13747,7 +13759,7 @@ public unsafe ref partial struct PrintfBuilder
     {
         // Precision 0 with value 0 → empty string.
         if (spec.Precision == 0 && v == 0) return "";
-        string s = v.ToString(ci);
+        var s = v.ToString(ci);
         if (spec.Precision > s.Length)
             s = s.PadLeft(spec.Precision, '0');
         return s;
@@ -13773,18 +13785,18 @@ public unsafe ref partial struct PrintfBuilder
             if (precision > 0 || (precision < 0 && precision != 0))
             {
                 sb0.Append('.');
-                int count = precision >= 0 ? precision : 1;
+                var count = precision >= 0 ? precision : 1;
                 sb0.Append('0', count);
             }
             sb0.Append(upper ? "P+0" : "p+0");
             return sb0.ToString();
         }
-        bool neg = double.IsNegative(v);
+        var neg = double.IsNegative(v);
         if (neg) { v = -v; }
         // Extract mantissa and exponent from the IEEE 754 representation
-        ulong bits = BitConverter.DoubleToUInt64Bits(v);
-        long biasedExp = (long)((bits >> 52) & 0x7FF);
-        ulong mantissa = bits & 0x000F_FFFF_FFFF_FFFF;
+        var bits = BitConverter.DoubleToUInt64Bits(v);
+        var biasedExp = (long)((bits >> 52) & 0x7FF);
+        var mantissa = bits & 0x000F_FFFF_FFFF_FFFF;
         long exp;
         if (biasedExp == 0)
         {
@@ -13795,27 +13807,27 @@ public unsafe ref partial struct PrintfBuilder
             mantissa |= 1UL << 52;
             exp = biasedExp - 1023;
         }
-        int firstNibble = (int)(mantissa >> 52);
-        ulong fracPart  = mantissa & 0x000F_FFFF_FFFF_FFFF;
+        var firstNibble = (int)(mantissa >> 52);
+        var fracPart  = mantissa & 0x000F_FFFF_FFFF_FFFF;
         // Build 13 hex fractional nibbles (52 bits / 4).
-        int[] nibbles = new int[13];
-        for (int i = 0; i < 13; i++)
+        var nibbles = new int[13];
+        for (var i = 0; i < 13; i++)
             nibbles[i] = (int)(fracPart >> (48 - i * 4)) & 0xF;
         // If precision is specified, round to that many fractional hex digits.
-        int fullLen = 13;
+        var fullLen = 13;
         while (fullLen > 0 && nibbles[fullLen - 1] == 0) { fullLen--; }
-        int outLen = precision >= 0 ? precision : fullLen;
+        var outLen = precision >= 0 ? precision : fullLen;
         if (outLen < 13)
         {
             // Round at position outLen.
-            int roundPos = outLen;
+            var roundPos = outLen;
             if (roundPos < 13 && nibbles[roundPos] >= 8)
             {
                 // Round up: propagate carry.
-                int carry = 1;
-                for (int i = roundPos - 1; i >= 0 && carry > 0; i--)
+                var carry = 1;
+                for (var i = roundPos - 1; i >= 0 && carry > 0; i--)
                 {
-                    int vv = nibbles[i] + 1;
+                    var vv = nibbles[i] + 1;
                     nibbles[i] = vv & 0xF;
                     carry = vv >> 4;
                 }
@@ -13837,7 +13849,7 @@ public unsafe ref partial struct PrintfBuilder
         if (outLen > 0)
         {
             sb.Append('.');
-            for (int i = 0; i < outLen; i++)
+            for (var i = 0; i < outLen; i++)
                 sb.Append(toHex(nibbles[i]));
         }
         sb.Append(upper ? 'P' : 'p');
@@ -13860,8 +13872,8 @@ public unsafe ref partial struct PrintfBuilder
     {
         var spec = ConsumeUntilSpec();
         var prec = spec.Precision >= 0 ? spec.Precision : 6;
-        bool nonNeg = !Float128.IsNegative(v) && !Float128.IsNaN(v);
-        string s = spec.Conv switch
+        var nonNeg = !Float128.IsNegative(v) && !Float128.IsNaN(v);
+        var s = spec.Conv switch
         {
             (byte)'d' or (byte)'i' => Float128.ToInt64(v).ToString(CultureInfo.InvariantCulture),
             (byte)'e' => v.ToScientificString(prec, upper: false),
@@ -13947,7 +13959,7 @@ public unsafe ref partial struct PrintfBuilder
         string s;
         if (spec.Conv == (byte)'s' && v != null)
         {
-            int len = 0;
+            var len = 0;
             // C precision bounds bytes read, including non-terminated slices.
             while ((spec.Precision < 0 || len < spec.Precision) && v[len] != 0) { len++; }
             s = (_byteOutput ? global::System.Text.Encoding.Latin1 : global::System.Text.Encoding.UTF8).GetString(v, len);
@@ -14000,7 +14012,7 @@ public unsafe ref partial struct PrintfBuilder
         string s;
         if ((spec.Conv == (byte)'s' || spec.Conv == (byte)'S') && v != null)
         {
-            int len = 0;
+            var len = 0;
             while (v[len] != 0) { len++; }
             s = new string(v, 0, len);
             if (spec.Precision >= 0 && spec.Precision < s.Length) { s = s[..spec.Precision]; }
@@ -14164,7 +14176,7 @@ public unsafe ref partial struct PrintfBuilder
     private static string FormatFloat(double v, Spec spec, CultureInfo ci)
     {
         var prec = spec.Precision >= 0 ? spec.Precision : 6;
-        string s = spec.Conv switch
+        var s = spec.Conv switch
         {
             (byte)'e' => v.ToString("e" + prec.ToString(ci), ci),
             (byte)'E' => v.ToString("E" + prec.ToString(ci), ci),
@@ -14204,12 +14216,12 @@ public unsafe ref partial struct PrintfBuilder
 
     private void WriteUtf8Codepoint(ref byte* p)
     {
-        byte b = *p;
+        var b = *p;
         // Allocating byte-buffer formatting preserves every original C byte,
         // including non-UTF8 %s data and multibyte format literals.
         if (_byteOutput) { _w.Write((char)b); _count++; p++; return; }
         if (b < 0x80) { _w.Write((char)b); _count++; p++; return; }
-        int len = 1;
+        var len = 1;
         if ((b & 0xE0) == 0xC0) { len = 2; }
         else if ((b & 0xF0) == 0xE0) { len = 3; }
         else if ((b & 0xF8) == 0xF0) { len = 4; }
@@ -14348,8 +14360,8 @@ public static unsafe partial class Libc
     private static int WinGetParentPid()
     {
         const uint TH32CS_SNAPPROCESS = 0x00000002;
-        uint self = GetCurrentProcessId();
-        IntPtr snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+        var self = GetCurrentProcessId();
+        var snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
         if (snap == IntPtr.Zero || snap == new IntPtr(-1)) { return 0; }
         try
         {
@@ -14424,7 +14436,7 @@ public static unsafe partial class Libc
             return sig == 0 ? 0 : QueueGuestSignal(sig);
         }
         if (OperatingSystem.IsWindows()) { return WinKill(pid, sig); }
-        int rc = PosixKill(pid, sig);
+        var rc = PosixKill(pid, sig);
         // Surface the raw OS errno (our constants are the glibc asm-generic values).
         if (rc != 0) { errno = Marshal.GetLastPInvokeError(); }
         return rc;
@@ -14455,7 +14467,7 @@ public static unsafe partial class Libc
         if (sig == 0)
         {
             // Existence/permission probe only — no signal is sent.
-            IntPtr h = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, (uint)pid);
+            var h = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, (uint)pid);
             if (h != IntPtr.Zero) { CloseHandle(h); return 0; }
             errno = Marshal.GetLastPInvokeError() == ERROR_ACCESS_DENIED ? EPERM : ESRCH;
             return -1;
@@ -14464,7 +14476,7 @@ public static unsafe partial class Libc
         // SIGKILL (9) / SIGTERM (15) / SIGINT (2): the deliverable "terminate" signals.
         if (sig == 9 || sig == 15 || sig == 2)
         {
-            IntPtr h = OpenProcess(PROCESS_TERMINATE, 0, (uint)pid);
+            var h = OpenProcess(PROCESS_TERMINATE, 0, (uint)pid);
             if (h == IntPtr.Zero)
             {
                 errno = Marshal.GetLastPInvokeError() == ERROR_ACCESS_DENIED ? EPERM : ESRCH;
@@ -14561,7 +14573,7 @@ public static unsafe partial class Libc
     private static int RaiseHostSignal(int sig)
     {
         if (OperatingSystem.IsWindows()) return kill(getpid(), sig);
-        int result = PosixRaise(sig);
+        var result = PosixRaise(sig);
         if (result != 0) errno = Marshal.GetLastPInvokeError();
         return result;
     }
@@ -14628,7 +14640,7 @@ public static unsafe partial class Libc
             errno = ENOTSUP;
             return -1;
         }
-        long result = PosixProcessTimes(buffer);
+        var result = PosixProcessTimes(buffer);
         if (result == -1) errno = Marshal.GetLastPInvokeError();
         return result;
     }
@@ -14640,7 +14652,7 @@ public static unsafe partial class Libc
             errno = ENOTSUP;
             return -1;
         }
-        long result = PosixProcessClockSysconf(2); // Linux _SC_CLK_TCK
+        var result = PosixProcessClockSysconf(2); // Linux _SC_CLK_TCK
         if (result == -1) errno = Marshal.GetLastPInvokeError();
         return result;
     }
@@ -14668,7 +14680,7 @@ public static unsafe partial class Libc
     {
         if (name == null) { errno = EINVAL; return null; }
         var text = Str(name);
-        for (int i = 0; i < ProtocolDatabase.Entries.Length; ++i)
+        for (var i = 0; i < ProtocolDatabase.Entries.Length; ++i)
         {
             var entry = ProtocolDatabase.Entries[i];
             if (text == entry.Name || text == entry.Alias) return ProtocolDatabase.Pointer + i * ProtocolDatabase.Stride;
@@ -14693,12 +14705,12 @@ public static unsafe partial class Libc
             Storage = GC.AllocateUninitializedArray<byte>(Entries.Length * Stride, pinned: true);
             Storage.AsSpan().Clear();
             Pointer = (byte*)Unsafe.AsPointer(ref MemoryMarshal.GetArrayDataReference(Storage));
-            for (int i = 0; i < Entries.Length; ++i)
+            for (var i = 0; i < Entries.Length; ++i)
             {
-                byte* record = Pointer + i * Stride;
-                byte* name = record + 40;
-                int length = Encoding.UTF8.GetBytes(Entries[i].Name, new Span<byte>(name, Stride - 40));
-                byte* alias = name + length + 1;
+                var record = Pointer + i * Stride;
+                var name = record + 40;
+                var length = Encoding.UTF8.GetBytes(Entries[i].Name, new Span<byte>(name, Stride - 40));
+                var alias = name + length + 1;
                 Encoding.UTF8.GetBytes(Entries[i].Alias, new Span<byte>(alias, Stride - 41 - length));
                 // protoent: p_name at 0, p_aliases at 8, p_proto at 16,
                 // size 24, alignment 8. Two alias pointers follow the record.
@@ -14761,7 +14773,7 @@ public static unsafe partial class Libc
             {
                 ObjectDisposedException.ThrowIf(disposed, this);
                 var admission = new PthreadAdmission(this, Math.Max(requestedBytes, pthreadStackPolicy?.MinimumBytes ?? 0));
-                int count = checked(pthreadAdmissions + 1);
+                var count = checked(pthreadAdmissions + 1);
                 Retain();
                 pthreadAdmissions = count;
                 return admission;
@@ -14820,23 +14832,23 @@ public static unsafe partial class Libc
     }
     private sealed class PthreadAttributeRegistry
     {
-        internal readonly Dictionary<int, PthreadAttributes> Attributes = new();
+        internal readonly Dictionary<int, PthreadAttributes> Attributes = new Dictionary<int, PthreadAttributes>();
     }
-    private static readonly ConditionalWeakTable<RuntimeContext, PthreadAttributeRegistry> pthreadAttributeOwners = new();
+    private static readonly ConditionalWeakTable<RuntimeContext, PthreadAttributeRegistry> pthreadAttributeOwners = new ConditionalWeakTable<RuntimeContext, PthreadAttributeRegistry>();
     private static long nextPthreadAttribute;
 
     private static PthreadAttributeRegistry PthreadAttributesFor(RuntimeContext owner) =>
-        pthreadAttributeOwners.GetValue(owner, static _ => new());
+        pthreadAttributeOwners.GetValue(owner, static _ => new PthreadAttributeRegistry());
 
     public static int pthread_attr_init(int* attribute)
     {
         if (attribute == null) return EINVAL;
-        long id = Interlocked.Increment(ref nextPthreadAttribute);
+        var id = Interlocked.Increment(ref nextPthreadAttribute);
         if (id <= 0 || id > int.MaxValue) return EAGAIN;
         try
         {
             var registry = PthreadAttributesFor(RuntimeState);
-            lock (registry) registry.Attributes.Add((int)id, new());
+            lock (registry) registry.Attributes.Add((int)id, new PthreadAttributes());
             *attribute = (int)id;
             return 0;
         }
@@ -15060,8 +15072,8 @@ public static unsafe partial class Libc
 
     public static int pthread_create(long* thread, int* attr, delegate*<void*, void*> start, void* arg)
     {
-        RuntimeContext owner = RuntimeState;
-        if (thread == null || start == null || !TryPthreadAttributes(owner, attr, out int stackSize, out bool detached)) return EINVAL;
+        var owner = RuntimeState;
+        if (thread == null || start == null || !TryPthreadAttributes(owner, attr, out var stackSize, out var detached)) return EINVAL;
         PthreadState? state = null;
         PthreadAdmission? admission = null;
         try
@@ -15092,14 +15104,14 @@ public static unsafe partial class Libc
         delegate*<T, void*, void*> start, void* arg) where T : class, IProgramInstance
     {
         if (instance == null || thread == null || start == null) return EINVAL;
-        RuntimeContext context = instance.__DotCcRuntime;
-        if (!TryPthreadAttributes(context, attr, out int stackSize, out bool detached)) return EINVAL;
+        var context = instance.__DotCcRuntime;
+        if (!TryPthreadAttributes(context, attr, out var stackSize, out var detached)) return EINVAL;
         PthreadState? state = null;
         PthreadAdmission? admission = null;
         try
         {
             admission = context.AdmitPthread(stackSize);
-            IntPtr address = (IntPtr)start;
+            var address = (IntPtr)start;
             state = new PthreadState
             {
                 Context = context, OwnerContext = context, Admission = admission, Id = Interlocked.Increment(ref context.NextThread),
@@ -15137,7 +15149,7 @@ public static unsafe partial class Libc
             contextBinding = state.Context?.Enter() ?? default;
             _pthreadSelf = state.Id;
             _pthreadCreated = true;
-            bool completed = false;
+            var completed = false;
             try
             {
                 try { state.Result = state.InstanceStart != null ? state.InstanceStart(state.Argument)
@@ -15228,7 +15240,7 @@ public static unsafe partial class Libc
     internal sealed class PthreadWaiter { public bool Signaled; }
     internal sealed class PthreadCondition
     {
-        public readonly LinkedList<PthreadWaiter> Waiters = new();
+        public readonly LinkedList<PthreadWaiter> Waiters = new LinkedList<PthreadWaiter>();
         public bool Destroyed;
         public int MutexId;
     }
@@ -15252,10 +15264,10 @@ public static unsafe partial class Libc
     {
         error = EINVAL;
         if (mutex == null) return null;
-        RuntimeContext context = RuntimeState;
+        var context = RuntimeState;
         if (Volatile.Read(ref context.MutexCacheEnabled))
         {
-            int cachedId = Volatile.Read(ref *mutex);
+            var cachedId = Volatile.Read(ref *mutex);
             if (cachedId > 0)
             {
                 var cached = Volatile.Read(ref context.MutexCache[cachedId & (context.MutexCache.Length - 1)]);
@@ -15268,7 +15280,7 @@ public static unsafe partial class Libc
         {
             lock (context.Objects)
             {
-                int id = *mutex;
+                var id = *mutex;
                 PthreadMutex? state;
                 if (id == 0) // PTHREAD_MUTEX_INITIALIZER, initialized once under the registry gate
                 {
@@ -15302,12 +15314,12 @@ public static unsafe partial class Libc
     public static int pthread_mutex_init(int* mutex, int* attr)
     {
         if (mutex == null || (attr != null && (*attr < 0 || *attr > 2))) return EINVAL;
-        RuntimeContext context = RuntimeState;
+        var context = RuntimeState;
         try
         {
             lock (context.Objects)
             {
-                int id = checked(++context.NextMutex);
+                var id = checked(++context.NextMutex);
                 var state = new PthreadMutex(id, attr == null ? 0 : *attr);
                 context.Mutexes.Add(id, state);
                 PthreadCheckMutexCacheCapacity(context);
@@ -15323,10 +15335,10 @@ public static unsafe partial class Libc
     public static int pthread_mutex_destroy(int* mutex)
     {
         if (mutex == null) return EINVAL;
-        RuntimeContext context = RuntimeState;
+        var context = RuntimeState;
         lock (context.Objects)
         {
-            int id = *mutex;
+            var id = *mutex;
             if (id == 0) { Volatile.Write(ref *mutex, -1); return 0; }
             if (!context.Mutexes.TryGetValue(id, out var state)) return EINVAL;
             lock (state)
@@ -15354,9 +15366,9 @@ public static unsafe partial class Libc
     // overflow for large tv_sec nor expire early through millisecond truncation.
     private static int PthreadTimeout(timespec* deadline)
     {
-        Int128 ns = (Int128)deadline->tv_sec * 1_000_000_000 + deadline->tv_nsec;
-        Int128 now = (Int128)(global::System.DateTime.UtcNow.Ticks - global::System.DateTime.UnixEpoch.Ticks) * 100;
-        Int128 ms = (ns - now + 999_999) / 1_000_000;
+        var ns = (Int128)deadline->tv_sec * 1_000_000_000 + deadline->tv_nsec;
+        var now = (Int128)(global::System.DateTime.UtcNow.Ticks - global::System.DateTime.UnixEpoch.Ticks) * 100;
+        var ms = (ns - now + 999_999) / 1_000_000;
         // BCL monitor waits have no wall-clock-change notification. Poll at
         // most once per second so a forward clock adjustment is observed.
         return ms <= 0 ? 0 : ms > 1000 ? 1000 : (int)ms;
@@ -15364,7 +15376,7 @@ public static unsafe partial class Libc
     private static bool PthreadValidDeadline(timespec* deadline) => deadline != null && deadline->tv_nsec >= 0 && deadline->tv_nsec < 1_000_000_000;
     private static int PthreadLock(PthreadMutex state, bool attempt, timespec* deadline, bool timed)
     {
-        int me = Environment.CurrentManagedThreadId;
+        var me = Environment.CurrentManagedThreadId;
         lock (state)
         {
             if (state.Destroyed) return EINVAL;
@@ -15381,7 +15393,7 @@ public static unsafe partial class Libc
             {
                 while (state.Owner != 0)
                 {
-                    int timeout = timed ? PthreadTimeout(deadline) : Timeout.Infinite;
+                    var timeout = timed ? PthreadTimeout(deadline) : Timeout.Infinite;
                     if (timeout == 0) return ETIMEDOUT;
                     Monitor.Wait(state, timeout);
                 }
@@ -15391,11 +15403,11 @@ public static unsafe partial class Libc
         }
     }
     public static int pthread_mutex_lock(int* mutex)
-    { var state = PthreadGetMutex(mutex, out int error); return state == null ? error : PthreadLock(state, false, null, false); }
+    { var state = PthreadGetMutex(mutex, out var error); return state == null ? error : PthreadLock(state, false, null, false); }
     public static int pthread_mutex_trylock(int* mutex)
-    { var state = PthreadGetMutex(mutex, out int error); return state == null ? error : PthreadLock(state, true, null, false); }
+    { var state = PthreadGetMutex(mutex, out var error); return state == null ? error : PthreadLock(state, true, null, false); }
     public static int pthread_mutex_timedlock(int* mutex, timespec* deadline)
-    { var state = PthreadGetMutex(mutex, out int error); return state == null ? error : PthreadLock(state, false, deadline, true); }
+    { var state = PthreadGetMutex(mutex, out var error); return state == null ? error : PthreadLock(state, false, deadline, true); }
     private static int PthreadUnlock(PthreadMutex state)
     {
         lock (state)
@@ -15407,7 +15419,7 @@ public static unsafe partial class Libc
         }
     }
     public static int pthread_mutex_unlock(int* mutex)
-    { var state = PthreadGetMutex(mutex, out int error); return state == null ? error : PthreadUnlock(state); }
+    { var state = PthreadGetMutex(mutex, out var error); return state == null ? error : PthreadUnlock(state); }
 
     public static int pthread_condattr_init(int* attr) { if (attr == null) return EINVAL; *attr = 0; return 0; }
     public static int pthread_condattr_destroy(int* attr)
@@ -15427,7 +15439,7 @@ public static unsafe partial class Libc
                 if (*condition == 0)
                 {
                     var state = new PthreadCondition();
-                    int id = checked(++_nextPthreadCondition);
+                    var id = checked(++_nextPthreadCondition);
                     _pthreadConditions.Add(id, state); *condition = id;
                     return state;
                 }
@@ -15444,7 +15456,7 @@ public static unsafe partial class Libc
         {
             lock (_pthreadObjects)
             {
-                int id = checked(++_nextPthreadCondition);
+                var id = checked(++_nextPthreadCondition);
                 _pthreadConditions.Add(id, new PthreadCondition()); *condition = id;
             }
             return 0;
@@ -15470,7 +15482,7 @@ public static unsafe partial class Libc
     }
     private static int PthreadSignal(int* condition, bool all)
     {
-        var state = PthreadGetCondition(condition, out int error);
+        var state = PthreadGetCondition(condition, out var error);
         if (state == null) return error;
         lock (state)
         {
@@ -15500,13 +15512,13 @@ public static unsafe partial class Libc
     private static int PthreadWaitCore(int* condition, int* mutex, timespec* deadline, bool timed)
     {
         if (timed && !PthreadValidDeadline(deadline)) return EINVAL;
-        var cv = PthreadGetCondition(condition, out int error);
+        var cv = PthreadGetCondition(condition, out var error);
         if (cv == null) return error;
         var m = PthreadGetMutex(mutex, out error);
         if (m == null) return error;
         PthreadTestCancellation(false);
-        int result = 0;
-        bool released = false;
+        var result = 0;
+        var released = false;
         try
         {
             lock (cv)
@@ -15531,7 +15543,7 @@ public static unsafe partial class Libc
                     while (!node.Value.Signaled)
                     {
                         PthreadTestCancellation(false);
-                        int timeout = timed ? PthreadTimeout(deadline) : Timeout.Infinite;
+                        var timeout = timed ? PthreadTimeout(deadline) : Timeout.Infinite;
                         if (timeout == 0) { result = ETIMEDOUT; break; }
                         Monitor.Wait(cv, Math.Min(timeout < 0 ? 100 : timeout, 100));
                     }
@@ -15564,7 +15576,7 @@ public static unsafe partial class Libc
         var spin = new SpinWait();
         while (true)
         {
-            int state = Volatile.Read(ref *once);
+            var state = Volatile.Read(ref *once);
             if (state == 2) return 0;
             if (state == 0 && Interlocked.CompareExchange(ref *once, 1, 0) == 0)
             {
@@ -15585,7 +15597,7 @@ public static unsafe partial class Libc
         var spin = new SpinWait();
         while (true)
         {
-            int state = Volatile.Read(ref *once);
+            var state = Volatile.Read(ref *once);
             if (state == 2) return 0;
             if (state == 0 && Interlocked.CompareExchange(ref *once, 1, 0) == 0)
             {
@@ -15605,7 +15617,7 @@ public static unsafe partial class Libc
         if (key == null) return EINVAL;
         try
         {
-            int id = Interlocked.Increment(ref _nextPthreadKey);
+            var id = Interlocked.Increment(ref _nextPthreadKey);
             if (id <= 0) return EAGAIN;
             _pthreadKeys[id] = (IntPtr)destructor; *key = id; return 0;
         }
@@ -15623,7 +15635,7 @@ public static unsafe partial class Libc
         {
             var values = _pthreadValues ??= new Dictionary<int, IntPtr>();
             if ((++_pthreadSets & 63) == 0)
-                foreach (int oldKey in new List<int>(values.Keys))
+                foreach (var oldKey in new List<int>(values.Keys))
                     if (!_pthreadKeys.ContainsKey(oldKey)) values.Remove(oldKey);
             values[key] = (IntPtr)value; return 0;
         }
@@ -15634,10 +15646,10 @@ public static unsafe partial class Libc
     {
         var values = _pthreadValues;
         if (values == null) return;
-        for (int round = 0; round < PTHREAD_DESTRUCTOR_ITERATIONS; round++)
+        for (var round = 0; round < PTHREAD_DESTRUCTOR_ITERATIONS; round++)
         {
-            bool any = false;
-            foreach (int key in new List<int>(values.Keys))
+            var any = false;
+            foreach (var key in new List<int>(values.Keys))
             {
                 if (!values.TryGetValue(key, out var value) || value == IntPtr.Zero || !_pthreadKeys.TryGetValue(key, out var destructor) || destructor == IntPtr.Zero) continue;
                 values[key] = IntPtr.Zero;
@@ -15660,13 +15672,13 @@ public static unsafe partial class Libc
 {
     private sealed class OwnedRandomState
     {
-        internal readonly object Gate = new();
-        internal Random Rand = new(1), Posix = new(1);
+        internal readonly object Gate = new object();
+        internal Random Rand = new Random(1), Posix = new Random(1);
     }
 
-    private static readonly ConditionalWeakTable<RuntimeContext, OwnedRandomState> ownedRandomStates = new();
+    private static readonly ConditionalWeakTable<RuntimeContext, OwnedRandomState> ownedRandomStates = new ConditionalWeakTable<RuntimeContext, OwnedRandomState>();
     private static OwnedRandomState? OwnedRandom => RuntimeContext.Current is { } owner
-        ? ownedRandomStates.GetValue(owner, static _ => new()) : null;
+        ? ownedRandomStates.GetValue(owner, static _ => new OwnedRandomState()) : null;
 }
 
 
@@ -15703,7 +15715,7 @@ public static unsafe partial class Libc
         // host descriptor. Never send the dotcc table index to the OS.
         if (slot.Stream is not FileStream file) return FcntlError(ENOTSUP);
         SafeFileHandle? handle = null;
-        bool retained = false;
+        var retained = false;
         try
         {
             // Getting SafeFileHandle drains FileStream's private byte buffer.
@@ -15713,7 +15725,7 @@ public static unsafe partial class Libc
             // table lock is held while waiting on another process.
             handle = file.SafeFileHandle;
             handle.DangerousAddRef(ref retained);
-            int nativeFd = checked((int)handle.DangerousGetHandle());
+            var nativeFd = checked((int)handle.DangerousGetHandle());
             // FileStream may use positioned I/O, leaving the kernel offset
             // behind its logical Position. Synchronize that same position for
             // SEEK_CUR; fcntl itself never advances it. SEEK_END uses the inode.
@@ -15722,7 +15734,7 @@ public static unsafe partial class Libc
             // Pass the original C pointer through to the kernel, which checks
             // its accessibility and returns EFAULT for invalid buffers. There
             // is no managed mirror/dereference that can crash on integer args.
-            int result = record ? PosixRecordLock(nativeFd, cmd, arg) : PosixFlock(nativeFd, cmd);
+            var result = record ? PosixRecordLock(nativeFd, cmd, arg) : PosixFlock(nativeFd, cmd);
             return result < 0 ? FcntlError(Marshal.GetLastPInvokeError()) : result;
         }
         catch (ObjectDisposedException) { return FcntlError(EBADF); }
@@ -15782,9 +15794,9 @@ public static unsafe partial class Libc
         uint hostLength, byte* service, uint serviceLength, int flags)
     {
         if (!HasHostResolverAbi) { errno = ENOSYS; return -11; }
-        int* hostErrno = ResolverHostErrno();
+        var hostErrno = ResolverHostErrno();
         *hostErrno = errno;
-        int status = HostGetNameInfo(address, addressLength, host, hostLength, service, serviceLength, flags);
+        var status = HostGetNameInfo(address, addressLength, host, hostLength, service, serviceLength, flags);
         errno = *hostErrno;
         return status;
     }
@@ -15814,7 +15826,7 @@ public static unsafe partial class Libc
         internal void Allocate(nuint capacity)
         {
             Release();
-            void* memory = NativeMemory.AllocZeroed(checked((nuint)sizeof(ResolverHostEntry) + capacity));
+            var memory = NativeMemory.AllocZeroed(checked((nuint)sizeof(ResolverHostEntry) + capacity));
             if (memory == null) throw new OutOfMemoryException();
             Allocation = (nint)memory;
             Capacity = capacity;
@@ -15836,16 +15848,16 @@ public static unsafe partial class Libc
             var storage = thread.Resolver ??= new ResolverStorage();
             nuint capacity = 1024;
             int error = h_errno, savedHostError = error, savedErrno = errno;
-            bool numericForm = IsLegacyNumericHostForm(name);
+            var numericForm = IsLegacyNumericHostForm(name);
             for (;;)
             {
                 storage.Allocate(capacity);
                 var record = (ResolverHostEntry*)storage.Allocation;
                 void* result = null;
-                int* hostErrno = ResolverHostErrno();
+                var hostErrno = ResolverHostErrno();
                 *hostErrno = savedErrno;
-                int status = HostGetHostByName(name, record, (byte*)(record + 1), capacity, &result, &error);
-                int observedErrno = *hostErrno;
+                var status = HostGetHostByName(name, record, (byte*)(record + 1), capacity, &result, &error);
+                var observedErrno = *hostErrno;
                 if (status == ERANGE)
                 {
                     capacity = checked(capacity * 2);
@@ -15873,15 +15885,15 @@ public static unsafe partial class Libc
 
     private static bool IsLegacyNumericHostForm(byte* name)
     {
-        bool decimalForm = *name >= (byte)'0' && *name <= (byte)'9';
-        bool hexForm = decimalForm || (*name >= (byte)'a' && *name <= (byte)'f') ||
+        var decimalForm = *name >= (byte)'0' && *name <= (byte)'9';
+        var hexForm = decimalForm || (*name >= (byte)'a' && *name <= (byte)'f') ||
             (*name >= (byte)'A' && *name <= (byte)'F') || *name == (byte)':';
-        bool colon = false;
+        var colon = false;
         byte last = 0;
-        for (byte* p = name; *p != 0; p++)
+        for (var p = name; *p != 0; p++)
         {
-            byte c = *p;
-            bool digit = c >= (byte)'0' && c <= (byte)'9';
+            var c = *p;
+            var digit = c >= (byte)'0' && c <= (byte)'9';
             decimalForm &= digit || c == (byte)'.';
             hexForm &= digit || c is (byte)'.' or (byte)':' ||
                 (c >= (byte)'a' && c <= (byte)'f') || (c >= (byte)'A' && c <= (byte)'F');
@@ -15897,17 +15909,17 @@ public static unsafe partial class Libc
         ResolverInfo* native = null;
         ResolverInfo* head = null;
         ResolverInfo* tail = null;
-        int* hostErrno = ResolverHostErrno();
+        var hostErrno = ResolverHostErrno();
         *hostErrno = errno;
-        int status = HostGetAddrInfo(name, service, (ResolverInfo*)hints, &native);
-        int finalErrno = *hostErrno;
+        var status = HostGetAddrInfo(name, service, (ResolverInfo*)hints, &native);
+        var finalErrno = *hostErrno;
         try
         {
             if (status != 0) return status;
             for (var item = native; item != null; item = item->Next)
             {
-                nuint nameSize = item->CanonicalName == null ? 0 : checked((nuint)strlen(item->CanonicalName) + 1);
-                nuint size = checked((nuint)sizeof(ResolverInfo) + item->AddressLength + nameSize);
+                var nameSize = item->CanonicalName == null ? 0 : checked((nuint)strlen(item->CanonicalName) + 1);
+                var size = checked((nuint)sizeof(ResolverInfo) + item->AddressLength + nameSize);
                 var copy = (ResolverInfo*)calloc(1, (ulong)size);
                 if (copy == null) { finalErrno = ENOMEM; freeaddrinfo(head); return -10; }
                 *copy = *item;
@@ -15958,27 +15970,27 @@ public static unsafe partial class Libc
     /// embedding application's explicit host bindings.</summary>
     public sealed partial class RuntimeContext : IDisposable
     {
-        private readonly object gate = new();
+        private readonly object gate = new object();
         private int users;
         private bool disposed;
         internal string WorkingDirectory;
         internal bool Utf8MultibyteLocale;
-        internal readonly List<object> ArrayRoots = new();
-        internal readonly HashSet<nuint> NativeAllocations = new();
-        internal readonly List<(GCHandle Handle, Array Arr)> FunctionArrays = new();
-        internal readonly ConcurrentDictionary<long, PthreadState> Threads = new();
+        internal readonly List<object> ArrayRoots = new List<object>();
+        internal readonly HashSet<nuint> NativeAllocations = new HashSet<UIntPtr>();
+        internal readonly List<(GCHandle Handle, Array Arr)> FunctionArrays = new List<(GCHandle Handle, Array Arr)>();
+        internal readonly ConcurrentDictionary<long, PthreadState> Threads = new ConcurrentDictionary<long, PthreadState>();
         internal long NextThread;
-        internal readonly object Objects = new();
-        internal readonly Dictionary<int, PthreadMutex> Mutexes = new();
+        internal readonly object Objects = new object();
+        internal readonly Dictionary<int, PthreadMutex> Mutexes = new Dictionary<int, PthreadMutex>();
         // Stable IDs are never reused. Cache only a bounded set of this runtime's
         // states; each operation still checks Destroyed under the state lock.
         internal readonly PthreadMutex?[] MutexCache = new PthreadMutex?[64];
         internal bool MutexCacheEnabled = true;
-        internal readonly Dictionary<int, PthreadCondition> Conditions = new();
+        internal readonly Dictionary<int, PthreadCondition> Conditions = new Dictionary<int, PthreadCondition>();
         internal int NextMutex, NextCondition;
-        internal readonly ConcurrentDictionary<int, IntPtr> Keys = new();
+        internal readonly ConcurrentDictionary<int, IntPtr> Keys = new ConcurrentDictionary<int, IntPtr>();
         internal int NextKey;
-        private readonly ConditionalWeakTable<Thread, RuntimeThreadState> threadStates = new();
+        private readonly ConditionalWeakTable<Thread, RuntimeThreadState> threadStates = new ConditionalWeakTable<Thread, RuntimeThreadState>();
         public object? ProgramState { get; }
         public RuntimeContext(object? programState = null) : this(programState, true) { }
         internal RuntimeContext(object? programState, bool captureWorkingDirectory)
@@ -15993,7 +16005,7 @@ public static unsafe partial class Libc
         {
             // A unique token distinguishes recursive bindings of the same context
             // and prevents a copied/stale scope from releasing a newer binding.
-            long token = checked(nextRuntimeBinding + 1);
+            var token = checked(nextRuntimeBinding + 1);
             Retain();
             var binding = new RuntimeBinding(this, currentRuntimeContext, currentRuntimeBinding, token);
             nextRuntimeBinding = token;
@@ -16094,7 +16106,7 @@ public static unsafe partial class Libc
     }
     [ThreadStatic] private static RuntimeContext? currentRuntimeContext;
     [ThreadStatic] private static long currentRuntimeBinding, nextRuntimeBinding;
-    private static readonly RuntimeContext legacyRuntime = new(null, false);
+    private static readonly RuntimeContext legacyRuntime = new RuntimeContext(null, false);
     private static RuntimeContext RuntimeState => RuntimeContext.Current ?? legacyRuntime;
     private static RuntimeThreadState RuntimeThread => RuntimeState.ThreadState;
 }
@@ -16168,8 +16180,7 @@ public static unsafe partial class Libc
     public sealed partial class RuntimeContext
     {
         private RuntimeTermination? termination;
-        private readonly global::System.Threading.Tasks.TaskCompletionSource<RuntimeTermination> terminationCompletion =
-            new(global::System.Threading.Tasks.TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly global::System.Threading.Tasks.TaskCompletionSource<RuntimeTermination> terminationCompletion = new TaskCompletionSource<RuntimeTermination>(global::System.Threading.Tasks.TaskCreationOptions.RunContinuationsAsynchronously);
 
         /// <summary>Terminal status, or null while no terminal request is known.
         /// This does not forcibly interrupt other workers or free their storage.</summary>
@@ -16278,17 +16289,17 @@ public unsafe ref struct ScanfReader
         _failed = false;
     }
 
-    public ScanfReader Read(int* dst) { if (ReadInteger(out ulong value)) *dst = unchecked((int)value); return this; }
-    public ScanfReader Read(uint* dst) { if (ReadInteger(out ulong value)) *dst = unchecked((uint)value); return this; }
-    public ScanfReader Read(long* dst) { if (ReadInteger(out ulong value)) *dst = unchecked((long)value); return this; }
-    public ScanfReader Read(ulong* dst) { if (ReadInteger(out ulong value)) *dst = value; return this; }
-    public ScanfReader Read(short* dst) { if (ReadInteger(out ulong value)) *dst = unchecked((short)value); return this; }
-    public ScanfReader Read(ushort* dst) { if (ReadInteger(out ulong value)) *dst = unchecked((ushort)value); return this; }
-    public ScanfReader Read(sbyte* dst) { if (ReadInteger(out ulong value)) *dst = unchecked((sbyte)value); return this; }
+    public ScanfReader Read(int* dst) { if (ReadInteger(out var value)) *dst = unchecked((int)value); return this; }
+    public ScanfReader Read(uint* dst) { if (ReadInteger(out var value)) *dst = unchecked((uint)value); return this; }
+    public ScanfReader Read(long* dst) { if (ReadInteger(out var value)) *dst = unchecked((long)value); return this; }
+    public ScanfReader Read(ulong* dst) { if (ReadInteger(out var value)) *dst = value; return this; }
+    public ScanfReader Read(short* dst) { if (ReadInteger(out var value)) *dst = unchecked((short)value); return this; }
+    public ScanfReader Read(ushort* dst) { if (ReadInteger(out var value)) *dst = unchecked((ushort)value); return this; }
+    public ScanfReader Read(sbyte* dst) { if (ReadInteger(out var value)) *dst = unchecked((sbyte)value); return this; }
     public ScanfReader Read(float* dst)
     {
         double value = 0;
-        int before = _matched;
+        var before = _matched;
         Read(&value);
         if (_matched != before) *dst = (float)value;
         return this;
@@ -16298,7 +16309,7 @@ public unsafe ref struct ScanfReader
     {
         value = 0;
         if (_failed) return false;
-        byte spec = ExpectSpec(out int width);
+        var spec = ExpectSpec(out var width);
         if (_failed) return false;
         if (!ReadIntegerValue(spec, width, out value)) { _failed = true; return false; }
         _matched++;
@@ -16307,7 +16318,7 @@ public unsafe ref struct ScanfReader
 
     private bool ReadIntegerValue(byte spec, int width, out ulong value)
     {
-        int radix = spec switch
+        var radix = spec switch
         {
             (byte)'d' or (byte)'u' => 10,
             (byte)'i' => 0,
@@ -16316,10 +16327,10 @@ public unsafe ref struct ScanfReader
             _ => throw Unsupported(spec, "an integer (%d %i %u %x %X %o)"),
         };
         SkipInputWs();
-        int remaining = width < 0 ? int.MaxValue : width;
+        var remaining = width < 0 ? int.MaxValue : width;
         bool negative = false, any = false;
         value = 0;
-        int peek = _r.Peek();
+        var peek = _r.Peek();
         if (remaining > 0 && (peek == '-' || peek == '+'))
         {
             negative = peek == '-'; _r.Read(); remaining--;
@@ -16336,7 +16347,7 @@ public unsafe ref struct ScanfReader
         if (radix == 0) radix = 10;
         while (remaining > 0 && (peek = _r.Peek()) != -1)
         {
-            int digit = DigitValue(peek, radix);
+            var digit = DigitValue(peek, radix);
             if (digit < 0) break;
             value = unchecked(value * (uint)radix + (uint)digit);
             any = true; _r.Read(); remaining--;
@@ -16348,7 +16359,7 @@ public unsafe ref struct ScanfReader
     public ScanfReader Read(double* dst)
     {
         if (_failed) return this;
-        var spec = ExpectSpec(out int width);
+        var spec = ExpectSpec(out var width);
         if (_failed) return this;
         if (spec != (byte)'f' && spec != (byte)'e' && spec != (byte)'g'
             && spec != (byte)'F' && spec != (byte)'E' && spec != (byte)'G')
@@ -16356,17 +16367,17 @@ public unsafe ref struct ScanfReader
             throw Unsupported(spec, "a double (%f %e %g)");
         }
         SkipInputWs();
-        int consumed = 0;
+        var consumed = 0;
         var sb = new StringBuilder();
-        int peek = _r.Peek();
+        var peek = _r.Peek();
         if ((peek == '-' || peek == '+') && (width < 0 || consumed < width))
         {
             sb.Append((char)_r.Read());
             consumed++;
         }
-        bool sawDigit = false;
-        bool sawDot = false;
-        bool sawExp = false;
+        var sawDigit = false;
+        var sawDot = false;
+        var sawExp = false;
         while ((width < 0 || consumed < width) && (peek = _r.Peek()) != -1)
         {
             if (peek >= '0' && peek <= '9') { sawDigit = true; sb.Append((char)_r.Read()); consumed++; }
@@ -16376,12 +16387,12 @@ public unsafe ref struct ScanfReader
                 sawExp = true;
                 sb.Append((char)_r.Read());
                 consumed++;
-                int p2 = _r.Peek();
+                var p2 = _r.Peek();
                 if ((p2 == '-' || p2 == '+') && (width < 0 || consumed < width)) { sb.Append((char)_r.Read()); consumed++; }
             }
             else { break; }
         }
-        if (sawDigit && double.TryParse(sb.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out double v))
+        if (sawDigit && double.TryParse(sb.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var v))
         {
             *dst = v;
             _matched++;
@@ -16393,30 +16404,30 @@ public unsafe ref struct ScanfReader
     public ScanfReader Read(byte* dst)
     {
         if (_failed) return this;
-        var spec = ExpectSpec(out int width);
+        var spec = ExpectSpec(out var width);
         if (_failed) return this;
         if (spec != (byte)'s' && spec != (byte)'c')
         {
-            if (ReadIntegerValue(spec, width, out ulong value)) { *dst = unchecked((byte)value); _matched++; }
+            if (ReadIntegerValue(spec, width, out var value)) { *dst = unchecked((byte)value); _matched++; }
             else _failed = true;
             return this;
         }
         // %c: default field width 1 (read exactly one byte); %s: unbounded unless capped.
-        int max = width >= 0 ? width : (spec == (byte)'c' ? 1 : int.MaxValue);
+        var max = width >= 0 ? width : (spec == (byte)'c' ? 1 : int.MaxValue);
         if (spec != (byte)'c') { SkipInputWs(); }
         // Hoisted once — CA2014 (no per-iteration stackalloc inside the loop).
         Span<char> chBuf = stackalloc char[1];
         Span<byte> b = stackalloc byte[4];
-        int written = 0;
-        int count = 0;
+        var written = 0;
+        var count = 0;
         while (count < max)
         {
-            int peek = _r.Peek();
+            var peek = _r.Peek();
             if (peek == -1) { break; }
             if (spec == (byte)'s' && char.IsWhiteSpace((char)peek)) { break; }
             // ASCII fast path — caller's buffer is byte* (UTF-8). For
             // multi-byte chars, encode via Encoding.UTF8.
-            int ch = _r.Read();
+            var ch = _r.Read();
             count++;
             if (ch < 0x80)
             {
@@ -16425,8 +16436,8 @@ public unsafe ref struct ScanfReader
             else
             {
                 chBuf[0] = (char)ch;
-                int n = Encoding.UTF8.GetBytes(chBuf, b);
-                for (int i = 0; i < n; i++) { dst[written++] = b[i]; }
+                var n = Encoding.UTF8.GetBytes(chBuf, b);
+                for (var i = 0; i < n; i++) { dst[written++] = b[i]; }
             }
         }
         if (spec != (byte)'c') { dst[written] = 0; }
@@ -16443,18 +16454,18 @@ public unsafe ref struct ScanfReader
     public ScanfReader Read(char* dst)
     {
         if (_failed) return this;
-        var spec = ExpectSpec(out int width);
+        var spec = ExpectSpec(out var width);
         if (_failed) return this;
         if (spec != (byte)'s' && spec != (byte)'c')
         {
             throw Unsupported(spec, "a wide string/char (%ls %lc)");
         }
-        int max = width >= 0 ? width : (spec == (byte)'c' ? 1 : int.MaxValue);
+        var max = width >= 0 ? width : (spec == (byte)'c' ? 1 : int.MaxValue);
         if (spec != (byte)'c') { SkipInputWs(); }
-        int written = 0;
+        var written = 0;
         while (written < max)
         {
-            int peek = _r.Peek();
+            var peek = _r.Peek();
             if (peek == -1) { break; }
             if (spec == (byte)'s' && char.IsWhiteSpace((char)peek)) { break; }
             dst[written++] = (char)_r.Read();
@@ -16479,14 +16490,14 @@ public unsafe ref struct ScanfReader
             {
                 if (IsAsciiWs(*_fmt)) { _fmt++; SkipInputWs(); continue; }
                 if (*_fmt == '%' && _fmt[1] != '%') break;
-                byte literal = *_fmt++;
+                var literal = *_fmt++;
                 if (literal == '%') _fmt++;
                 if (_r.Peek() != literal) { _failed = true; return 0; }
                 _r.Read();
             }
             if (*_fmt != '%') return 0;
             _fmt++;
-            bool suppress = *_fmt == '*';
+            var suppress = *_fmt == '*';
             if (suppress) _fmt++;
             width = -1;
             while (*_fmt >= '0' && *_fmt <= '9')
@@ -16496,14 +16507,14 @@ public unsafe ref struct ScanfReader
                 _fmt++;
             }
             while (*_fmt is (byte)'l' or (byte)'L' or (byte)'h' or (byte)'z' or (byte)'j' or (byte)'t') _fmt++;
-            byte spec = *_fmt;
+            var spec = *_fmt;
             if (spec != 0) _fmt++;
             if (!suppress) return spec;
             if (spec == 's' || spec == 'c')
             {
                 if (spec == 's') SkipInputWs();
-                int remaining = width < 0 ? (spec == 'c' ? 1 : int.MaxValue) : width;
-                bool any = false;
+                var remaining = width < 0 ? (spec == 'c' ? 1 : int.MaxValue) : width;
+                var any = false;
                 while (remaining-- > 0 && _r.Peek() != -1 && (spec == 'c' || !char.IsWhiteSpace((char)_r.Peek())))
                 { _r.Read(); any = true; }
                 if (!any) { _failed = true; return 0; }
@@ -16522,7 +16533,7 @@ public unsafe ref struct ScanfReader
     /// or -1 if it is not a digit of that base.</summary>
     private static int DigitValue(int c, int @base)
     {
-        int v = c switch
+        var v = c switch
         {
             >= '0' and <= '9' => c - '0',
             >= 'a' and <= 'f' => c - 'a' + 10,
@@ -16536,7 +16547,7 @@ public unsafe ref struct ScanfReader
     /// satisfy — the dotcc "fail loudly, never silently wrong" contract for scanf.</summary>
     private static FormatException Unsupported(byte spec, string expected)
     {
-        string s = spec == 0 ? "<end of format>" : "%" + (char)spec;
+        var s = spec == 0 ? "<end of format>" : "%" + (char)spec;
         return new FormatException(
             $"dotcc scanf: conversion '{s}' is not supported for {expected}. " +
             "Supported: %d %i %u %x %X %o (integer), %f %e %g (floating point), %s %c (string/char); " +
@@ -16559,13 +16570,13 @@ public static unsafe partial class Libc
     /// A null pointer is accepted for zero bytes. Success preserves errno.</summary>
     public static void explicit_bzero(void* destination, ulong count)
     {
-        nuint remaining = ValidateMemoryRange(destination, count);
-        byte* cursor = (byte*)destination;
+        var remaining = ValidateMemoryRange(destination, count);
+        var cursor = (byte*)destination;
         while (remaining != 0)
         {
             // Span lengths are signed int; C size_t is LP64. Validate the full
             // range before storing, then advance without narrowing the extent.
-            int length = remaining > int.MaxValue ? int.MaxValue : (int)remaining;
+            var length = remaining > int.MaxValue ? int.MaxValue : (int)remaining;
             // ZeroMemory's documented contract retains writes even if no read
             // follows. Plain memset/Span.Clear alone does not give that contract.
             global::System.Security.Cryptography.CryptographicOperations.ZeroMemory(new Span<byte>(cursor, length));
@@ -16618,24 +16629,24 @@ public static unsafe partial class Libc
             microseconds = seconds > (long.MaxValue - micros) / 1000000
                 ? long.MaxValue : seconds * 1000000 + micros;
         }
-        SelectPollFd* checks = stackalloc SelectPollFd[nfds];
-        int count = 0;
-        for (int fd = 0; fd < nfds; fd++)
+        var checks = stackalloc SelectPollFd[nfds];
+        var count = 0;
+        for (var fd = 0; fd < nfds; fd++)
         {
-            short events = (short)(FD_ISSET(fd, readfds) | (FD_ISSET(fd, writefds) << 2) |
+            var events = (short)(FD_ISSET(fd, readfds) | (FD_ISSET(fd, writefds) << 2) |
                 (FD_ISSET(fd, errorfds) << 1));
-            if (events != 0) checks[count++] = new() { Fd = fd, Events = events, Revents = 0 };
+            if (events != 0) checks[count++] = new SelectPollFd { Fd = fd, Events = events, Revents = 0 };
         }
         var elapsed = global::System.Diagnostics.Stopwatch.StartNew();
         long Remaining() => microseconds < 0 ? -1 : Math.Max(0, microseconds - (long)elapsed.Elapsed.TotalMicroseconds);
         while (true)
         {
-            long remaining = Remaining();
-            int millis = remaining < 0 ? -1 : (int)Math.Min(int.MaxValue, remaining / 1000 + (remaining % 1000 != 0 ? 1 : 0));
-            int polled = poll(checks, (ulong)count, millis);
+            var remaining = Remaining();
+            var millis = remaining < 0 ? -1 : (int)Math.Min(int.MaxValue, remaining / 1000 + (remaining % 1000 != 0 ? 1 : 0));
+            var polled = poll(checks, (ulong)count, millis);
             if (polled < 0) return -1;
-            int ready = 0;
-            for (int i = 0; i < count; i++)
+            var ready = 0;
+            for (var i = 0; i < count; i++)
             {
                 if ((checks[i].Revents & 32) != 0) return FcntlError(EBADF);
                 short result = checks[i].Revents, wanted = checks[i].Events;
@@ -16646,9 +16657,9 @@ public static unsafe partial class Libc
             if (ready != 0 || Remaining() == 0)
             {
                 FD_ZERO(readfds); FD_ZERO(writefds); FD_ZERO(errorfds);
-                for (int i = 0; i < count; i++)
+                for (var i = 0; i < count; i++)
                 {
-                    int fd = checks[i].Fd;
+                    var fd = checks[i].Fd;
                     short result = checks[i].Revents, wanted = checks[i].Events;
                     if ((wanted & 1) != 0 && (result & (1 | 8 | 16)) != 0) FD_SET(fd, readfds);
                     if ((wanted & 4) != 0 && (result & (4 | 8)) != 0) FD_SET(fd, writefds);
@@ -16656,9 +16667,9 @@ public static unsafe partial class Libc
                 }
                 if (timeout != null)
                 {
-                    long used = (long)elapsed.Elapsed.TotalMicroseconds;
-                    long seconds = originalSeconds - used / 1000000;
-                    long micros = originalMicros - used % 1000000;
+                    var used = (long)elapsed.Elapsed.TotalMicroseconds;
+                    var seconds = originalSeconds - used / 1000000;
+                    var micros = originalMicros - used % 1000000;
                     if (micros < 0) { seconds--; micros += 1000000; }
                     ((long*)timeout)[0] = seconds < 0 ? 0 : seconds;
                     ((long*)timeout)[1] = seconds < 0 ? 0 : micros;
@@ -16668,7 +16679,7 @@ public static unsafe partial class Libc
             // HUP/ERR are unconditional poll results, but aren't exceptional
             // data for select. A permanently hung-up exception-only descriptor
             // cannot gain urgent data; ignore it while waiting on the remainder.
-            for (int i = 0; i < count; i++)
+            for (var i = 0; i < count; i++)
                 if ((checks[i].Revents & (8 | 16)) != 0) checks[i].Fd = -1;
         }
     }
@@ -16770,7 +16781,7 @@ public static unsafe partial class Libc
     public static void longjmp(ulong* buffer, int value)
     {
         if (buffer == null) throw new ArgumentNullException(nameof(buffer));
-        ulong identity = *buffer;
+        var identity = *buffer;
         if (identity == 0)
             throw new InvalidOperationException("longjmp requires an armed jump buffer.");
         throw new JumpBufferException(identity, value == 0 ? 1 : value);
@@ -16881,7 +16892,7 @@ public static unsafe partial class Libc
             StatusFlags = 2 | (sock.Blocking ? 0 : SOCK_NONBLOCK), DescriptorFlags = descriptorFlags };
         lock (_filesLock)
         {
-            for (int i = 3; i < _files.Count; i++)
+            for (var i = 3; i < _files.Count; i++)
             {
                 if (_files[i] == null) { _files[i] = slot; return i; }
             }
@@ -16910,9 +16921,9 @@ public static unsafe partial class Libc
     private static long SocketRecvInto(FileSlot s, void* buf, ulong count, int flags)
     {
         if (s.Socket is not { } sock) { errno = ENOTSOCK; return -1; }
-        int n = (int)Math.Min(count, int.MaxValue);
+        var n = (int)Math.Min(count, int.MaxValue);
         var span = new Span<byte>(buf, n);
-        int got = sock.Receive(span, ToSocketFlags(flags), out var serr);
+        var got = sock.Receive(span, ToSocketFlags(flags), out var serr);
         if (serr != SocketError.Success) { errno = SocketErrno(serr); return -1; }
         return got;
     }
@@ -16922,9 +16933,9 @@ public static unsafe partial class Libc
     private static long SocketSendFrom(FileSlot s, void* buf, ulong count, int flags)
     {
         if (s.Socket is not { } sock) { errno = ENOTSOCK; return -1; }
-        int n = (int)Math.Min(count, int.MaxValue);
+        var n = (int)Math.Min(count, int.MaxValue);
         var span = new ReadOnlySpan<byte>(buf, n);
-        int sent = sock.Send(span, ToSocketFlags(flags), out var serr);
+        var sent = sock.Send(span, ToSocketFlags(flags), out var serr);
         if (serr != SocketError.Success) { errno = SocketErrno(serr); return -1; }
         return sent;
     }
@@ -16935,7 +16946,7 @@ public static unsafe partial class Libc
     {
         if (s.Socket is not { } sock) { errno = ENOTSOCK; s.Err = true; return -1; }
         Span<byte> one = stackalloc byte[1];
-        int n = sock.Receive(one, SocketFlags.None, out var serr);
+        var n = sock.Receive(one, SocketFlags.None, out var serr);
         if (serr != SocketError.Success) { errno = SocketErrno(serr); s.Err = true; return -1; }
         if (n == 0) { s.Eof = true; return -1; }
         return one[0];
@@ -16947,7 +16958,7 @@ public static unsafe partial class Libc
         if (s.Socket is not { } sock) { errno = ENOTSOCK; s.Err = true; return false; }
         Span<byte> one = stackalloc byte[1];
         one[0] = b;
-        int sent = sock.Send(one, SocketFlags.None, out var serr);
+        var sent = sock.Send(one, SocketFlags.None, out var serr);
         if (serr != SocketError.Success || sent != 1) { errno = SocketErrno(serr); s.Err = true; return false; }
         return true;
     }
@@ -16967,7 +16978,7 @@ public static unsafe partial class Libc
             default: errno = EAFNOSUPPORT; return -1;
         }
 
-        int baseType = type & ~(SOCK_NONBLOCK | SOCK_CLOEXEC);
+        var baseType = type & ~(SOCK_NONBLOCK | SOCK_CLOEXEC);
         var st = baseType switch
         {
             SOCK_STREAM => SocketType.Stream,
@@ -17040,7 +17051,7 @@ public static unsafe partial class Libc
         try { sock.Connect(ep); SlotByFd(fd)!.Connecting = false; return 0; }
         catch (SocketException ex)
         {
-            bool pending = !sock.Blocking && ex.SocketErrorCode is SocketError.WouldBlock or SocketError.InProgress;
+            var pending = !sock.Blocking && ex.SocketErrorCode is SocketError.WouldBlock or SocketError.InProgress;
             SlotByFd(fd)!.Connecting = pending;
             errno = pending ? EINPROGRESS : SocketErrno(ex.SocketErrorCode);
             return -1;
@@ -17072,7 +17083,7 @@ public static unsafe partial class Libc
         if (dest == null) { return SocketSendFrom(s, buf, len, flags); }
         if (s.Socket is not { } sock) { errno = ENOTSOCK; return -1; }
         if (!TryReadSockaddr(dest, destlen, out var ep, out var aerr)) { errno = aerr; return -1; }
-        int n = (int)Math.Min(len, int.MaxValue);
+        var n = (int)Math.Min(len, int.MaxValue);
         try { return sock.SendTo(new ReadOnlySpan<byte>(buf, n), ToSocketFlags(flags), ep); }
         catch (SocketException ex) { errno = SocketErrno(ex.SocketErrorCode); return -1; }
     }
@@ -17085,12 +17096,12 @@ public static unsafe partial class Libc
         if (s == null) { errno = EBADF; return -1; }
         if (src == null) { return SocketRecvInto(s, buf, len, flags); }
         if (s.Socket is not { } sock) { errno = ENOTSOCK; return -1; }
-        int n = (int)Math.Min(len, int.MaxValue);
+        var n = (int)Math.Min(len, int.MaxValue);
         EndPoint remote = sock.AddressFamily == AddressFamily.InterNetworkV6
             ? new IPEndPoint(IPAddress.IPv6Any, 0) : new IPEndPoint(IPAddress.Any, 0);
         try
         {
-            int got = sock.ReceiveFrom(new Span<byte>(buf, n), ToSocketFlags(flags), ref remote);
+            var got = sock.ReceiveFrom(new Span<byte>(buf, n), ToSocketFlags(flags), ref remote);
             if (srclen != null) WriteSockaddr(remote, src, srclen);
             return got;
         }
@@ -17120,7 +17131,7 @@ public static unsafe partial class Libc
     public static int setsockopt(int fd, int level, int optname, void* optval, uint optlen)
     {
         if (SockByFd(fd, out var err) is not { } sock) { errno = err; return -1; }
-        int ival = (optval != null && optlen >= 4) ? *(int*)optval : 0;
+        var ival = (optval != null && optlen >= 4) ? *(int*)optval : 0;
         try
         {
             if (level == SOL_SOCKET)
@@ -17145,7 +17156,7 @@ public static unsafe partial class Libc
                     case SO_LINGER:
                         if (optlen < 8) { errno = EINVAL; return -1; }
                         if (optval == null) { errno = EFAULT; return -1; }
-                        int seconds = Unsafe.ReadUnaligned<int>((byte*)optval + 4);
+                        var seconds = Unsafe.ReadUnaligned<int>((byte*)optval + 4);
                         // BCL LingerTime is unsigned 16-bit on supported hosts.
                         if ((uint)seconds > ushort.MaxValue) { errno = EINVAL; return -1; }
                         sock.LingerState = new LingerOption(Unsafe.ReadUnaligned<int>((byte*)optval) != 0, seconds);
@@ -17177,7 +17188,7 @@ public static unsafe partial class Libc
             if (optname == SO_REUSEPORT && !OperatingSystem.IsLinux()) { errno = ENOTSUP; return -1; }
             if (OperatingSystem.IsLinux())
             {
-                int count = (int)Math.Min(*optlen, (uint)sizeof(int));
+                var count = (int)Math.Min(*optlen, (uint)sizeof(int));
                 if (count != 0 && optval == null) { errno = EFAULT; return -1; }
                 try
                 {
@@ -17193,8 +17204,8 @@ public static unsafe partial class Libc
             try
             {
                 var linger = sock.LingerState!;
-                int* values = stackalloc int[2] { linger.Enabled ? 1 : 0, linger.LingerTime };
-                int count = (int)Math.Min(*optlen, 8u);
+                var values = stackalloc int[2] { linger.Enabled ? 1 : 0, linger.LingerTime };
+                var count = (int)Math.Min(*optlen, 8u);
                 new ReadOnlySpan<byte>(values, count).CopyTo(new Span<byte>(optval, count));
                 *optlen = (uint)count; // getsockopt reports bytes copied, including truncation
                 return 0;
@@ -17257,8 +17268,8 @@ public static unsafe partial class Libc
         {
             case IPEndPoint ip:
             {
-                byte* tmp = stackalloc byte[28];
-                int size = ip.AddressFamily == AddressFamily.InterNetworkV6 ? 28 : 16;
+                var tmp = stackalloc byte[28];
+                var size = ip.AddressFamily == AddressFamily.InterNetworkV6 ? 28 : 16;
                 if (size == 28) WriteSockaddrIn6(tmp, ip); else WriteSockaddrIn(tmp, ip);
                 CopyTruncated(tmp, size, addr, addrlen);
                 return 0;
@@ -17266,10 +17277,10 @@ public static unsafe partial class Libc
             case UnixDomainSocketEndPoint ud:
             {
                 var path = Encoding.UTF8.GetBytes(ud.ToString() ?? "");
-                byte* tmp = stackalloc byte[128];
+                var tmp = stackalloc byte[128];
                 Unsafe.WriteUnaligned(tmp, (ushort)AF_UNIX);        // sun_family (host order)
-                int plen = Math.Min(path.Length, 125);              // family(2)+path+NUL ≤ 128
-                for (int i = 0; i < plen; i++) { tmp[2 + i] = path[i]; }
+                var plen = Math.Min(path.Length, 125);              // family(2)+path+NUL ≤ 128
+                for (var i = 0; i < plen; i++) { tmp[2 + i] = path[i]; }
                 tmp[2 + plen] = 0;                                  // NUL-terminate sun_path
                 CopyTruncated(tmp, 2 + plen + 1, addr, addrlen);
                 return 0;
@@ -17285,7 +17296,7 @@ public static unsafe partial class Libc
     /// (POSIX: the stored address is truncated but the real size is reported).</summary>
     private static void CopyTruncated(byte* src, int srclen, void* dst, uint* dstlen)
     {
-        int copy = (int)Math.Min((uint)srclen, *dstlen);
+        var copy = (int)Math.Min((uint)srclen, *dstlen);
         new ReadOnlySpan<byte>(src, copy).CopyTo(new Span<byte>(dst, copy));
         *dstlen = (uint)srclen;
     }
@@ -17332,7 +17343,7 @@ public static unsafe partial class Libc
         while (src[length] != 0)
         {
             if (length == maximum) return 0;
-            byte value = src[length];
+            var value = src[length];
             if (value is not (>= (byte)'0' and <= (byte)'9') && value is not (>= (byte)'a' and <= (byte)'f') &&
                 value is not (>= (byte)'A' and <= (byte)'F') && value != ':' && value != '.') return 0;
             text[length++] = (char)value;
@@ -17345,11 +17356,11 @@ public static unsafe partial class Libc
         }
         else
         {
-            int colon = presentation.LastIndexOf(':');
+            var colon = presentation.LastIndexOf(':');
             if (colon < 0) return 0;
             if (presentation.Contains('.') && !TryStrictIpv4(presentation[(colon + 1)..], packed[..4])) return 0;
             if (!IPAddress.TryParse(presentation, out var ip) || ip.AddressFamily != AddressFamily.InterNetworkV6 ||
-                !ip.TryWriteBytes(packed, out int written) || written != 16) return 0;
+                !ip.TryWriteBytes(packed, out var written) || written != 16) return 0;
         }
         packed[..(af == AF_INET ? 4 : 16)].CopyTo(new Span<byte>(dst, af == AF_INET ? 4 : 16));
         return 1;
@@ -17357,8 +17368,8 @@ public static unsafe partial class Libc
 
     private static bool TryStrictIpv4(ReadOnlySpan<char> text, Span<byte> output)
     {
-        int offset = 0;
-        for (int part = 0; part < 4; part++)
+        var offset = 0;
+        for (var part = 0; part < 4; part++)
         {
             int start = offset, value = 0;
             while (offset < text.Length && text[offset] is >= '0' and <= '9')
@@ -17381,7 +17392,7 @@ public static unsafe partial class Libc
         if (af != AF_INET && af != AF_INET6) { errno = EAFNOSUPPORT; return null; }
         if (src == null || dst == null) { errno = EINVAL; return null; }
         var address = new ReadOnlySpan<byte>(src, af == AF_INET ? 4 : 16);
-        string presentation = af == AF_INET ? new IPAddress(address).ToString() : FormatInet6(address);
+        var presentation = af == AF_INET ? new IPAddress(address).ToString() : FormatInet6(address);
         var text = Encoding.ASCII.GetBytes(presentation);
         if ((uint)(text.Length + 1) > size) { errno = ENOSPC; return null; }
         text.AsSpan().CopyTo(new Span<byte>(dst, text.Length));
@@ -17398,17 +17409,17 @@ public static unsafe partial class Libc
         // not address parsing or platform socket marshalling.
         Span<ushort> words = stackalloc ushort[8];
         int bestStart = -1, bestLength = 1;
-        for (int i = 0; i < 8; i++) words[i] = (ushort)((address[i * 2] << 8) | address[i * 2 + 1]);
-        for (int i = 0; i < 8;)
+        for (var i = 0; i < 8; i++) words[i] = (ushort)((address[i * 2] << 8) | address[i * 2 + 1]);
+        for (var i = 0; i < 8;)
         {
             if (words[i] != 0) { i++; continue; }
-            int start = i;
+            var start = i;
             while (i < 8 && words[i] == 0) i++;
             if (i - start > bestLength) { bestStart = start; bestLength = i - start; }
         }
-        bool dotted = bestStart == 0 && (bestLength == 6 || (bestLength == 5 && words[5] == 0xffff));
+        var dotted = bestStart == 0 && (bestLength == 6 || (bestLength == 5 && words[5] == 0xffff));
         var text = new StringBuilder(45);
-        for (int i = 0; i < 8;)
+        for (var i = 0; i < 8;)
         {
             if (i == bestStart) { text.Append("::"); i += bestLength; continue; }
             if (text.Length != 0 && text[text.Length - 1] != ':') text.Append(':');
@@ -17430,7 +17441,7 @@ public static unsafe partial class Libc
         ep = null!;
         err = 0;
         if (addr == null || addrlen < 2) { err = EINVAL; return false; }
-        ushort fam = Unsafe.ReadUnaligned<ushort>((byte*)addr);   // sa_family is host order
+        var fam = Unsafe.ReadUnaligned<ushort>((byte*)addr);   // sa_family is host order
         switch (fam)
         {
             case AF_INET:
@@ -17440,7 +17451,7 @@ public static unsafe partial class Libc
             case AF_INET6:
             {
                 if (addrlen < 28) { err = EINVAL; return false; }
-                byte* p = (byte*)addr;
+                var p = (byte*)addr;
                 // BCL IPEndPoint supports scope IDs; nonzero flowinfo has no
                 // equivalent and is rejected rather than silently discarded.
                 if (Unsafe.ReadUnaligned<uint>(p + 4) != 0) { err = EOPNOTSUPP; return false; }
@@ -17451,9 +17462,9 @@ public static unsafe partial class Libc
             case AF_UNIX:
             {
                 // sockaddr_un: sun_family (2 bytes) then a NUL-terminated sun_path.
-                byte* path = (byte*)addr + 2;
-                int max = (int)addrlen - 2;
-                int len = 0;
+                var path = (byte*)addr + 2;
+                var max = (int)addrlen - 2;
+                var len = 0;
                 while (len < max && path[len] != 0) { len++; }
                 if (len == 0) { err = EINVAL; return false; }   // unnamed/abstract not modeled
                 ep = new UnixDomainSocketEndPoint(Encoding.UTF8.GetString(path, len));
@@ -17472,10 +17483,10 @@ public static unsafe partial class Libc
         ep = null!;
         err = 0;
         if (addr == null || addrlen < 16) { err = EINVAL; return false; }
-        byte* p = (byte*)addr;
-        ushort fam = Unsafe.ReadUnaligned<ushort>(p);   // sin_family is host order
+        var p = (byte*)addr;
+        var fam = Unsafe.ReadUnaligned<ushort>(p);   // sin_family is host order
         if (fam != AF_INET) { err = EAFNOSUPPORT; return false; }
-        int port = (p[2] << 8) | p[3];                  // sin_port: network order -> host
+        var port = (p[2] << 8) | p[3];                  // sin_port: network order -> host
         var ipBytes = new ReadOnlySpan<byte>(p + 4, 4); // sin_addr: network order
         ep = new IPEndPoint(new IPAddress(ipBytes), port);
         return true;
@@ -17484,18 +17495,18 @@ public static unsafe partial class Libc
     /// <summary>Write an <see cref="IPEndPoint"/> into a 16-byte <c>sockaddr_in</c>.</summary>
     private static void WriteSockaddrIn(void* addr, IPEndPoint ep)
     {
-        byte* p = (byte*)addr;
+        var p = (byte*)addr;
         Unsafe.WriteUnaligned(p, (ushort)AF_INET);      // sin_family (host order)
         p[2] = (byte)(ep.Port >> 8);                    // sin_port (network order)
         p[3] = (byte)ep.Port;
         var b = ep.Address.GetAddressBytes();           // 4 bytes, network order
         p[4] = b[0]; p[5] = b[1]; p[6] = b[2]; p[7] = b[3];
-        for (int i = 8; i < 16; i++) { p[i] = 0; }      // sin_zero
+        for (var i = 8; i < 16; i++) { p[i] = 0; }      // sin_zero
     }
 
     private static void WriteSockaddrIn6(void* addr, IPEndPoint ep)
     {
-        byte* p = (byte*)addr;
+        var p = (byte*)addr;
         new Span<byte>(p, 28).Clear();
         Unsafe.WriteUnaligned(p, (ushort)AF_INET6);
         p[2] = (byte)(ep.Port >> 8); p[3] = (byte)ep.Port;
@@ -17505,7 +17516,7 @@ public static unsafe partial class Libc
 
     private static int ReadSocketError(FileSlot slot)
     {
-        int pending = slot.PendingSocketError;
+        var pending = slot.PendingSocketError;
         slot.PendingSocketError = 0;
         if (pending != 0) return pending;
         return SocketErrno((SocketError)(int)slot.Socket!.GetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Error)!);
@@ -17517,9 +17528,9 @@ public static unsafe partial class Libc
     private static int TimevalToMs(void* tv, uint len)
     {
         if (tv == null || len < 16) { return 0; }
-        long sec = *(long*)tv;
-        long usec = *(long*)((byte*)tv + 8);
-        long ms = sec * 1000 + usec / 1000;
+        var sec = *(long*)tv;
+        var usec = *(long*)((byte*)tv + 8);
+        var ms = sec * 1000 + usec / 1000;
         return ms is <= 0 or > int.MaxValue ? 0 : (int)ms;
     }
 
@@ -17581,7 +17592,7 @@ public static unsafe partial class Libc
     {
         if (descriptors == null) { errno = EFAULT; return -1; }
         if (!OperatingSystem.IsLinux()) { errno = ENOTSUP; return -1; }
-        int* native = stackalloc int[2];
+        var native = stackalloc int[2];
         if (LinuxSocketPair(domain, type, protocol, native) != 0)
         { errno = Marshal.GetLastPInvokeError(); return -1; }
         int firstRaw = native[0], secondRaw = native[1], firstFd = -1;
@@ -17594,9 +17605,9 @@ public static unsafe partial class Libc
             first = new Socket(firstHandle);
             second = new Socket(secondHandle);
             first.Blocking = second.Blocking = (type & SOCK_NONBLOCK) == 0;
-            int flags = (type & SOCK_CLOEXEC) == 0 ? 0 : 1;
+            var flags = (type & SOCK_CLOEXEC) == 0 ? 0 : 1;
             firstFd = RegisterSocketSlot(first, flags);
-            int secondFd = RegisterSocketSlot(second, flags);
+            var secondFd = RegisterSocketSlot(second, flags);
             descriptors[0] = firstFd; descriptors[1] = secondFd;
             first = second = null;
             firstHandle = secondHandle = null;
@@ -17689,8 +17700,8 @@ public unsafe ref struct SprintfBuilder
         // unit, preserving non-ASCII narrow literals, strings and %c exactly.
         var latin1 = global::System.Text.Encoding.GetEncoding(28591);
         var bytes = latin1.GetBytes(_buf.ToString());
-        int writeCount = _capacity < 0 ? bytes.Length : Math.Min(bytes.Length, _capacity);
-        for (int i = 0; i < writeCount; i++) { _dst[i] = bytes[i]; }
+        var writeCount = _capacity < 0 ? bytes.Length : Math.Min(bytes.Length, _capacity);
+        for (var i = 0; i < writeCount; i++) { _dst[i] = bytes[i]; }
         if (_terminate) _dst[writeCount] = 0;
         // Real sprintf returns total chars that *would* have been written
         // (excl. terminating NUL) — same when fully copied, larger than
@@ -17762,10 +17773,10 @@ public static unsafe partial class Libc
     public static byte* fgets(byte* s, int n, FILE* stream)
     {
         if (n <= 0) { return null; }
-        int i = 0;
+        var i = 0;
         while (i < n - 1)
         {
-            int ch = ReadByteFrom(stream);
+            var ch = ReadByteFrom(stream);
             if (ch < 0)
             {
                 if (i == 0) { return null; }   // EOF with nothing read
@@ -17855,22 +17866,22 @@ public static unsafe partial class Libc
     /// sets <see cref="errno"/> to ERANGE on overflow.</summary>
     private static long StrtollCore(byte* nptr, byte** endptr, int @base)
     {
-        byte* p = nptr;
+        var p = nptr;
         while (*p == (byte)' ' || (*p >= 9 && *p <= 13)) { p++; }
-        bool neg = false;
+        var neg = false;
         if (*p == (byte)'+' || *p == (byte)'-') { neg = *p == (byte)'-'; p++; }
 
         @base = NormalizeBase(ref p, @base);
 
-        ulong cutoff = neg ? (ulong)long.MaxValue + 1UL : (ulong)long.MaxValue;
-        ulong cutlim = cutoff % (ulong)@base;
+        var cutoff = neg ? (ulong)long.MaxValue + 1UL : (ulong)long.MaxValue;
+        var cutlim = cutoff % (ulong)@base;
         cutoff /= (ulong)@base;
 
         bool any = false, overflow = false;
         ulong acc = 0;
         for (; ; p++)
         {
-            int d = DigitVal(*p);
+            var d = DigitVal(*p);
             if (d < 0 || d >= @base) { break; }
             any = true;
             if (overflow) { continue; }
@@ -17888,21 +17899,21 @@ public static unsafe partial class Libc
     /// minus negates the result modulo 2^64 (per C).</summary>
     private static ulong StrtoullCore(byte* nptr, byte** endptr, int @base)
     {
-        byte* p = nptr;
+        var p = nptr;
         while (*p == (byte)' ' || (*p >= 9 && *p <= 13)) { p++; }
-        bool neg = false;
+        var neg = false;
         if (*p == (byte)'+' || *p == (byte)'-') { neg = *p == (byte)'-'; p++; }
 
         @base = NormalizeBase(ref p, @base);
 
-        ulong cutoff = ulong.MaxValue / (ulong)@base;
-        ulong cutlim = ulong.MaxValue % (ulong)@base;
+        var cutoff = ulong.MaxValue / (ulong)@base;
+        var cutlim = ulong.MaxValue % (ulong)@base;
 
         bool any = false, overflow = false;
         ulong acc = 0;
         for (; ; p++)
         {
-            int d = DigitVal(*p);
+            var d = DigitVal(*p);
             if (d < 0 || d >= @base) { break; }
             any = true;
             if (overflow) { continue; }
@@ -18049,14 +18060,14 @@ public static unsafe partial class Libc
     private static byte* StashCString(string? s)
     {
         if (s is null) { return null; }
-        int need = Encoding.UTF8.GetByteCount(s) + 1;
+        var need = Encoding.UTF8.GetByteCount(s) + 1;
         if (_envBuf == null || _envCap < need)
         {
             if (_envBuf != null) { NativeMemory.Free(_envBuf); }
             _envCap = need;
             _envBuf = (byte*)NativeMemory.Alloc((nuint)need);
         }
-        int n = Encoding.UTF8.GetBytes(s, new Span<byte>(_envBuf, _envCap));
+        var n = Encoding.UTF8.GetBytes(s, new Span<byte>(_envBuf, _envCap));
         _envBuf[n] = 0;
         return _envBuf;
     }
@@ -18101,7 +18112,7 @@ public static unsafe partial class Libc
     }
 
     private static byte** _environ;
-    private static readonly Lock _environLock = new();
+    private static readonly Lock _environLock = new Lock();
 
     /// <summary>POSIX <c>char **environ</c> — the whole process environment as a
     /// NULL-terminated array of NUL-terminated <c>"NAME=value"</c> UTF-8 strings.
@@ -18226,12 +18237,12 @@ public static unsafe partial class Libc
     public static void qsort(void* @base, int n, int size, delegate*<void*, void*, int> cmp)
     {
         if (n < 2 || size <= 0) { return; }
-        byte* b = (byte*)@base;
-        byte* tmp = (byte*)NativeMemory.Alloc((nuint)size);
-        for (int i = 1; i < n; i++)
+        var b = (byte*)@base;
+        var tmp = (byte*)NativeMemory.Alloc((nuint)size);
+        for (var i = 1; i < n; i++)
         {
             Buffer.MemoryCopy(b + (long)i * size, tmp, size, size);
-            int j = i - 1;
+            var j = i - 1;
             while (j >= 0 && cmp(b + (long)j * size, tmp) > 0)
             {
                 Buffer.MemoryCopy(b + (long)j * size, b + (long)(j + 1) * size, size, size);
@@ -18249,13 +18260,13 @@ public static unsafe partial class Libc
     /// </summary>
     public static void* bsearch(void* key, void* @base, int n, int size, delegate*<void*, void*, int> cmp)
     {
-        byte* b = (byte*)@base;
+        var b = (byte*)@base;
         int lo = 0, hi = n - 1;
         while (lo <= hi)
         {
-            int mid = lo + (hi - lo) / 2;
-            byte* el = b + (long)mid * size;
-            int c = cmp(key, el);
+            var mid = lo + (hi - lo) / 2;
+            var el = b + (long)mid * size;
+            var c = cmp(key, el);
             if (c < 0) { hi = mid - 1; }
             else if (c > 0) { lo = mid + 1; }
             else { return el; }
@@ -18270,17 +18281,17 @@ public static unsafe partial class Libc
     {
         ArgumentNullException.ThrowIfNull(instance);
         if (n < 2 || size <= 0) return;
-        RuntimeContext context = instance.__DotCcRuntime;
+        var context = instance.__DotCcRuntime;
         context.Retain();
         byte* temporary = null;
         try
         {
-            byte* bytes = (byte*)@base;
+            var bytes = (byte*)@base;
             temporary = (byte*)NativeMemory.Alloc((nuint)size);
-            for (int i = 1; i < n; ++i)
+            for (var i = 1; i < n; ++i)
             {
                 Buffer.MemoryCopy(bytes + (long)i * size, temporary, size, size);
-                int j = i - 1;
+                var j = i - 1;
                 while (j >= 0 && cmp(instance, bytes + (long)j * size, temporary) > 0)
                 {
                     Buffer.MemoryCopy(bytes + (long)j * size, bytes + (long)(j + 1) * size, size, size);
@@ -18298,17 +18309,17 @@ public static unsafe partial class Libc
         delegate*<T, void*, void*, int> cmp) where T : class, IProgramInstance
     {
         ArgumentNullException.ThrowIfNull(instance);
-        RuntimeContext context = instance.__DotCcRuntime;
+        var context = instance.__DotCcRuntime;
         context.Retain();
         try
         {
-            byte* bytes = (byte*)@base;
+            var bytes = (byte*)@base;
             int lo = 0, hi = n - 1;
             while (lo <= hi)
             {
-                int mid = lo + (hi - lo) / 2;
-                byte* element = bytes + (long)mid * size;
-                int order = cmp(instance, key, element);
+                var mid = lo + (hi - lo) / 2;
+                var element = bytes + (long)mid * size;
+                var order = cmp(instance, key, element);
                 if (order < 0) hi = mid - 1;
                 else if (order > 0) lo = mid + 1;
                 else return element;
@@ -18331,7 +18342,7 @@ public static unsafe partial class Libc
     /// dependency, errno mutation, or read beyond the first NUL.</summary>
     public static byte* strchrnul(byte* text, int character)
     {
-        byte value = unchecked((byte)character);
+        var value = unchecked((byte)character);
         while (*text != 0 && *text != value) text++;
         return text;
     }
@@ -18364,7 +18375,7 @@ public static unsafe partial class Libc
     {
         // Reserve the terminator before narrowing to the native allocation size.
         if (length >= (ulong)nuint.MaxValue) { errno = ENOMEM; return null; }
-        byte* result = (byte*)AllocateHeap((nuint)length + 1);
+        var result = (byte*)AllocateHeap((nuint)length + 1);
         if (result == null) { errno = ENOMEM; return null; }
         if (length != 0) memcpy(result, source, length);
         result[length] = 0;
@@ -18442,7 +18453,7 @@ public static unsafe partial class Libc
     public static byte* strncpy(byte* dst, byte* src, int n) => strncpy(dst, src, checked((ulong)n));
     public static byte* strncpy(byte* dst, byte* src, ulong n)
     {
-        nuint count = ValidateMemoryRange(dst, n);
+        var count = ValidateMemoryRange(dst, n);
         if (count != 0 && src == null) throw new ArgumentNullException(nameof(src));
         nuint i = 0;
         for (; i < count && src[i] != 0; i++) dst[i] = src[i];
@@ -18461,7 +18472,7 @@ public static unsafe partial class Libc
     /// </summary>
     public static byte* strcat(byte* dst, byte* src)
     {
-        byte* p = dst;
+        var p = dst;
         while (*p != 0) { p++; }
         while ((*p++ = *src++) != 0) { }
         return dst;
@@ -18476,7 +18487,7 @@ public static unsafe partial class Libc
     public static byte* strncat(byte* dst, byte* src, ulong n)
     {
         if (dst == null || (src == null && n != 0)) throw new ArgumentNullException(dst == null ? nameof(dst) : nameof(src));
-        byte* p = dst;
+        var p = dst;
         while (*p != 0) p++;
         while (n-- != 0 && *src != 0) *p++ = *src++;
         *p = 0;
@@ -18495,7 +18506,7 @@ public static unsafe partial class Libc
     /// </summary>
     public static byte* strchr(byte* s, int c)
     {
-        byte target = (byte)c;
+        var target = (byte)c;
         while (true)
         {
             if (*s == target) { return s; }
@@ -18511,7 +18522,7 @@ public static unsafe partial class Libc
     /// </summary>
     public static byte* strrchr(byte* s, int c)
     {
-        byte target = (byte)c;
+        var target = (byte)c;
         byte* last = null;
         while (true)
         {
@@ -18530,10 +18541,10 @@ public static unsafe partial class Libc
     public static byte* strstr(byte* haystack, byte* needle)
     {
         if (*needle == 0) { return haystack; }
-        for (byte* h = haystack; *h != 0; h++)
+        for (var h = haystack; *h != 0; h++)
         {
-            byte* a = h;
-            byte* b = needle;
+            var a = h;
+            var b = needle;
             while (*a != 0 && *a == *b) { a++; b++; }
             if (*b == 0) { return h; }
         }
@@ -18547,7 +18558,7 @@ public static unsafe partial class Libc
     /// </summary>
     public static int strspn(byte* s, byte* accept)
     {
-        int n = 0;
+        var n = 0;
         while (s[n] != 0 && InSet(accept, s[n])) { n++; }
         return n;
     }
@@ -18559,7 +18570,7 @@ public static unsafe partial class Libc
     /// </summary>
     public static int strcspn(byte* s, byte* reject)
     {
-        int n = 0;
+        var n = 0;
         while (s[n] != 0 && !InSet(reject, s[n])) { n++; }
         return n;
     }
@@ -18583,7 +18594,7 @@ public static unsafe partial class Libc
     /// member — matches <c>strspn</c>/<c>strpbrk</c> semantics).</summary>
     private static bool InSet(byte* set, byte b)
     {
-        for (byte* p = set; *p != 0; p++)
+        for (var p = set; *p != 0; p++)
         {
             if (*p == b) { return true; }
         }
@@ -18603,14 +18614,14 @@ public static unsafe partial class Libc
     /// </summary>
     public static byte* strtok_r(byte* str, byte* delim, byte** saveptr)
     {
-        byte* p = str != null ? str : *saveptr;
+        var p = str != null ? str : *saveptr;
         if (p == null) { return null; }
 
         // Skip leading delimiters.
         while (*p != 0 && InSet(delim, *p)) { p++; }
         if (*p == 0) { *saveptr = p; return null; }
 
-        byte* tokenStart = p;
+        var tokenStart = p;
         // Advance to the next delimiter (or end).
         while (*p != 0 && !InSet(delim, *p)) { p++; }
         if (*p != 0)
@@ -18747,7 +18758,7 @@ public static unsafe partial class Libc
     private sealed class MtxState
     {
         public int Type;
-        public readonly SemaphoreSlim Avail = new(1, 1);
+        public readonly SemaphoreSlim Avail = new SemaphoreSlim(1, 1);
         public int Owner;   // managed-thread id of the current holder (recursive bookkeeping)
         public int Count;   // recursion depth
     }
@@ -18756,18 +18767,18 @@ public static unsafe partial class Libc
     // monitor BEFORE releasing the caller's mutex, so a concurrent cnd_signal
     // (which must also enter the monitor to Pulse) cannot slip in between the
     // unlock and the wait — no lost wakeup, without reimplementing mtx.
-    private sealed class CndState { public readonly object Lock = new(); }
+    private sealed class CndState { public readonly object Lock = new object(); }
 
     // thrd_exit unwinds the calling thread via this sentinel, caught in ThrdEntry
     // (modern .NET has no Thread.Abort). The exit code becomes the join result.
     private sealed class ThrdExitException : Exception { public int Code; }
 
-    private static readonly ConcurrentDictionary<int, ThrdState> _threads = new();
-    private static readonly ConcurrentDictionary<int, MtxState> _mtx = new();
-    private static readonly ConcurrentDictionary<int, CndState> _cnd = new();
+    private static readonly ConcurrentDictionary<int, ThrdState> _threads = new ConcurrentDictionary<int, ThrdState>();
+    private static readonly ConcurrentDictionary<int, MtxState> _mtx = new ConcurrentDictionary<int, MtxState>();
+    private static readonly ConcurrentDictionary<int, CndState> _cnd = new ConcurrentDictionary<int, CndState>();
     // tss destructor per key (0 = none), shared across threads; the VALUES are
     // per-thread (each thread's own map, so distinct threads don't share slots).
-    private static readonly ConcurrentDictionary<int, IntPtr> _tssDtors = new();
+    private static readonly ConcurrentDictionary<int, IntPtr> _tssDtors = new ConcurrentDictionary<int, IntPtr>();
     [ThreadStatic] private static Dictionary<int, IntPtr>? _tssValues;
     // This thread's own thrd_t id (0 = not yet assigned). Set in the entry
     // trampoline for created threads; lazily minted by thrd_current otherwise.
@@ -18785,9 +18796,9 @@ public static unsafe partial class Libc
     public static int thrd_create(thrd_t* thr, delegate*<void*, int> func, void* arg)
     {
         if (thr == null || func == null) { return thrd_error; }
-        int id = Interlocked.Increment(ref _nextThrdId);
-        RuntimeContext? context = RuntimeContext.Current;
-        bool retained = false;
+        var id = Interlocked.Increment(ref _nextThrdId);
+        var context = RuntimeContext.Current;
+        var retained = false;
         try
         {
             if (context != null) { context.Retain(); retained = true; }
@@ -18810,13 +18821,13 @@ public static unsafe partial class Libc
     // reads it from the side table by id (boxed through ParameterizedThreadStart).
     private static void ThrdEntry(object? idObj)
     {
-        int id = (int)idObj!;
+        var id = (int)idObj!;
         var st = _threads[id];
         using var contextBinding = st.Context?.Enter();
         _selfThrdId = id;
         try
         {
-            bool completed = false;
+            var completed = false;
             try
             {
                 try { st.Result = ((delegate*<void*, int>)st.Func)((void*)st.Arg); }
@@ -18867,9 +18878,9 @@ public static unsafe partial class Libc
     // for the BCL wait primitives (clamped at 0 for an already-past deadline).
     private static int AbsTimeoutMs(timespec* ts)
     {
-        long deadlineMs = ts->tv_sec * 1000L + ts->tv_nsec / 1_000_000L;
-        long nowMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        long rel = deadlineMs - nowMs;
+        var deadlineMs = ts->tv_sec * 1000L + ts->tv_nsec / 1_000_000L;
+        var nowMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var rel = deadlineMs - nowMs;
         return rel <= 0 ? 0 : (rel > int.MaxValue ? int.MaxValue : (int)rel);
     }
 
@@ -18891,7 +18902,7 @@ public static unsafe partial class Libc
     public static int mtx_init(mtx_t* mtx, int type)
     {
         if (mtx == null) { return thrd_error; }
-        int id = Interlocked.Increment(ref _nextMtxId);
+        var id = Interlocked.Increment(ref _nextMtxId);
         _mtx[id] = new MtxState { Type = type };
         mtx->Id = id;
         return thrd_success;
@@ -18901,7 +18912,7 @@ public static unsafe partial class Libc
     public static int mtx_lock(mtx_t* mtx)
     {
         if (!_mtx.TryGetValue(mtx->Id, out var st)) { return thrd_error; }
-        int me = Environment.CurrentManagedThreadId;
+        var me = Environment.CurrentManagedThreadId;
         if ((st.Type & mtx_recursive) != 0 && st.Owner == me) { st.Count++; return thrd_success; }
         st.Avail.Wait();
         st.Owner = me;
@@ -18913,7 +18924,7 @@ public static unsafe partial class Libc
     public static int mtx_trylock(mtx_t* mtx)
     {
         if (!_mtx.TryGetValue(mtx->Id, out var st)) { return thrd_error; }
-        int me = Environment.CurrentManagedThreadId;
+        var me = Environment.CurrentManagedThreadId;
         if ((st.Type & mtx_recursive) != 0 && st.Owner == me) { st.Count++; return thrd_success; }
         if (!st.Avail.Wait(0)) { return thrd_busy; }
         st.Owner = me;
@@ -18944,7 +18955,7 @@ public static unsafe partial class Libc
     public static int mtx_timedlock(mtx_t* mtx, timespec* ts)
     {
         if (!_mtx.TryGetValue(mtx->Id, out var st)) { return thrd_error; }
-        int me = Environment.CurrentManagedThreadId;
+        var me = Environment.CurrentManagedThreadId;
         if ((st.Type & mtx_recursive) != 0 && st.Owner == me) { st.Count++; return thrd_success; }
         if (!st.Avail.Wait(AbsTimeoutMs(ts))) { return thrd_timedout; }
         st.Owner = me;
@@ -18959,7 +18970,7 @@ public static unsafe partial class Libc
     {
         if (_selfThrdId == 0)
         {
-            int id = Interlocked.Increment(ref _nextThrdId);
+            var id = Interlocked.Increment(ref _nextThrdId);
             _threads[id] = new ThrdState { Thread = Thread.CurrentThread };
             _selfThrdId = id;
         }
@@ -18977,7 +18988,7 @@ public static unsafe partial class Libc
     public static int thrd_sleep(timespec* duration, timespec* remaining)
     {
         if (duration == null) { return -1; }
-        long ms = duration->tv_sec * 1000L + duration->tv_nsec / 1_000_000L;
+        var ms = duration->tv_sec * 1000L + duration->tv_nsec / 1_000_000L;
         if (ms < 0) { ms = 0; }
         Thread.Sleep(ms > int.MaxValue ? int.MaxValue : (int)ms);
         if (remaining != null) { remaining->tv_sec = 0; remaining->tv_nsec = 0; }
@@ -19007,7 +19018,7 @@ public static unsafe partial class Libc
     public static int cnd_init(cnd_t* cond)
     {
         if (cond == null) { return thrd_error; }
-        int id = Interlocked.Increment(ref _nextCndId);
+        var id = Interlocked.Increment(ref _nextCndId);
         _cnd[id] = new CndState();
         cond->Id = id;
         return thrd_success;
@@ -19052,7 +19063,7 @@ public static unsafe partial class Libc
         if (!_cnd.TryGetValue(cond->Id, out var st)) { return thrd_error; }
         Monitor.Enter(st.Lock);
         mtx_unlock(mtx);
-        bool signalled = Monitor.Wait(st.Lock, AbsTimeoutMs(ts));
+        var signalled = Monitor.Wait(st.Lock, AbsTimeoutMs(ts));
         Monitor.Exit(st.Lock);
         mtx_lock(mtx);
         return signalled ? thrd_success : thrd_timedout;
@@ -19068,7 +19079,7 @@ public static unsafe partial class Libc
     public static int tss_create(tss_t* key, delegate*<void*, void> dtor)
     {
         if (key == null) { return thrd_error; }
-        int id = Interlocked.Increment(ref _nextTssId);
+        var id = Interlocked.Increment(ref _nextTssId);
         _tssDtors[id] = (IntPtr)dtor;
         key->Id = id;
         return thrd_success;
@@ -19145,7 +19156,7 @@ public static unsafe partial class Libc
     /// value through <paramref name="t"/> when non-null and also returns it.</summary>
     public static long time(long* t)
     {
-        long secs = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var secs = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         if (t != null) { *t = secs; }
         return secs;
     }
@@ -19296,14 +19307,14 @@ public readonly struct VaArg
     // FROM each C argument type (applied at the call site by C# on each
     // variadic actual). The emitter explicitly promotes char/short → int and
     // float → double before reaching these; direct runtime callers remain valid.
-    public static implicit operator VaArg(byte v) => new(v, 0);
-    public static implicit operator VaArg(int v) => new(v, 0);
-    public static implicit operator VaArg(uint v) => new(v, 0);
-    public static implicit operator VaArg(long v) => new(v, 0);
-    public static implicit operator VaArg(ulong v) => new(unchecked((long)v), 0);
-    public static implicit operator VaArg(double v) => new(0, v);
-    public static implicit operator VaArg(CBool v) => new((int)v, 0);
-    public static unsafe implicit operator VaArg(void* p) => new((long)p, 0);
+    public static implicit operator VaArg(byte v) => new VaArg(v, 0);
+    public static implicit operator VaArg(int v) => new VaArg(v, 0);
+    public static implicit operator VaArg(uint v) => new VaArg(v, 0);
+    public static implicit operator VaArg(long v) => new VaArg(v, 0);
+    public static implicit operator VaArg(ulong v) => new VaArg(unchecked((long)v), 0);
+    public static implicit operator VaArg(double v) => new VaArg(0, v);
+    public static implicit operator VaArg(CBool v) => new VaArg((int)v, 0);
+    public static unsafe implicit operator VaArg(void* p) => new VaArg((long)p, 0);
 
     // TO the type requested by `va_arg(ap, T)`, which the emitter lowers to
     // `(T)ap.Next()`. A typedef alias resolves through C# (e.g. `(size_t)` is
@@ -19373,7 +19384,7 @@ public static unsafe partial class Libc
         if (SlotByFd(fd) is not { } slot) { errno = EBADF; return -1; }
         var entries = (VectorIoEntry*)vectors;
         ulong total = 0;
-        for (int i = 0; i < count; i++)
+        for (var i = 0; i < count; i++)
         {
             if (entries[i].Length > (ulong)long.MaxValue - total) { errno = EINVAL; return -1; }
             if (entries[i].Base == null && entries[i].Length != 0) { errno = EFAULT; return -1; }
@@ -19382,7 +19393,7 @@ public static unsafe partial class Libc
         if (total == 0) return 0;
         // Like Linux's MAX_RW_COUNT, one operation can transfer fewer than the
         // requested bytes. Bound a single BCL buffer without summation overflow.
-        int capacity = (int)Math.Min(total, 0x7ffff000UL);
+        var capacity = (int)Math.Min(total, 0x7ffff000UL);
         byte[] buffer;
         try { buffer = global::System.Buffers.ArrayPool<byte>.Shared.Rent(capacity); }
         catch (OutOfMemoryException) { errno = ENOMEM; return -1; }
@@ -19390,10 +19401,10 @@ public static unsafe partial class Libc
         {
             if (writing)
             {
-                int offset = 0;
-                for (int i = 0; i < count && offset < capacity; i++)
+                var offset = 0;
+                for (var i = 0; i < count && offset < capacity; i++)
                 {
-                    int size = (int)Math.Min(entries[i].Length, (ulong)(capacity - offset));
+                    var size = (int)Math.Min(entries[i].Length, (ulong)(capacity - offset));
                     new ReadOnlySpan<byte>(entries[i].Base, size).CopyTo(buffer.AsSpan(offset, size));
                     offset += size;
                 }
@@ -19408,10 +19419,10 @@ public static unsafe partial class Libc
             }
             if (!writing && transferred > 0)
             {
-                int offset = 0;
-                for (int i = 0; i < count && offset < transferred; i++)
+                var offset = 0;
+                for (var i = 0; i < count && offset < transferred; i++)
                 {
-                    int size = (int)Math.Min(entries[i].Length, (ulong)(transferred - offset));
+                    var size = (int)Math.Min(entries[i].Length, (ulong)(transferred - offset));
                     buffer.AsSpan(offset, size).CopyTo(new Span<byte>(entries[i].Base, size));
                     offset += size;
                 }
@@ -19446,7 +19457,7 @@ public static unsafe partial class Libc
         {
             // Format once: evaluating %n twice during sizing would repeat its
             // observable write. vasprintf owns the byte-oriented cursor formatter.
-            int count = vasprintf(&buffer, format, arguments);
+            var count = vasprintf(&buffer, format, arguments);
             if (count < 0) return -1;
             if (slot.BufferMode < 0 && (slot.Kind is FileSlot.K.Out or FileSlot.K.Err))
             {
@@ -19457,7 +19468,7 @@ public static unsafe partial class Libc
             }
             else
             {
-                for (int i = 0; i < count; i++)
+                for (var i = 0; i < count; i++)
                     if (!WriteByteSlot(slot, buffer[i])) { slot.Err = true; return -1; }
             }
             return count;
@@ -19489,18 +19500,18 @@ public static class VolatileValue
 {
     public static T Load<T>(ref T location) where T : unmanaged
     {
-        if (Unsafe.SizeOf<T>() == 1) { byte value = Volatile.Read(ref Unsafe.As<T, byte>(ref location)); return Unsafe.As<byte, T>(ref value); }
-        if (Unsafe.SizeOf<T>() == 2) { short value = Volatile.Read(ref Unsafe.As<T, short>(ref location)); return Unsafe.As<short, T>(ref value); }
-        if (Unsafe.SizeOf<T>() == 4) { int value = Volatile.Read(ref Unsafe.As<T, int>(ref location)); return Unsafe.As<int, T>(ref value); }
-        if (Unsafe.SizeOf<T>() == 8) { long value = Volatile.Read(ref Unsafe.As<T, long>(ref location)); return Unsafe.As<long, T>(ref value); }
+        if (Unsafe.SizeOf<T>() == 1) { var value = Volatile.Read(ref Unsafe.As<T, byte>(ref location)); return Unsafe.As<byte, T>(ref value); }
+        if (Unsafe.SizeOf<T>() == 2) { var value = Volatile.Read(ref Unsafe.As<T, short>(ref location)); return Unsafe.As<short, T>(ref value); }
+        if (Unsafe.SizeOf<T>() == 4) { var value = Volatile.Read(ref Unsafe.As<T, int>(ref location)); return Unsafe.As<int, T>(ref value); }
+        if (Unsafe.SizeOf<T>() == 8) { var value = Volatile.Read(ref Unsafe.As<T, long>(ref location)); return Unsafe.As<long, T>(ref value); }
         // C volatile aggregates need not be atomic. Read every byte through a
         // real volatile access rather than reading an ordinary aggregate copy
         // or silently rejecting valid storage larger than a machine word.
         // The byref keeps the source alive and evaluates its address once.
         T aggregate = default;
-        ref byte source = ref Unsafe.As<T, byte>(ref location);
-        ref byte destination = ref Unsafe.As<T, byte>(ref aggregate);
-        for (int index = 0; index < Unsafe.SizeOf<T>(); index++)
+        ref var source = ref Unsafe.As<T, byte>(ref location);
+        ref var destination = ref Unsafe.As<T, byte>(ref aggregate);
+        for (var index = 0; index < Unsafe.SizeOf<T>(); index++)
             Unsafe.Add(ref destination, index) = Volatile.Read(ref Unsafe.Add(ref source, index));
         return aggregate;
     }
@@ -19516,9 +19527,9 @@ public static class VolatileValue
             // As for aggregate loads, preserve all object bytes without
             // promising an atomic multiword store. Each write has release
             // ordering; the original lvalue is evaluated only once.
-            ref byte destination = ref Unsafe.As<T, byte>(ref location);
-            ref byte source = ref Unsafe.As<T, byte>(ref value);
-            for (int index = 0; index < Unsafe.SizeOf<T>(); index++)
+            ref var destination = ref Unsafe.As<T, byte>(ref location);
+            ref var source = ref Unsafe.As<T, byte>(ref value);
+            for (var index = 0; index < Unsafe.SizeOf<T>(); index++)
                 Volatile.Write(ref Unsafe.Add(ref destination, index), Unsafe.Add(ref source, index));
         }
         return value;
@@ -19527,8 +19538,8 @@ public static class VolatileValue
     public static T Update<T, TArgument>(ref T location, TArgument argument,
         Func<T, TArgument, T> operation, bool returnOld) where T : unmanaged
     {
-        T before = Load(ref location);
-        T after = operation(before, argument);
+        var before = Load(ref location);
+        var after = operation(before, argument);
         Store(ref location, after);
         return returnOld ? before : after;
     }
@@ -19547,7 +19558,7 @@ public static unsafe partial class Libc
     /// A zero size never dereferences the destination, including a null pointer.</summary>
     public static int vsnprintf(byte* destination, ulong size, byte* format, scoped VaList arguments)
     {
-        int capacity = size == 0 ? 0 : (int)global::System.Math.Min(size - 1, int.MaxValue);
+        var capacity = size == 0 ? 0 : (int)global::System.Math.Min(size - 1, int.MaxValue);
         return new SprintfBuilder(destination, format, capacity, terminate: size != 0)
             .Arguments(arguments).Done();
     }
@@ -19559,16 +19570,16 @@ public unsafe ref partial struct PrintfBuilder
     {
         while (true)
         {
-            var spec = ConsumeUntilSpec(arguments, true, out int consumed);
-            for (int i = 0; i < consumed; i++) arguments.Next();
+            var spec = ConsumeUntilSpec(arguments, true, out var consumed);
+            for (var i = 0; i < consumed; i++) arguments.Next();
             if (spec.Conv == 0) return this;
-            bool wide = spec.Length is (byte)'l' or (byte)'j' or (byte)'z' or (byte)'t';
+            var wide = spec.Length is (byte)'l' or (byte)'j' or (byte)'z' or (byte)'t';
             var value = arguments.Next();
             switch (spec.Conv)
             {
                 case (byte)'d': case (byte)'i':
                 {
-                    long number = wide ? (long)value : (int)value;
+                    var number = wide ? (long)value : (int)value;
                     if (spec.Length == (byte)'h') number = spec.DoubleLength ? (sbyte)number : (short)number;
                     if (spec.Precision >= 0) spec.Zero = false;
                     Emit(ApplyWidth(PadInt(number, spec, global::System.Globalization.CultureInfo.InvariantCulture), spec));
@@ -19576,9 +19587,9 @@ public unsafe ref partial struct PrintfBuilder
                 }
                 case (byte)'u': case (byte)'x': case (byte)'X': case (byte)'o':
                 {
-                    ulong number = wide ? (ulong)value : (uint)value;
+                    var number = wide ? (ulong)value : (uint)value;
                     if (spec.Length == (byte)'h') number = spec.DoubleLength ? (byte)number : (ushort)number;
-                    string digits = spec.Conv switch
+                    var digits = spec.Conv switch
                     {
                         (byte)'x' => number.ToString("x", global::System.Globalization.CultureInfo.InvariantCulture),
                         (byte)'X' => number.ToString("X", global::System.Globalization.CultureInfo.InvariantCulture),
@@ -19588,7 +19599,7 @@ public unsafe ref partial struct PrintfBuilder
                     if (spec.Precision == 0 && number == 0) digits = "";
                     if (spec.Precision > digits.Length) digits = digits.PadLeft(spec.Precision, '0');
                     if (spec.Precision >= 0) spec.Zero = false;
-                    string prefix = spec.Alt && number != 0 && spec.Conv == (byte)'x' ? "0x"
+                    var prefix = spec.Alt && number != 0 && spec.Conv == (byte)'x' ? "0x"
                         : spec.Alt && number != 0 && spec.Conv == (byte)'X' ? "0X" : "";
                     if (spec.Alt && spec.Conv == (byte)'o' && (digits.Length == 0 || digits[0] != '0')) digits = "0" + digits;
                     if (spec.Zero && !spec.Left && prefix.Length != 0 && spec.Width > prefix.Length + digits.Length)
@@ -19603,12 +19614,12 @@ public unsafe ref partial struct PrintfBuilder
                 case (byte)'s':
                 {
                     if (spec.Length != 0) throw new global::System.NotSupportedException("vsnprintf wide strings are not supported");
-                    byte* text = (byte*)(void*)value;
+                    var text = (byte*)(void*)value;
                     string bytes;
                     if (text == null) bytes = "(null)";
                     else
                     {
-                        int length = 0;
+                        var length = 0;
                         while ((spec.Precision < 0 || length < spec.Precision) && text[length] != 0) length++;
                         bytes = global::System.Text.Encoding.Latin1.GetString(text, length);
                     }
@@ -19617,7 +19628,7 @@ public unsafe ref partial struct PrintfBuilder
                 }
                 case (byte)'n':
                 {
-                    void* target = (void*)value;
+                    var target = (void*)value;
                     if (wide) *(long*)target = _count;
                     else if (spec.Length == (byte)'h' && spec.DoubleLength) *(sbyte*)target = (sbyte)_count;
                     else if (spec.Length == (byte)'h') *(short*)target = (short)_count;
@@ -19705,16 +19716,16 @@ public unsafe ref struct WSprintfBuilder
         // units straight into the wide buffer (no Latin-1 byte step that the narrow
         // SprintfBuilder needs). %c wrote a (char) value, which lands verbatim.
         var str = _buf.ToString();
-        int max = _capacity > 0 ? _capacity - 1 : 0;   // reserve a slot for the NUL
+        var max = _capacity > 0 ? _capacity - 1 : 0;   // reserve a slot for the NUL
         if (str.Length > max)
         {
             // Doesn't fit (incl. NUL): NUL-terminate what fits and report failure,
             // per C swprintf (negative on overflow — distinct from snprintf).
-            for (int i = 0; i < max; i++) { _dst[i] = str[i]; }
+            for (var i = 0; i < max; i++) { _dst[i] = str[i]; }
             if (_capacity > 0) { _dst[max] = '\0'; }
             return -1;
         }
-        for (int i = 0; i < str.Length; i++) { _dst[i] = str[i]; }
+        for (var i = 0; i < str.Length; i++) { _dst[i] = str[i]; }
         if (_capacity > 0) { _dst[str.Length] = '\0'; }
         return str.Length;
     }
@@ -19763,7 +19774,7 @@ public static unsafe partial class Libc
     /// <paramref name="s"/> (the wide <see cref="strlen"/>).</summary>
     public static int wcslen(char* s)
     {
-        int n = 0;
+        var n = 0;
         while (s[n] != 0) { n++; }
         return n;
     }
@@ -19798,7 +19809,7 @@ public static unsafe partial class Libc
     /// <paramref name="dst"/>.</summary>
     public static char* wcscpy(char* dst, char* src)
     {
-        char* p = dst;
+        var p = dst;
         while ((*p++ = *src++) != 0) { }
         return dst;
     }
@@ -19825,7 +19836,7 @@ public static unsafe partial class Libc
     /// <paramref name="dst"/>.</summary>
     public static char* wcscat(char* dst, char* src)
     {
-        char* p = dst;
+        var p = dst;
         while (*p != 0) { p++; }
         while ((*p++ = *src++) != 0) { }
         return dst;
@@ -19836,7 +19847,7 @@ public static unsafe partial class Libc
     /// Returns <paramref name="dst"/>.</summary>
     public static char* wcsncat(char* dst, char* src, ulong n)
     {
-        char* p = dst;
+        var p = dst;
         while (*p != 0) { p++; }
         ulong i = 0;
         for (; i < n && src[i] != 0; i++) { p[i] = src[i]; }
@@ -19880,10 +19891,10 @@ public static unsafe partial class Libc
     public static char* wcsstr(char* haystack, char* needle)
     {
         if (*needle == 0) { return haystack; }
-        for (char* h = haystack; *h != 0; h++)
+        for (var h = haystack; *h != 0; h++)
         {
-            char* a = h;
-            char* b = needle;
+            var a = h;
+            var b = needle;
             while (*a != 0 && *b != 0 && *a == *b) { a++; b++; }
             if (*b == 0) { return h; }
         }
@@ -19894,7 +19905,7 @@ public static unsafe partial class Libc
     /// unit <paramref name="c"/> — the inner scan of wcsspn/wcscspn/wcspbrk.</summary>
     private static bool WcsSetContains(char* set, char c)
     {
-        for (char* p = set; *p != 0; p++) { if (*p == c) { return true; } }
+        for (var p = set; *p != 0; p++) { if (*p == c) { return true; } }
         return false;
     }
 
@@ -19903,7 +19914,7 @@ public static unsafe partial class Libc
     /// <paramref name="accept"/>.</summary>
     public static int wcsspn(char* s, char* accept)
     {
-        int n = 0;
+        var n = 0;
         while (s[n] != 0 && WcsSetContains(accept, s[n])) { n++; }
         return n;
     }
@@ -19913,7 +19924,7 @@ public static unsafe partial class Libc
     /// <paramref name="reject"/>.</summary>
     public static int wcscspn(char* s, char* reject)
     {
-        int n = 0;
+        var n = 0;
         while (s[n] != 0 && !WcsSetContains(reject, s[n])) { n++; }
         return n;
     }
@@ -19922,7 +19933,7 @@ public static unsafe partial class Libc
     /// <paramref name="s"/> that is in <paramref name="accept"/>, or <c>null</c>.</summary>
     public static char* wcspbrk(char* s, char* accept)
     {
-        for (char* p = s; *p != 0; p++) { if (WcsSetContains(accept, *p)) { return p; } }
+        for (var p = s; *p != 0; p++) { if (WcsSetContains(accept, *p)) { return p; } }
         return null;
     }
 
@@ -19933,12 +19944,12 @@ public static unsafe partial class Libc
     /// NUL over each consumed delimiter. Returns the next token, or <c>null</c>.</summary>
     public static char* wcstok(char* str, char* delim, char** saveptr)
     {
-        char* s = str != null ? str : *saveptr;
+        var s = str != null ? str : *saveptr;
         if (s == null) { return null; }
         // Skip leading delimiters.
         while (*s != 0 && WcsSetContains(delim, *s)) { s++; }
         if (*s == 0) { *saveptr = s; return null; }
-        char* token = s;
+        var token = s;
         // Run to the next delimiter or the end.
         while (*s != 0 && !WcsSetContains(delim, *s)) { s++; }
         if (*s != 0) { *s = '\0'; s++; }
@@ -19954,7 +19965,7 @@ public static unsafe partial class Libc
     /// Returns <paramref name="dst"/>.</summary>
     public static char* wmemcpy(char* dst, char* src, ulong n)
     {
-        ulong bytes = n * (ulong)sizeof(char);
+        var bytes = n * (ulong)sizeof(char);
         Buffer.MemoryCopy(src, dst, bytes, bytes);
         return dst;
     }
@@ -19963,7 +19974,7 @@ public static unsafe partial class Libc
     /// overlap-safe. Returns <paramref name="dst"/>.</summary>
     public static char* wmemmove(char* dst, char* src, ulong n)
     {
-        ulong bytes = n * (ulong)sizeof(char);
+        var bytes = n * (ulong)sizeof(char);
         Buffer.MemoryCopy(src, dst, bytes, bytes);   // overlap-safe
         return dst;
     }
@@ -20017,10 +20028,10 @@ public static unsafe partial class Libc
     /// caller must <see cref="NativeMemory.Free(void*)"/> the result.</summary>
     private static byte* WideNumericScratch(char* nptr)
     {
-        int n = 0;
+        var n = 0;
         while (nptr[n] != 0 && nptr[n] <= 0x7F) { n++; }
-        byte* buf = (byte*)NativeMemory.Alloc((nuint)n + 1);
-        for (int i = 0; i < n; i++) { buf[i] = (byte)nptr[i]; }
+        var buf = (byte*)NativeMemory.Alloc((nuint)n + 1);
+        for (var i = 0; i < n; i++) { buf[i] = (byte)nptr[i]; }
         buf[n] = 0;
         return buf;
     }
@@ -20029,9 +20040,9 @@ public static unsafe partial class Libc
     /// translate the endptr back to the wide pointer (shared by wcstol/wcstoll).</summary>
     private static long WcstollViaByte(char* nptr, char** endptr, int @base)
     {
-        byte* buf = WideNumericScratch(nptr);
+        var buf = WideNumericScratch(nptr);
         byte* bEnd;
-        long v = strtol(buf, &bEnd, @base);
+        var v = strtol(buf, &bEnd, @base);
         if (endptr != null) { *endptr = nptr + (bEnd - buf); }
         NativeMemory.Free(buf);
         return v;
@@ -20041,9 +20052,9 @@ public static unsafe partial class Libc
     /// translate the endptr back to the wide pointer (shared by wcstoul/wcstoull).</summary>
     private static ulong WcstoullViaByte(char* nptr, char** endptr, int @base)
     {
-        byte* buf = WideNumericScratch(nptr);
+        var buf = WideNumericScratch(nptr);
         byte* bEnd;
-        ulong v = strtoul(buf, &bEnd, @base);
+        var v = strtoul(buf, &bEnd, @base);
         if (endptr != null) { *endptr = nptr + (bEnd - buf); }
         NativeMemory.Free(buf);
         return v;
@@ -20053,9 +20064,9 @@ public static unsafe partial class Libc
     /// translate the endptr back to the wide pointer (shared by wcstod/wcstof/wcstold).</summary>
     private static double WcstodViaByte(char* nptr, char** endptr)
     {
-        byte* buf = WideNumericScratch(nptr);
+        var buf = WideNumericScratch(nptr);
         byte* bEnd;
-        double v = strtod(buf, &bEnd);
+        var v = strtod(buf, &bEnd);
         if (endptr != null) { *endptr = nptr + (bEnd - buf); }
         NativeMemory.Free(buf);
         return v;
@@ -20149,10 +20160,10 @@ public static unsafe partial class Libc
     public static char* fgetws(char* s, int n, FILE* stream)
     {
         if (n <= 0) { return null; }
-        int i = 0;
+        var i = 0;
         while (i < n - 1)
         {
-            int ch = ReadWideFrom(stream);
+            var ch = ReadWideFrom(stream);
             if (ch < 0)
             {
                 if (i == 0) { return null; }   // EOF with nothing read
@@ -20175,8 +20186,7 @@ public static unsafe partial class Libc
     // Wide formatted INPUT (w*scanf) lowers the same way to ScanfReader.
     // ---------------------------------------------------------------------
 
-    private static readonly global::System.Collections.Concurrent.ConcurrentDictionary<IntPtr, IntPtr> _wideFmtToUtf8 =
-        new();
+    private static readonly global::System.Collections.Concurrent.ConcurrentDictionary<IntPtr, IntPtr> _wideFmtToUtf8 = new ConcurrentDictionary<IntPtr, IntPtr>();
 
     /// <summary>Transcode a wide (UTF-16) printf/scanf format to a pinned,
     /// NUL-terminated UTF-8 <c>byte*</c> so the byte <see cref="PrintfBuilder"/> /
@@ -20193,8 +20203,8 @@ public static unsafe partial class Libc
         // frees its buffer (otherwise the dropped NativeMemory block would leak — the
         // reason a value cache like this can't use the naive factory GetOrAdd).
         var bytes = global::System.Text.Encoding.UTF8.GetBytes(new string(wfmt, 0, wcslen(wfmt)));
-        byte* buf = (byte*)NativeMemory.Alloc((nuint)bytes.Length + 1);
-        for (int i = 0; i < bytes.Length; i++) { buf[i] = bytes[i]; }
+        var buf = (byte*)NativeMemory.Alloc((nuint)bytes.Length + 1);
+        for (var i = 0; i < bytes.Length; i++) { buf[i] = bytes[i]; }
         buf[bytes.Length] = 0;
         var actual = _wideFmtToUtf8.GetOrAdd(key, (IntPtr)buf);
         if (actual != (IntPtr)buf) { NativeMemory.Free(buf); }   // lost the race → free ours

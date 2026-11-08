@@ -45,7 +45,7 @@ namespace System.Net
 
             if (_blocks is not null)
             {
-                for (int i = 0; i < _blocks.Length; i++)
+                for (var i = 0; i < _blocks.Length; i++)
                 {
                     if (_blocks[i] is byte[] toReturn)
                     {
@@ -78,11 +78,11 @@ namespace System.Net
 
             CheckState();
 
-            uint ubyteCount = (uint)byteCount;
+            var ubyteCount = (uint)byteCount;
 
-            uint oldStartBlock = _activeStart / BlockSize;
+            var oldStartBlock = _activeStart / BlockSize;
             _activeStart += ubyteCount;
-            uint newStartBlock = _activeStart / BlockSize;
+            var newStartBlock = _activeStart / BlockSize;
 
             FreeBlocks(oldStartBlock, newStartBlock);
 
@@ -93,8 +93,8 @@ namespace System.Net
         {
             CheckState();
 
-            uint firstAllocatedBlock = _activeStart / BlockSize;
-            uint firstUnallocatedBlock = _allocatedEnd / BlockSize;
+            var firstAllocatedBlock = _activeStart / BlockSize;
+            var firstUnallocatedBlock = _allocatedEnd / BlockSize;
             FreeBlocks(firstAllocatedBlock, firstUnallocatedBlock);
 
             _activeStart = _availableStart = _allocatedEnd = 0;
@@ -105,10 +105,10 @@ namespace System.Net
 
         private void FreeBlocks(uint startBlock, uint endBlock)
         {
-            byte[]?[] blocks = _blocks!;
-            for (uint i = startBlock; i < endBlock; i++)
+            var blocks = _blocks!;
+            for (var i = startBlock; i < endBlock; i++)
             {
-                byte[]? toReturn = blocks[i];
+                var toReturn = blocks[i];
                 Debug.Assert(toReturn is not null);
                 blocks[i] = null;
                 ArrayPool<byte>.Shared.Return(toReturn);
@@ -120,7 +120,7 @@ namespace System.Net
             Debug.Assert(byteCount >= 0);
             Debug.Assert(byteCount <= AvailableMemory.Length, $"MultiArrayBuffer.Commit: Expected byteCount={byteCount} <= {AvailableMemory.Length}");
 
-            uint ubyteCount = (uint)byteCount;
+            var ubyteCount = (uint)byteCount;
 
             _availableStart += ubyteCount;
         }
@@ -158,10 +158,10 @@ namespace System.Net
 
             CheckState();
 
-            uint ubyteCount = (uint)byteCount;
+            var ubyteCount = (uint)byteCount;
 
-            uint newBytesNeeded = ubyteCount - (uint)AvailableMemory.Length;
-            uint newBlocksNeeded = (newBytesNeeded + BlockSize - 1) / BlockSize;
+            var newBytesNeeded = ubyteCount - (uint)AvailableMemory.Length;
+            var newBlocksNeeded = (newBytesNeeded + BlockSize - 1) / BlockSize;
 
             // Ensure we have enough space in the block array for the new blocks needed.
             if (_blocks is null)
@@ -170,7 +170,7 @@ namespace System.Net
                 Debug.Assert(_activeStart == 0);
                 Debug.Assert(_availableStart == 0);
 
-                int blockArraySize = 4;
+                var blockArraySize = 4;
                 while (blockArraySize < newBlocksNeeded)
                 {
                     blockArraySize *= 2;
@@ -183,14 +183,14 @@ namespace System.Net
                 Debug.Assert(_allocatedEnd % BlockSize == 0);
                 Debug.Assert(_allocatedEnd <= _blocks.Length * BlockSize);
 
-                uint allocatedBlocks = _allocatedEnd / BlockSize;
-                uint blockArraySize = (uint)_blocks.Length;
+                var allocatedBlocks = _allocatedEnd / BlockSize;
+                var blockArraySize = (uint)_blocks.Length;
                 if (allocatedBlocks + newBlocksNeeded > blockArraySize)
                 {
                     // Not enough room in current block array.
-                    uint unusedInitialBlocks = _activeStart / BlockSize;
-                    uint usedBlocks = (allocatedBlocks - unusedInitialBlocks);
-                    uint blocksNeeded = usedBlocks + newBlocksNeeded;
+                    var unusedInitialBlocks = _activeStart / BlockSize;
+                    var usedBlocks = (allocatedBlocks - unusedInitialBlocks);
+                    var blocksNeeded = usedBlocks + newBlocksNeeded;
                     if (blocksNeeded > blockArraySize)
                     {
                         // Need to allocate a new array and copy.
@@ -199,7 +199,7 @@ namespace System.Net
                             blockArraySize *= 2;
                         }
 
-                        byte[]?[] newBlockArray = new byte[]?[blockArraySize];
+                        var newBlockArray = new byte[]?[blockArraySize];
                         _blocks.AsSpan((int)unusedInitialBlocks, (int)usedBlocks).CopyTo(newBlockArray);
                         _blocks = newBlockArray;
                     }
@@ -212,7 +212,7 @@ namespace System.Net
                         _blocks.AsSpan((int)usedBlocks, (int)unusedInitialBlocks).Clear();
                     }
 
-                    uint shift = unusedInitialBlocks * BlockSize;
+                    var shift = unusedInitialBlocks * BlockSize;
                     _allocatedEnd -= shift;
                     _activeStart -= shift;
                     _availableStart -= shift;
@@ -223,7 +223,7 @@ namespace System.Net
 
             // Allocate new blocks
             Debug.Assert(_allocatedEnd % BlockSize == 0);
-            uint allocatedBlockCount = _allocatedEnd / BlockSize;
+            var allocatedBlockCount = _allocatedEnd / BlockSize;
             Debug.Assert(allocatedBlockCount == 0 || _blocks[allocatedBlockCount - 1] is not null);
             for (uint i = 0; i < newBlocksNeeded; i++)
             {
@@ -256,20 +256,20 @@ namespace System.Net
 
                 Debug.Assert(_allocatedEnd % BlockSize == 0, $"_allocatedEnd={_allocatedEnd} not at block boundary?");
 
-                uint firstAllocatedBlock = _activeStart / BlockSize;
-                uint firstUnallocatedBlock = _allocatedEnd / BlockSize;
+                var firstAllocatedBlock = _activeStart / BlockSize;
+                var firstUnallocatedBlock = _allocatedEnd / BlockSize;
 
                 for (uint i = 0; i < firstAllocatedBlock; i++)
                 {
                     Debug.Assert(_blocks[i] is null);
                 }
 
-                for (uint i = firstAllocatedBlock; i < firstUnallocatedBlock; i++)
+                for (var i = firstAllocatedBlock; i < firstUnallocatedBlock; i++)
                 {
                     Debug.Assert(_blocks[i] is not null);
                 }
 
-                for (uint i = firstUnallocatedBlock; i < _blocks.Length; i++)
+                for (var i = firstUnallocatedBlock; i < _blocks.Length; i++)
                 {
                     Debug.Assert(_blocks[i] is null);
                 }
@@ -326,13 +326,13 @@ namespace System.Net
         {
             get
             {
-                uint uindex = (uint)index;
+                var uindex = (uint)index;
                 if (uindex >= _length)
                 {
                     throw new IndexOutOfRangeException();
                 }
 
-                uint offset = _start + uindex;
+                var offset = _start + uindex;
                 return ref _blocks![GetBlockIndex(offset)]![GetOffsetInBlock(offset)];
             }
         }
@@ -349,8 +349,8 @@ namespace System.Net
             Debug.Assert(_length > 0, "Length should never be 0 here because BlockCount would be 0");
             Debug.Assert(_blocks is not null);
 
-            uint startInBlock = (blockIndex == 0 ? GetOffsetInBlock(_start) : 0);
-            uint endInBlock = (blockIndex == BlockCount - 1 ? GetOffsetInBlock(_start + _length - 1) + 1 : BlockSize);
+            var startInBlock = (blockIndex == 0 ? GetOffsetInBlock(_start) : 0);
+            var endInBlock = (blockIndex == BlockCount - 1 ? GetOffsetInBlock(_start + _length - 1) + 1 : BlockSize);
 
             Debug.Assert(0 <= startInBlock, $"Invalid startInBlock={startInBlock}. blockIndex={blockIndex}, _blocks.Length={_blocks.Length}, _start={_start}, _length={_length}");
             Debug.Assert(startInBlock < endInBlock, $"Invalid startInBlock={startInBlock}, endInBlock={endInBlock}. blockIndex={blockIndex}, _blocks.Length={_blocks.Length}, _start={_start}, _length={_length}");
@@ -361,7 +361,7 @@ namespace System.Net
 
         public MultiMemory Slice(int start)
         {
-            uint ustart = (uint)start;
+            var ustart = (uint)start;
             if (ustart > _length)
             {
                 throw new IndexOutOfRangeException();
@@ -372,8 +372,8 @@ namespace System.Net
 
         public MultiMemory Slice(int start, int length)
         {
-            uint ustart = (uint)start;
-            uint ulength = (uint)length;
+            var ustart = (uint)start;
+            var ulength = (uint)length;
             if (ustart > _length || ulength > _length - ustart)
             {
                 throw new IndexOutOfRangeException();
@@ -389,10 +389,10 @@ namespace System.Net
                 throw new ArgumentOutOfRangeException(nameof(destination));
             }
 
-            int blockCount = BlockCount;
-            for (int blockIndex = 0; blockIndex < blockCount; blockIndex++)
+            var blockCount = BlockCount;
+            for (var blockIndex = 0; blockIndex < blockCount; blockIndex++)
             {
-                Memory<byte> block = GetBlock(blockIndex);
+                var block = GetBlock(blockIndex);
                 block.Span.CopyTo(destination);
                 destination = destination.Slice(block.Length);
             }
@@ -405,10 +405,10 @@ namespace System.Net
                 throw new ArgumentOutOfRangeException(nameof(source));
             }
 
-            int blockCount = BlockCount;
-            for (int blockIndex = 0; blockIndex < blockCount; blockIndex++)
+            var blockCount = BlockCount;
+            for (var blockIndex = 0; blockIndex < blockCount; blockIndex++)
             {
-                Memory<byte> block = GetBlock(blockIndex);
+                var block = GetBlock(blockIndex);
 
                 if (source.Length <= block.Length)
                 {

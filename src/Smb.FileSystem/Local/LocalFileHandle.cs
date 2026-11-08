@@ -1,7 +1,10 @@
 using System;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Linq;
 using Smb.Protocol.Enums;
+using Microsoft.Win32.SafeHandles;
 
 namespace Smb.FileSystem.Local;
 
@@ -14,6 +17,22 @@ internal sealed class LocalFileHandle : IFileHandle, IDisposable
 	private readonly bool _isDirectory;
 
 	private readonly Lock _io = new Lock();
+
+	private readonly SafeFileHandle? _directoryHandle;
+	private readonly LocalObject _object;
+	public FileIdentity? Identity { get; }
+	internal SafeFileHandle NativeHandle => _stream?.SafeFileHandle ?? _directoryHandle!;
+
+	public bool DeletePending
+	{
+		get
+		{
+			lock (LocalObjects.Gate) return _object.DeletePending;
+		}
+	}
+
+	private bool _closed;
+	private NtStatus _closeStatus;
 
 	public string FullPath { get; private set; }
 
@@ -32,6 +51,45 @@ internal sealed class LocalFileHandle : IFileHandle, IDisposable
 		_root = root;
 		_stream = stream;
 		_isDirectory = isDirectory;
+		try
+		{
+			_directoryHandle = isDirectory ? LocalIdentity.OpenDirectory(fullPath) : null;
+			Identity = LocalIdentity.Resolve(fullPath, stream?.SafeFileHandle ?? _directoryHandle)!.Value;
+			lock (LocalObjects.Gate)
+			{
+				if (!LocalObjects.Objects.TryGetValue(Identity.Value, out _object))
+					LocalObjects.Objects.Add(Identity.Value, _object = new LocalObject());
+				if (_object.DeletePending) throw new IOException("Object is delete pending.");
+
+				_object.Handles.Add(this);
+			}
+		}
+		catch
+		{
+			try { stream?.Dispose(); }
+			finally { _directoryHandle?.Dispose(); }
+			throw;
+		}
+	}
+
+	public async ValueTask<FileStoreResult<int>> ReadAtAsync(long offset, Memory<byte> buffer, CancellationToken cancellationToken)
+	{
+		if (_stream == null) return FileStoreResult<int>.Fail(NtStatus.InvalidParameter);
+
+		try { return FileStoreResult<int>.Ok(await RandomAccess.ReadAsync(_stream.SafeFileHandle, buffer, offset, cancellationToken).ConfigureAwait(false)); }
+		catch (IOException) { return FileStoreResult<int>.Fail(NtStatus.InvalidParameter); }
+	}
+
+	public async ValueTask<FileStoreResult<int>> WriteAtAsync(long offset, ReadOnlyMemory<byte> data, CancellationToken cancellationToken)
+	{
+		if (_stream == null || !_stream.CanWrite) return FileStoreResult<int>.Fail(NtStatus.AccessDenied);
+
+		try
+		{
+			await RandomAccess.WriteAsync(_stream.SafeFileHandle, data, offset, cancellationToken).ConfigureAwait(false);
+			return FileStoreResult<int>.Ok(data.Length);
+		}
+		catch (IOException) { return FileStoreResult<int>.Fail(NtStatus.DiskFull); }
 	}
 
 	public FileStoreResult<int> ReadAt(long offset, Span<byte> buffer)
@@ -154,14 +212,15 @@ internal sealed class LocalFileHandle : IFileHandle, IDisposable
 		return new FileEntryInfo
 		{
 			Name = System.IO.Path.GetFileName(FullPath),
-			Attributes = LocalFileStore.MapAttributes(info.Attributes),
+			DeletePending = DeletePending,
+			Attributes = LocalFileStore.MapAttributes(File.GetAttributes(_stream?.SafeFileHandle ?? _directoryHandle!)),
 			EndOfFile = size,
 			AllocationSize = (isDir ? 0 : ((size + 4095) / 4096 * 4096)),
-			CreationTime = Safe(info.CreationTimeUtc),
-			LastAccessTime = Safe(info.LastAccessTimeUtc),
-			LastWriteTime = Safe(info.LastWriteTimeUtc),
-			ChangeTime = Safe(info.LastWriteTimeUtc),
-			IndexNumber = PathId.Of(FullPath),
+			CreationTime = Safe(File.GetCreationTimeUtc(_stream?.SafeFileHandle ?? _directoryHandle!)),
+			LastAccessTime = Safe(File.GetLastAccessTimeUtc(_stream?.SafeFileHandle ?? _directoryHandle!)),
+			LastWriteTime = Safe(File.GetLastWriteTimeUtc(_stream?.SafeFileHandle ?? _directoryHandle!)),
+			ChangeTime = Safe(File.GetLastWriteTimeUtc(_stream?.SafeFileHandle ?? _directoryHandle!)),
+			IndexNumber = LocalIdentity.IndexNumber(Identity!.Value),
 		};
 	}
 
@@ -177,28 +236,86 @@ internal sealed class LocalFileHandle : IFileHandle, IDisposable
 		}
 	}
 
-	public void Dispose()
+	/// <summary>Validate before marking, without changing the existing flag on failure.</summary>
+	public NtStatus SetDeleteOnClose(bool delete)
 	{
-		_stream?.Dispose();
-		if (!DeleteOnClose)
+		lock (LocalObjects.Gate)
+		lock (_io)
 		{
-			return;
-		}
+			if (_closed) return NtStatus.FileClosed;
 
-		try
-		{
-			if (_isDirectory)
+			try
 			{
-				Directory.Delete(FullPath, recursive: true);
+				if (delete && _isDirectory && Directory.EnumerateFileSystemEntries(FullPath).Any())
+					return NtStatus.DirectoryNotEmpty;
+
+				DeleteOnClose = delete;
+				_object.DeletePending = delete;
+				_object.DeletePath = delete ? FullPath : null;
+				return NtStatus.Success;
 			}
-			else
-			{
-				File.Delete(FullPath);
-			}
+			catch (UnauthorizedAccessException) { return NtStatus.AccessDenied; }
+			catch (DirectoryNotFoundException) { return NtStatus.ObjectNameNotFound; }
+			catch (IOException) { return NtStatus.AccessDenied; }
 		}
-		catch
+	}
+
+	public ValueTask<NtStatus> CloseAsync() => new ValueTask<NtStatus>(Close());
+
+	// Resource cleanup cannot communicate an NTSTATUS. Explicit CLOSE uses CloseAsync;
+	// repeated disposal never repeats pathname deletion or targets a replacement object.
+	public void Dispose() => Close();
+
+	private NtStatus Close()
+	{
+		lock (LocalObjects.Gate)
+		lock (_io)
 		{
-			// ignored
+			if (_closed) return _closeStatus;
+
+			_closed = true;
+			try
+			{
+				_object.Handles.Remove(this);
+				if (_object.Handles.Count != 0) return _closeStatus = NtStatus.Success;
+
+				LocalObjects.Objects.Remove(Identity!.Value);
+				DeleteOnClose = _object.DeletePending;
+				var deletePath = _object.DeletePath ?? FullPath;
+				// Never delete a pathname now referring to a replacement object.
+				if (DeleteOnClose && LocalIdentity.Resolve(deletePath) != Identity) return _closeStatus = NtStatus.ObjectNameNotFound;
+
+				if (DeleteOnClose)
+				{
+					if (OperatingSystem.IsWindows()) WindowsLocalIdentity.Delete(deletePath, Identity!.Value);
+					else if (_isDirectory) Directory.Delete(deletePath, recursive: false);
+					else File.Delete(deletePath);
+				}
+
+				return _closeStatus = NtStatus.Success;
+			}
+			catch (UnauthorizedAccessException) { return _closeStatus = NtStatus.AccessDenied; }
+			catch (DirectoryNotFoundException) { return _closeStatus = NtStatus.ObjectNameNotFound; }
+			catch (IOException)
+			{
+				// The final host operation is nonrecursive; a child arriving after validation
+				// is preserved. Inspect only to map the failed host operation's status.
+				try
+				{
+					if (DeleteOnClose && _isDirectory && Directory.EnumerateFileSystemEntries(_object.DeletePath ?? FullPath).Any())
+						return _closeStatus = NtStatus.DirectoryNotEmpty;
+				}
+				catch (IOException) { }
+				catch (UnauthorizedAccessException) { }
+
+				return _closeStatus = NtStatus.AccessDenied;
+			}
+			finally
+			{
+				try { _stream?.Dispose(); }
+				finally { _directoryHandle?.Dispose(); }
+			}
+
 		}
 	}
 }

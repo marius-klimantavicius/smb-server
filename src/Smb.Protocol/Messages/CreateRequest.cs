@@ -28,6 +28,8 @@ public sealed class CreateRequest
 
 	public static CreateRequest Parse(ReadOnlySpan<byte> message, int bodyOffset)
 	{
+		if (bodyOffset < 0 || bodyOffset > message.Length || message.Length - bodyOffset < 57) throw new SmbWireFormatException("Incomplete CREATE fixed structure/Buffer.");
+
 		var spanReader = new SpanReader(message.Slice(bodyOffset));
 		var num = spanReader.ReadUInt16();
 		if (num != ExpectedStructureSize)
@@ -49,6 +51,13 @@ public sealed class CreateRequest
 		var num3 = spanReader.ReadUInt16();
 		var contextsOffset = (int)spanReader.ReadUInt32();
 		var contextsLength = (int)spanReader.ReadUInt32();
+		if (contextsLength == 0 && contextsOffset != 0) throw new SmbWireFormatException("CREATE without contexts requires zero context offset.");
+		if ((num3 & 1) != 0 || (num3 > 0 && (num2 & 7) != 0)) throw new SmbWireFormatException("CREATE name must have even UTF-16 length and 8-byte alignment.");
+
+		RequestBounds.Buffer(message, num2, num3, bodyOffset + 56, "CREATE name");
+		RequestBounds.Buffer(message, (uint)contextsOffset, (uint)contextsLength, bodyOffset + 56, "CREATE contexts");
+		if (contextsLength != 0 && (contextsOffset & 7) != 0) throw new SmbWireFormatException("CREATE contexts must be 8-byte aligned.");
+
 		var text = string.Empty;
 		if (num3 > 0)
 		{

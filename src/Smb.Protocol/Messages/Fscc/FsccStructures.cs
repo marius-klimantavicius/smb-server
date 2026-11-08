@@ -166,7 +166,7 @@ public static class FsccStructures
 		spanWriter.WriteInt64(e.AllocationSize);
 		spanWriter.WriteInt64(e.EndOfFile);
 		spanWriter.WriteUInt32(e.NumberOfLinks);
-		spanWriter.WriteByte(0);
+		spanWriter.WriteByte(e.DeletePending ? (byte)1 : (byte)0);
 		spanWriter.WriteByte(e.IsDirectory ? ((byte)1) : ((byte)0));
 		spanWriter.WriteUInt16(0);
 		return array;
@@ -286,7 +286,7 @@ public static class FsccStructures
 
 	private static byte[] FsAttribute()
 	{
-		var bytes = Encoding.Unicode.GetBytes("NTFS");
+		var bytes = Encoding.Unicode.GetBytes("SMB");
 		var growableWriter = new GrowableWriter(12 + bytes.Length);
 		growableWriter.WriteUInt32(47u);
 		growableWriter.WriteUInt32(255u);

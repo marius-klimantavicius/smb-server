@@ -30,6 +30,7 @@ public static class SetInfoMessage
 		var additionalInformation = spanReader.ReadUInt32();
 		var persistentId = spanReader.ReadUInt64();
 		var volatileId = spanReader.ReadUInt64();
+		RequestBounds.Buffer(message, num3, num2, bodyOffset + 32, "SET_INFO buffer");
 		var buffer = Array.Empty<byte>();
 		if (num2 != 0)
 		{

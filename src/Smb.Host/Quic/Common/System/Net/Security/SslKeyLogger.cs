@@ -18,7 +18,7 @@ internal static class SslKeyLogger
 
         try
         {
-            bool isEnabled = LocalAppContextSwitches.EnableSslKeyLogging;
+            var isEnabled = LocalAppContextSwitches.EnableSslKeyLogging;
 
             if (isEnabled && s_keyLogFile != null)
             {
@@ -80,7 +80,7 @@ internal static class SslKeyLogger
             return;
         }
 
-        Span<byte> clientRandomUtf8 = clientRandom.Length <= 1024 ? stackalloc byte[clientRandom.Length * 2] : new byte[clientRandom.Length * 2];
+        var clientRandomUtf8 = clientRandom.Length <= 1024 ? stackalloc byte[clientRandom.Length * 2] : new byte[clientRandom.Length * 2];
         HexEncode(clientRandom, clientRandomUtf8);
 
         lock (s_fileStream)
@@ -104,8 +104,8 @@ internal static class SslKeyLogger
 
         // write the secret line in the format {label} {client_random (hex)} {secret (hex)} e.g.
         // SERVER_HANDSHAKE_TRAFFIC_SECRET bae582227f0f46ca663cb8c3d62e68cec38c2b947e7c4a9ec6f4e262b5ed5354 48f6bd5b0c8447d97129c6dad080f34c7f9f11ade8eeabb011f33811543411d7ab1013b1374bcd81bfface6a2deef539
-        int totalLength = checked(labelUtf8.Length + 1 + clientRandomUtf8.Length + 1 + 2 * secret.Length + 1);
-        Span<byte> line = (uint)totalLength <= 1024 ? stackalloc byte[totalLength] : new byte[totalLength];
+        var totalLength = checked(labelUtf8.Length + 1 + clientRandomUtf8.Length + 1 + 2 * secret.Length + 1);
+        var line = (uint)totalLength <= 1024 ? stackalloc byte[totalLength] : new byte[totalLength];
 
         labelUtf8.CopyTo(line);
         line[labelUtf8.Length] = (byte)' ';
@@ -121,7 +121,7 @@ internal static class SslKeyLogger
 
     private static void HexEncode(ReadOnlySpan<byte> source, Span<byte> destination)
     {
-        for (int i = 0; i < source.Length; i++)
+        for (var i = 0; i < source.Length; i++)
         {
             HexConverter.ToBytesBuffer(source[i], destination.Slice(i * 2));
         }

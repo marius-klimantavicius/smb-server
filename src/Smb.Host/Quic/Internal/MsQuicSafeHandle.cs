@@ -60,7 +60,7 @@ internal unsafe class MsQuicSafeHandle : SafeHandle
 
     protected override bool ReleaseHandle()
     {
-        MsQuic.QUIC_HANDLE* quicHandle = QuicHandle;
+        var quicHandle = QuicHandle;
         SetHandle(IntPtr.Zero);
         _releaseAction(quicHandle);
 
@@ -117,7 +117,7 @@ internal sealed class MsQuicContextSafeHandle : MsQuicSafeHandle
         _context = context;
         if (parent is not null)
         {
-            bool success = false;
+            var success = false;
             parent.DangerousAddRef(ref success);
             _parent = parent;
             if (NetEventSource.Log.IsEnabled())

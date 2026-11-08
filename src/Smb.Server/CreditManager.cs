@@ -20,22 +20,18 @@ public static class CreditManager
 			return 1;
 		}
 
-		var val = (num + CreditUnit - 1) / CreditUnit;
+		var val = ((long)num + CreditUnit - 1) / CreditUnit;
 		return (ushort)Math.Max(1, val);
 	}
 
 	public static ushort ComputeCreditGrant(ushort requested, ushort cap)
 	{
-		int num = Math.Max(requested, (ushort)256);
+		int num = requested;
 		if (num > cap)
 		{
 			num = cap;
 		}
 
-		if (num < 1)
-		{
-			num = 1;
-		}
 
 		return (ushort)num;
 	}
@@ -44,7 +40,7 @@ public static class CreditManager
 	{
 		if (messageId >= windowStart)
 		{
-			return messageId < windowStart + windowSize;
+			return messageId - windowStart < windowSize;
 		}
 
 		return false;

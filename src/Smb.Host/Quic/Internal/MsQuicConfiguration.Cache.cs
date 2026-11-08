@@ -35,23 +35,23 @@ internal static partial class MsQuicConfiguration
 
         public CacheKey(QUIC_SETTINGS settings, QUIC_CREDENTIAL_FLAGS flags, X509Certificate? certificate, ReadOnlyCollection<X509Certificate2>? intermediates, List<SslApplicationProtocol> alpnProtocols, QUIC_ALLOWED_CIPHER_SUITE_FLAGS allowedCipherSuites)
         {
-            int certCount = certificate == null ? 0 : 1;
+            var certCount = certificate == null ? 0 : 1;
             certCount += intermediates?.Count ?? 0;
-            byte[] certificateThumbprints = new byte[certCount * ThumbprintSize];
+            var certificateThumbprints = new byte[certCount * ThumbprintSize];
 
             certCount = 0;
             if (certificate != null)
             {
-                bool success = certificate.TryGetCertHash(HashAlgorithmName.SHA512, certificateThumbprints.AsSpan(0, ThumbprintSize), out _);
+                var success = certificate.TryGetCertHash(HashAlgorithmName.SHA512, certificateThumbprints.AsSpan(0, ThumbprintSize), out _);
                 Debug.Assert(success);
                 certCount++;
             }
 
             if (intermediates != null)
             {
-                foreach (X509Certificate2 intermediate in intermediates)
+                foreach (var intermediate in intermediates)
                 {
-                    bool success = intermediate.TryGetCertHash(HashAlgorithmName.SHA512, certificateThumbprints.AsSpan(certCount * ThumbprintSize, ThumbprintSize), out _);
+                    var success = intermediate.TryGetCertHash(HashAlgorithmName.SHA512, certificateThumbprints.AsSpan(certCount * ThumbprintSize, ThumbprintSize), out _);
                     Debug.Assert(success);
                     certCount++;
                 }
@@ -80,7 +80,7 @@ internal static partial class MsQuicConfiguration
                 return false;
             }
 
-            for (int i = 0; i < ApplicationProtocols.Count; i++)
+            for (var i = 0; i < ApplicationProtocols.Count; i++)
             {
                 if (ApplicationProtocols[i] != other.ApplicationProtocols[i])
                 {
@@ -115,7 +115,7 @@ internal static partial class MsQuicConfiguration
 
     private static MsQuicConfigurationSafeHandle GetCachedCredentialOrCreate(QUIC_SETTINGS settings, QUIC_CREDENTIAL_FLAGS flags, X509Certificate? certificate, ReadOnlyCollection<X509Certificate2>? intermediates, List<SslApplicationProtocol> alpnProtocols, QUIC_ALLOWED_CIPHER_SUITE_FLAGS allowedCipherSuites)
     {
-        CacheKey key = new CacheKey(settings, flags, certificate, intermediates, alpnProtocols, allowedCipherSuites);
+        var key = new CacheKey(settings, flags, certificate, intermediates, alpnProtocols, allowedCipherSuites);
 
         return s_configurationCache.GetOrCreate(key, static (args) =>
         {

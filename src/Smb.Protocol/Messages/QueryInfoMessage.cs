@@ -6,7 +6,10 @@ namespace Smb.Protocol.Messages;
 
 public static class QueryInfoMessage
 {
-	public readonly record struct Request(InfoType InfoType, byte FileInfoClass, uint OutputBufferLength, uint AdditionalInformation, ulong PersistentId, ulong VolatileId, byte[] InputBuffer);
+	public readonly record struct Request(InfoType InfoType, byte FileInfoClass, uint OutputBufferLength, uint AdditionalInformation, ulong PersistentId, ulong VolatileId, byte[] InputBuffer)
+	{
+		public uint Flags { get; init; }
+	}
 
 	public const ushort RequestStructureSize = 41;
 
@@ -28,16 +31,17 @@ public static class QueryInfoMessage
 		spanReader.ReadUInt16();
 		var num3 = spanReader.ReadUInt32();
 		var additionalInformation = spanReader.ReadUInt32();
-		spanReader.ReadUInt32();
+		var flags = spanReader.ReadUInt32();
 		var persistentId = spanReader.ReadUInt64();
 		var volatileId = spanReader.ReadUInt64();
+		RequestBounds.Buffer(message, num2, num3, bodyOffset + 40, "QUERY_INFO input");
 		var inputBuffer = Array.Empty<byte>();
 		if (num3 != 0 && num2 + num3 <= message.Length)
 		{
 			inputBuffer = message.Slice(num2, (int)num3).ToArray();
 		}
 
-		return new Request((InfoType)infoType, fileInfoClass, outputBufferLength, additionalInformation, persistentId, volatileId, inputBuffer);
+		return new Request((InfoType)infoType, fileInfoClass, outputBufferLength, additionalInformation, persistentId, volatileId, inputBuffer) { Flags = flags };
 	}
 
 	public static byte[] BuildResponseBody(ReadOnlySpan<byte> buffer)

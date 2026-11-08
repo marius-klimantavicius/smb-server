@@ -67,13 +67,13 @@ internal sealed class ValueTaskSource : IValueTaskSource
                 {
                     _cancellationRegistration = cancellationToken.UnsafeRegister(static (obj, cancellationToken) =>
                     {
-                        ValueTaskSource thisRef = (ValueTaskSource)obj!;
+                        var thisRef = (ValueTaskSource)obj!;
                         thisRef.TrySetException(new OperationCanceledException(cancellationToken));
                     }, this);
                 }
             }
 
-            State state = _state;
+            var state = _state;
 
             // If we're the first here, we will return true.
             if (state == State.None)
@@ -103,7 +103,7 @@ internal sealed class ValueTaskSource : IValueTaskSource
             {
                 try
                 {
-                    State state = _state;
+                    var state = _state;
 
                     if (state != State.Completed)
                     {

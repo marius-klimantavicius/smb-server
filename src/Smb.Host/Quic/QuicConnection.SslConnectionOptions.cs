@@ -74,8 +74,8 @@ public partial class QuicConnection
             try
             {
                 // Both pointers expire when the event returns. Snapshot before yielding.
-                byte[] certData = CopyCertificateBuffer(certificatePtr);
-                byte[] chainData = CopyCertificateBuffer(chainPtr);
+                var certData = CopyCertificateBuffer(certificatePtr);
+                var chainData = CopyCertificateBuffer(chainPtr);
                 if (MsQuicApi.SupportsAsyncCertValidation)
                     await Task.CompletedTask.ConfigureAwait(ConfigureAwaitOptions.ForceYielding);
 
@@ -103,7 +103,7 @@ public partial class QuicConnection
             {
                 try
                 {
-                    uint status = MsQuicApi.Api.ConnectionCertificateValidationComplete(
+                    var status = MsQuicApi.Api.ConnectionCertificateValidationComplete(
                         _connection._handle,
                         result == QUIC_TLS_ALERT_CODES.QUIC_TLS_ALERT_CODE_SUCCESS ? (byte)1 : (byte)0, result);
                     if (MsQuicApi.StatusFailed(status) && NetEventSource.Log.IsEnabled())
@@ -120,7 +120,7 @@ public partial class QuicConnection
         private static unsafe byte[] CopyCertificateBuffer(IntPtr pointer)
         {
             if (pointer == IntPtr.Zero) return [];
-            QUIC_BUFFER* buffer = (QUIC_BUFFER*)pointer;
+            var buffer = (QUIC_BUFFER*)pointer;
             // The host bounds DER input at 1 MiB; allow PKCS7 envelope overhead too.
             if (buffer->Length > 2 * 1024 * 1024 || (buffer->Length != 0 && buffer->Buffer == null))
                 throw new CryptographicException("Invalid portable certificate buffer.");
@@ -129,11 +129,11 @@ public partial class QuicConnection
 
         private QUIC_TLS_ALERT_CODES ValidateCertificate(X509Certificate2? certificate, Span<byte> chainData)
         {
-            SslPolicyErrors sslPolicyErrors = SslPolicyErrors.None;
-            bool wrapException = false;
+            var sslPolicyErrors = SslPolicyErrors.None;
+            var wrapException = false;
 
             X509Chain? chain = null;
-            X509Certificate2Collection additionalCertificates = new();
+            var additionalCertificates = new X509Certificate2Collection();
             try
             {
                 if (certificate is not null)
@@ -167,7 +167,7 @@ public partial class QuicConnection
                         chain.ChainPolicy.ExtraStore.AddRange(additionalCertificates);
                     }
 
-                    bool checkCertName = !chain!.ChainPolicy!.VerificationFlags.HasFlag(X509VerificationFlags.IgnoreInvalidName);
+                    var checkCertName = !chain!.ChainPolicy!.VerificationFlags.HasFlag(X509VerificationFlags.IgnoreInvalidName);
                     sslPolicyErrors |= CertificateValidation.BuildChainAndVerifyProperties(chain, certificate, checkCertName && _isClient, TargetHostNameHelper.NormalizeHostName(_targetHost));
                 }
                 else if (_certificateRequired)
@@ -175,7 +175,7 @@ public partial class QuicConnection
                     sslPolicyErrors |= SslPolicyErrors.RemoteCertificateNotAvailable;
                 }
 
-                QUIC_TLS_ALERT_CODES result = QUIC_TLS_ALERT_CODES.QUIC_TLS_ALERT_CODE_SUCCESS;
+                var result = QUIC_TLS_ALERT_CODES.QUIC_TLS_ALERT_CODE_SUCCESS;
                 if (_validationCallback is not null)
                 {
                     wrapException = true;
@@ -213,11 +213,11 @@ public partial class QuicConnection
             }
             finally
             {
-                foreach (X509Certificate2 intermediate in additionalCertificates) intermediate.Dispose();
+                foreach (var intermediate in additionalCertificates) intermediate.Dispose();
                 if (chain is not null)
                 {
-                    X509ChainElementCollection elements = chain.ChainElements;
-                    for (int i = 0; i < elements.Count; i++)
+                    var elements = chain.ChainElements;
+                    for (var i = 0; i < elements.Count; i++)
                     {
                         elements[i].Certificate.Dispose();
                     }

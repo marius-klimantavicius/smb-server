@@ -205,6 +205,6 @@ public sealed class InMemoryLeaseManager : ILeaseManager
 
 	private static string FileKey(SmbOpen open)
 	{
-		return open.LocalOpen?.PhysicalPath ?? open.PathName;
+		return open.IdentityKey;
 	}
 }

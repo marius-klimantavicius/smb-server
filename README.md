@@ -1,28 +1,90 @@
 # SmbServer
 
-Source reconstruction of KaimoSystemSolutions **SMB-Server 2.1.1**, decompiled with ILSpyCmd 11.2.0.10050. The goal is a maintained, fully C# SMB2/3 server with Native AOT support. Correctness repairs and AOT validation are pending; this import is not a validated server release.
+Maintained C# source reconstruction of KaimoSystemSolutions **SMB-Server 2.1.1**,
+with scoped non-security correctness repairs through P7c and P8 integration evidence.
+This is a reviewable checkout, not a production-ready or certified SMB release.
+The coordinator still owns acceptance: historical TDD-order exceptions are pending,
+external Samba operations are blocked during authentication, and QUIC attribution
+is not fully resolved. See [acceptance](docs/correctness/acceptance.md).
 
-## Build
-
-Use the .NET SDK selected by `global.json` (10.0.114, with patch roll-forward):
+Use the .NET SDK selected by `global.json` (observed 10.0.114). All six runtime
+projects use source project references; no original package DLLs or new runtime
+packages are used. The executable harness uses no third-party test framework.
 
 ```sh
+dotnet restore SmbServer.slnx
 dotnet build SmbServer.slnx -c Release
+dotnet run --project tests/Smb.Tests -c Release -- --list
+dotnet run --project tests/Smb.Tests -c Release
+dotnet run --project test-host/Smb.TestHost -c Release -- localtest
+# Fresh restore, rebuild, JIT/native publish, full tests, hosts, stress and identities.
+# The output path must not already exist.
+python3 scripts/validate-platform.py --out "$SMB_VALIDATION_OUTPUT"
 ```
 
-Debug and Release builds pass after reconstructing the init-only property assignment in `SetInfoMessage.ParseBasicInfo`. The original failing build is retained in the [import build log](docs/provenance/import-build.log). Full builds currently report 333 warnings (nullable annotation context, platform compatibility and unawaited calls); protocol correctness and Native AOT compatibility remain unverified. See the [build reconstruction record](docs/validation/build-reconstruction.txt).
+Set `SMB_VALIDATION_OUTPUT` to a new directory outside the source tree. The portable
+runner builds and runs on its native Windows or Linux host; on Windows use
+`python scripts/validate-platform.py --out $env:SMB_VALIDATION_OUTPUT` in PowerShell.
+Native AOT needs the host C++ toolchain. No external archive is required.
 
-All six projects target `net10.0` and reference one another from source. `Smb.Host` is a library, not an executable; the test host is planned work. No original binaries or NuGet archives are included. Build outputs should remain outside version control.
+`dotnet test` is not the harness entry point. Historical P8 published JIT and linux-x64
+Native AOT harnesses passed **837/837** tests; that result does not validate later source.
+The former F08 baseline assertion now passes normally. Both published hosts run
+`selftest` (fake backend) and `localtest` (actual local backend, real TCP,
+required signing). Four persistent JSON AOT diagnostics and the fixture identity
+reader IL3000 have been recorded; see [provenance](docs/correctness/provenance.md).
+Windows AND Linux are required local-backend platforms. The platform implementation
+has been reviewed; fresh Linux JIT and Native AOT each pass **854/854** tests plus
+actual LocalFileStore TCP workloads. Native Windows execution is outstanding and
+will be tested by the user. See [platform validation](docs/correctness/platform-validation.md).
 
-## Layout
+| Explicit profile | Copy | File caching | Multichannel | In-memory durable |
+| --- | --- | --- | --- | --- |
+| Restricted (default) | No | No | No | No |
+| CopyOnly | Yes | No | No | No |
+| Caching / CachingWithCopy | Optional | Yes | No | No |
+| MultichannelOnly / MultichannelWithCopy | Optional | No | Yes | No |
+| MultichannelWithCaching / MultichannelWithCachingAndCopy | Optional | Yes | Yes | No |
+| Durable / DurableWithCopy | Optional | Yes | No | Yes |
+| DurableWithMultichannel / DurableWithMultichannelAndCopy | Optional | Yes | Yes | Yes |
 
-- `src/`: Smb.Protocol, Smb.Crypto, Smb.Auth, Smb.FileSystem, Smb.Server and Smb.Host.
-- [Repair plan](docs/correctness-repair-plan.txt): phases, findings, required red–green TDD and coordinator/implementation-agent settings. Microsoft Protocol Test Suites integration is strongly recommended but optional.
-- [Static review](docs/review/astra-protocol-review.txt): original findings, before runtime confirmation. Source locations refer to the original decompilation.
-- [Provenance](docs/provenance/decompilation-manifest.json): package hash, upstream commit and decompiler version. Paths in this original manifest refer to the external evidence archive at `/mnt/storage/SMB-Server`.
+Multichannel also requires `EnableMultichannel=true`. Advanced multichannel and
+durability are limited to **SMB 3.0/3.0.2**. SMB 3.1.1 primary local TCP workloads
+pass, but bound signed CREATE/LOCK fails at an excluded signing/preauth boundary;
+multichannel and durable recovery remain withheld there. Mandatory SMB3 channel
+sequencing applies under every profile, including Restricted.
 
-The raw evidence archive is retained separately. This repository is the maintained source tree; future implementation should follow the plan here rather than create another `maintained/` directory. Original assembly attribution and version metadata are retained; they identify the source package, not a newly published release. Behavioral changes require the plan's red–green workflow. Authorization/authentication/signing and encryption review remain outside the agreed scope.
+Caching/durable grants require a stable-identity coherent backend and an explicit
+exclusive-server-access assertion. `new LocalFileStore(root, false)` permits
+ordinary operations but withholds caching. Only use its four-argument constructor
+with `exclusiveServerAccess:true` when all backing-data access and mutation go
+through one server state. This is a deployment assertion, not an OS lock.
 
-## License
+Directory leases, persistent handles, CA shares and local allocation are unsupported.
+`FileDurableHandleStore` is rejected by profile validation; there is no cold recovery.
+Streams/EAs are process-memory only; unbuffered I/O is advisory; local metadata is
+not an NTFS implementation. See [capabilities](docs/correctness/capabilities.md).
 
-The original package's [Apache-2.0 license](LICENSE) is included unchanged. Original author: KaimoSystemSolutions (assembly metadata also names kaimoSystem). Source was recovered from the published package, not an upstream source checkout.
+For a disposable loopback share, provide an existing credential file:
+
+```sh
+dotnet run --project test-host/Smb.TestHost -c Release -- serve /absolute/disposable/root 1445 WORKGROUP testuser /absolute/password-file
+```
+
+The share is `P0`; the published JIT/native host accepts the same arguments.
+Signing remains required. No authentication, authorization, signature, encryption,
+key-derivation, preauth or security-path certification is implied. Existing user
+QUIC edits and attribution limitations remain outside this platform repair.
+Historical Samba attempts stopped in excluded authentication before file operations;
+see [acceptance](docs/correctness/acceptance.md).
+
+The [repair plan](docs/correctness-repair-plan.txt), [findings](docs/correctness/findings.md),
+[acceptance gaps](docs/correctness/acceptance.md) and [test API notes](tests/README.md)
+retain the current contracts and limits. Raw historical evidence and original
+archive inputs are external; ordinary builds, tests and workloads do not require them.
+Reconstruction is separate from behavioral repairs; see [build reconstruction](docs/validation/build-reconstruction.txt).
+
+The original [Apache-2.0 LICENSE](LICENSE) is unchanged. [NOTICE](NOTICE) and
+[provenance summary](docs/correctness/provenance.md) describe pre-existing MIT components
+and the remaining attribution blocker. The top-level license does not replace
+third-party notices.

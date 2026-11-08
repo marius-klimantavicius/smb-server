@@ -219,7 +219,7 @@ namespace System.Net
             {
                 fixed (long* pCounters = s_counters)
                 {
-                    uint size = (uint)s_counters.Length * sizeof(long);
+                    var size = (uint)s_counters.Length * sizeof(long);
                     MsQuicApi.Api.ApiTable->GetParam(null, QUIC_PARAM_GLOBAL_PERF_COUNTERS, &size, (byte*)pCounters);
                 }
             }

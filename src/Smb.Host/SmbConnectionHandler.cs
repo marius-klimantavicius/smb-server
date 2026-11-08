@@ -31,7 +31,7 @@ namespace Smb.Host;
 /// capped via <see cref="P:Smb.Server.SmbServerOptions.MaxConcurrentFileOpsPerConnection" /> — processed
 /// concurrently; their responses may go out-of-order via the serialized writer.
 /// Every other frame acts as a barrier: all outstanding I/Os are drained first, then it is
-/// processed sequentially as before (state changes remain ordered).
+/// retain their operation scopes; CANCEL and teardown progress independently of the I/O drain.
 /// </para>
 /// </summary>
 internal sealed class SmbConnectionHandler
@@ -46,8 +46,10 @@ internal sealed class SmbConnectionHandler
 
 	private readonly SemaphoreSlim _writeLock = new SemaphoreSlim(1, 1);
 
-	/// <summary>Cap for concurrent READ/WRITE frames; <c>null</c> = feature off (option ≤ 1).</summary>
+	/// <summary>Caps physical READ/WRITE work. A cap of one still allows control frames to progress.</summary>
 	private readonly SemaphoreSlim? _ioGate;
+
+	internal SemaphoreSlim? ConcurrentOperations => _ioGate;
 
 	private readonly List<Task> _inflight = new List<Task>();
 
@@ -58,7 +60,7 @@ internal sealed class SmbConnectionHandler
 		_log = log;
 		_tls = tls;
 		var maxConcurrentFileOpsPerConnection = server.Options.MaxConcurrentFileOpsPerConnection;
-		_ioGate = ((maxConcurrentFileOpsPerConnection > 1) ? new SemaphoreSlim(maxConcurrentFileOpsPerConnection, maxConcurrentFileOpsPerConnection) : null);
+		_ioGate = new SemaphoreSlim(Math.Max(1, maxConcurrentFileOpsPerConnection), Math.Max(1, maxConcurrentFileOpsPerConnection));
 	}
 
 	/// <summary>
@@ -158,14 +160,26 @@ internal sealed class SmbConnectionHandler
 						}
 
 						var (message, transportEncrypted) = tuple.Value;
+						var controlHeader = SmbProtocolIds.IsSmb2(message.Span) ? Smb2Header.Read(message.Span) : null;
+						if (controlHeader != null && controlHeader.NextCommand == 0 && controlHeader.Command is SmbCommand.Cancel or SmbCommand.Close or SmbCommand.TreeDisconnect or SmbCommand.Logoff)
+						{
+							var control = RunControlFrameAsync(stream, connection, message, transportEncrypted, connCt);
+							lock (_inflight)
+							{
+								_inflight.RemoveAll(t => t.IsCompleted);
+								_inflight.Add(control);
+							}
+
+							continue;
+						}
+
 						if (_ioGate != null && _dispatcher.TryBeginConcurrentFrame(connection, message, transportEncrypted, out var prepared))
 						{
-							await _ioGate.WaitAsync(connCt).ConfigureAwait(continueOnCapturedContext: false);
 							prepared = _dispatcher.ReserveScope(prepared);
 							lock (_inflight)
 							{
 								_inflight.RemoveAll(t => t.IsCompleted);
-								_inflight.Add(RunConcurrentFrameAsync(stream, connection, prepared, connCt));
+								_inflight.Add(RunQueuedFrameAsync(stream, connection, prepared, connCt));
 							}
 
 							continue;
@@ -206,10 +220,13 @@ internal sealed class SmbConnectionHandler
 			}
 			finally
 			{
+				connection.AbandonPending();
+				connection.CancelOrdinary();
 				connection.SendRawAsync = null;
 				connection.RequestClose = null;
-				await DrainInflightAsync().ConfigureAwait(continueOnCapturedContext: false);
-				await _dispatcher.OnConnectionClosedAsync(connection).ConfigureAwait(continueOnCapturedContext: false);
+				var retirement = _dispatcher.OnConnectionClosedAsync(connection, connection.ResponseSendFailed ? Smb2Dispatcher.CloseReason.SendFailure : (hardCt.IsCancellationRequested || drainToken.IsCancellationRequested) ? Smb2Dispatcher.CloseReason.Shutdown : Smb2Dispatcher.CloseReason.ConnectionLoss).AsTask();
+				await DrainInflightAsync().ConfigureAwait(false);
+				await retirement.ConfigureAwait(false);
 				_server.Connections.TryRemove(connection.ConnectionId, out _);
 				_server.Options.Metrics.OnConnectionClosed();
 				AuditConnection(SmbAuditEventType.ConnectionClosed, connection);
@@ -324,11 +341,39 @@ internal sealed class SmbConnectionHandler
 
 	/// <summary>
 	/// Executes a prepared READ/WRITE frame and sends the response. Errors stay in the
-	/// task (connection drops are handled by the read loop itself); the I/O slot is always released.
+	/// task; it requests connection teardown so a failed CREATE response cannot retain an ordinary open. The I/O slot is always released.
 	/// </summary>
-	private async Task RunConcurrentFrameAsync(Stream stream, SmbConnection connection, Smb2Dispatcher.PreparedFrame frame, CancellationToken ct)
+	private async Task RunQueuedFrameAsync(Stream stream, SmbConnection connection, Smb2Dispatcher.PreparedFrame frame, CancellationToken ct)
 	{
-		_ = 1;
+		try { await _ioGate!.WaitAsync(ct).ConfigureAwait(false); }
+		catch (OperationCanceledException)
+		{
+			await _dispatcher.AbandonPreparedFrameAsync(connection, frame).ConfigureAwait(false);
+			return;
+		}
+
+		await RunConcurrentFrameAsync(stream, connection, frame, ct).ConfigureAwait(false);
+	}
+
+	private async Task RunControlFrameAsync(Stream stream, SmbConnection connection, ReadOnlyMemory<byte> message, bool encrypted, CancellationToken ct)
+	{
+		try
+		{
+			var response = await _dispatcher.ProcessMessageAsync(connection, message, encrypted).ConfigureAwait(false);
+			if (response.Length != 0) await SendFramedAsync(stream, connection, response, false, ct).ConfigureAwait(false);
+		}
+		catch
+		{
+			connection.ResponseSendFailed = true;
+			connection.AbandonPending();
+			connection.CancelOrdinary();
+			connection.RequestClose?.Invoke();
+		}
+	}
+
+	internal async Task RunConcurrentFrameAsync(Stream stream, SmbConnection connection, Smb2Dispatcher.PreparedFrame frame, CancellationToken ct)
+	{
+		connection.OrdinaryRequests.TryGetValue(frame.MessageId, out var physical);
 		try
 		{
 			var array = await _dispatcher.ExecutePreparedFrameAsync(connection, frame, ct).ConfigureAwait(continueOnCapturedContext: false);
@@ -339,13 +384,18 @@ internal sealed class SmbConnectionHandler
 		}
 		catch (Exception ex) when (ex is IOException || ex is OperationCanceledException || ex is SocketException || ex is ObjectDisposedException)
 		{
+			connection.ResponseSendFailed = true;
+			connection.RequestClose?.Invoke();
 		}
 		catch (Exception ex2)
 		{
 			_log?.Invoke($"[conn {connection.ConnectionId:N}] Error in concurrent frame: {ex2.GetType().Name}: {ex2.Message}");
+			connection.ResponseSendFailed = true;
+			connection.RequestClose?.Invoke();
 		}
 		finally
 		{
+			if (physical != null) await physical.PhysicalFinished.ConfigureAwait(false);
 			_ioGate!.Release();
 		}
 	}
@@ -432,10 +482,19 @@ internal sealed class SmbConnectionHandler
 			await stream.WriteAsync(framed, ct).ConfigureAwait(continueOnCapturedContext: false);
 			await stream.FlushAsync(ct).ConfigureAwait(continueOnCapturedContext: false);
 		}
+		catch
+		{
+			connection.ResponseSendFailed = true;
+			connection.AbandonPending();
+			connection.CancelOrdinary();
+			throw;
+		}
 		finally
 		{
 			_writeLock.Release();
 		}
+
+		connection.ResponseSent(rawResponse);
 	}
 
 	/// <summary>

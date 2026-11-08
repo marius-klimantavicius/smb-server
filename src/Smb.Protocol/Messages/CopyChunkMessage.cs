@@ -33,7 +33,7 @@ public static class CopyChunkMessage
 			throw new ArgumentException($"Resume key must be {ResumeKeyLength} bytes.", nameof(resumeKey));
 		}
 
-		var array = new byte[28];
+		var array = new byte[32];
 		var spanWriter = new SpanWriter(array);
 		spanWriter.WriteBytes(resumeKey);
 		spanWriter.WriteUInt32(0u);

@@ -195,7 +195,7 @@ public sealed partial class QuicStream
     /// <param name="defaultErrorCode">Error code used when the stream needs to abort read or write side of the stream internally.</param>
     internal unsafe QuicStream(MsQuicContextSafeHandle connectionHandle, QuicStreamType type, long defaultErrorCode)
     {
-        GCHandle context = GCHandle.Alloc(this, GCHandleType.Weak);
+        var context = GCHandle.Alloc(this, GCHandleType.Weak);
         try
         {
             QUIC_HANDLE* handle;
@@ -237,7 +237,7 @@ public sealed partial class QuicStream
     /// <param name="defaultErrorCode">Error code used when the stream needs to abort read or write side of the stream internally.</param>
     internal unsafe QuicStream(MsQuicContextSafeHandle connectionHandle, QUIC_HANDLE* handle, QUIC_STREAM_OPEN_FLAGS flags, long defaultErrorCode)
     {
-        GCHandle context = GCHandle.Alloc(this, GCHandleType.Weak);
+        var context = GCHandle.Alloc(this, GCHandleType.Weak);
         try
         {
             _handle = new MsQuicContextSafeHandle(handle, context, SafeHandleType.Stream, connectionHandle)
@@ -283,7 +283,7 @@ public sealed partial class QuicStream
         Debug.Assert(!_startedTcs.IsCompleted);
 
         // Always call StreamStart to get consistent behavior (events, stream count, frames send to peer) regardless of cancellation.
-        _startedTcs.TryInitialize(out ValueTask valueTask, this, cancellationToken);
+        _startedTcs.TryInitialize(out var valueTask, this, cancellationToken);
         _decrementStreamCapacity = decrementStreamCapacity;
         unsafe
         {
@@ -323,18 +323,18 @@ public sealed partial class QuicStream
 
         // Loop copying available data and/or waiting on RECEIVE or PEER_SEND_(SHUTDOWN|ABORTED) events.
         // Keeps waiting while nothing was copied and the buffer is empty (and not final) to ignore stale wake-ups on _receiveTcs.
-        int totalCopied = 0;
+        var totalCopied = 0;
         bool empty;
         do
         {
             // Concurrent call, this one lost the race.
-            if (!_receiveTcs.TryGetValueTask(out ValueTask valueTask, this, cancellationToken))
+            if (!_receiveTcs.TryGetValueTask(out var valueTask, this, cancellationToken))
             {
                 throw new InvalidOperationException(SR.Format(SR.net_io_invalidnestedcall, "read"));
             }
 
             // Copy data from the buffer, reduce target and increment total.
-            int copied = _receiveBuffers.CopyTo(buffer, out bool complete, out empty);
+            var copied = _receiveBuffers.CopyTo(buffer, out var complete, out empty);
             buffer = buffer.Slice(copied);
             totalCopied += copied;
 
@@ -413,7 +413,7 @@ public sealed partial class QuicStream
         }
 
         // Concurrent call, this one lost the race.
-        if (!_sendTcs.TryGetValueTask(out ValueTask valueTask, this, cancellationToken))
+        if (!_sendTcs.TryGetValueTask(out var valueTask, this, cancellationToken))
         {
             return ValueTask.FromException(ExceptionDispatchInfo.SetCurrentStackTrace(new InvalidOperationException(SR.Format(SR.net_io_invalidnestedcall, "write"))));
         }
@@ -461,7 +461,7 @@ public sealed partial class QuicStream
                     Volatile.Write(ref _sendLocked, 0);
 
                     // There might be stored exception from when we held the lock.
-                    if (ThrowHelper.TryGetStreamExceptionForMsQuicStatus(status, out Exception? exception))
+                    if (ThrowHelper.TryGetStreamExceptionForMsQuicStatus(status, out var exception))
                     {
                         Interlocked.CompareExchange(ref _sendException, exception, null);
                     }
@@ -495,7 +495,7 @@ public sealed partial class QuicStream
         }
         ThrowHelper.ValidateErrorCode(nameof(errorCode), errorCode, $"{nameof(Abort)}.{nameof(errorCode)}");
 
-        QUIC_STREAM_SHUTDOWN_FLAGS flags = QUIC_STREAM_SHUTDOWN_FLAGS.QUIC_STREAM_SHUTDOWN_FLAG_NONE;
+        var flags = QUIC_STREAM_SHUTDOWN_FLAGS.QUIC_STREAM_SHUTDOWN_FLAG_NONE;
         if (abortDirection.HasFlag(QuicAbortDirection.Read) && !_receiveTcs.IsCompleted)
         {
             flags |= QUIC_STREAM_SHUTDOWN_FLAGS.QUIC_STREAM_SHUTDOWN_FLAG_ABORT_RECEIVE;
@@ -587,7 +587,7 @@ public sealed partial class QuicStream
         }
         else
         {
-            if (ThrowHelper.TryGetStreamExceptionForMsQuicStatus(data.Status, out Exception? exception))
+            if (ThrowHelper.TryGetStreamExceptionForMsQuicStatus(data.Status, out var exception))
             {
                 _startedTcs.TrySetException(exception);
             }
@@ -598,7 +598,7 @@ public sealed partial class QuicStream
     }
     private unsafe uint HandleEventReceive(ref RECEIVE_DATA data)
     {
-        ulong totalCopied = (ulong)_receiveBuffers.CopyFrom(
+        var totalCopied = (ulong)_receiveBuffers.CopyFrom(
             new ReadOnlySpan<QUIC_BUFFER>(data.Buffers, (int)data.BufferCount),
             (int)data.TotalBufferLength,
             data.Flags.HasFlag(QUIC_RECEIVE_FLAGS.QUIC_RECEIVE_FLAG_FIN));
@@ -620,7 +620,7 @@ public sealed partial class QuicStream
         Volatile.Write(ref _sendLocked, 0);
 
         // There might be stored exception from when we held the lock.
-        Exception? exception = Volatile.Read(ref _sendException);
+        var exception = Volatile.Read(ref _sendException);
         if (exception is not null)
         {
             _sendTcs.TrySetException(exception);
@@ -663,9 +663,9 @@ public sealed partial class QuicStream
     {
         if (data.ConnectionShutdown != 0)
         {
-            bool shutdownByApp = data.ConnectionShutdownByApp != 0;
-            bool closedRemotely = data.ConnectionClosedRemotely != 0;
-            Exception exception = (shutdownByApp, closedRemotely) switch
+            var shutdownByApp = data.ConnectionShutdownByApp != 0;
+            var closedRemotely = data.ConnectionClosedRemotely != 0;
+            var exception = (shutdownByApp, closedRemotely) switch
             {
                 // It's remote shutdown by app, peer's side called QuicConnection.CloseAsync, throw QuicError.ConnectionAborted.
                 (shutdownByApp: true, closedRemotely: true) => ThrowHelper.GetConnectionAbortedException((long)data.ConnectionErrorCode),
@@ -710,7 +710,7 @@ public sealed partial class QuicStream
 
     private static unsafe uint NativeCallback(QUIC_HANDLE* stream, void* context, QUIC_STREAM_EVENT* streamEvent)
     {
-        GCHandle stateHandle = GCHandle.FromIntPtr((IntPtr)context);
+        var stateHandle = GCHandle.FromIntPtr((IntPtr)context);
 
         // Check if the instance hasn't been collected.
         if (!stateHandle.IsAllocated || stateHandle.Target is not QuicStream instance)
@@ -780,7 +780,7 @@ public sealed partial class QuicStream
         }
 
         // Wait for SHUTDOWN_COMPLETE, the last event, so that all resources can be safely released.
-        if (_shutdownTcs.TryInitialize(out ValueTask valueTask, this))
+        if (_shutdownTcs.TryInitialize(out var valueTask, this))
         {
             await valueTask.ConfigureAwait(false);
         }

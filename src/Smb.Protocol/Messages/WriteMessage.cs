@@ -5,7 +5,16 @@ namespace Smb.Protocol.Messages;
 
 public static class WriteMessage
 {
-	public readonly record struct Request(ulong Offset, ulong PersistentId, ulong VolatileId, byte[] Data);
+	public readonly record struct Request(ulong Offset, ulong PersistentId, ulong VolatileId, byte[] Data)
+	{
+		public ushort DataOffset { get; init; }
+		public byte FlagsByte { get; init; }
+		public uint Flags { get; init; }
+		public uint Channel { get; init; }
+		public uint RemainingBytes { get; init; }
+		public ushort ChannelInfoOffset { get; init; }
+		public ushort ChannelInfoLength { get; init; }
+	}
 
 	public const ushort RequestStructureSize = 49;
 
@@ -25,10 +34,16 @@ public static class WriteMessage
 		var offset = spanReader.ReadUInt64();
 		var persistentId = spanReader.ReadUInt64();
 		var volatileId = spanReader.ReadUInt64();
+		var channel = spanReader.ReadUInt32();
+		var remaining = spanReader.ReadUInt32();
+		var infoOffset = spanReader.ReadUInt16();
+		var infoLength = spanReader.ReadUInt16();
+		var flags = spanReader.ReadUInt32();
+		RequestBounds.Buffer(message, num2, num3, bodyOffset + 48, "WRITE data");
 		var data = Array.Empty<byte>();
 		if (num3 != 0)
 		{
-			if ((long)num2 + (long)num3 > message.Length)
+			if (num2 + (long)num3 > message.Length)
 			{
 				throw new SmbWireFormatException("WRITE data extends past the message.");
 			}
@@ -36,7 +51,15 @@ public static class WriteMessage
 			data = message.Slice(num2, (int)num3).ToArray();
 		}
 
-		return new Request(offset, persistentId, volatileId, data);
+		return new Request(offset, persistentId, volatileId, data)
+		{
+			DataOffset = num2,
+			Flags = flags,
+			Channel = channel,
+			RemainingBytes = remaining,
+			ChannelInfoOffset = infoOffset,
+			ChannelInfoLength = infoLength
+		};
 	}
 
 	public static byte[] BuildResponseBody(uint count)

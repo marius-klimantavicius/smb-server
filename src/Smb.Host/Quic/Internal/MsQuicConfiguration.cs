@@ -19,9 +19,9 @@ internal static partial class MsQuicConfiguration
 
     public static MsQuicConfigurationSafeHandle Create(QuicClientConnectionOptions options)
     {
-        SslClientAuthenticationOptions authenticationOptions = options.ClientAuthenticationOptions;
+        var authenticationOptions = options.ClientAuthenticationOptions;
 
-        QUIC_CREDENTIAL_FLAGS flags = QUIC_CREDENTIAL_FLAGS.QUIC_CREDENTIAL_FLAG_NONE;
+        var flags = QUIC_CREDENTIAL_FLAGS.QUIC_CREDENTIAL_FLAG_NONE;
         flags |= QUIC_CREDENTIAL_FLAGS.QUIC_CREDENTIAL_FLAG_CLIENT;
         flags |= QUIC_CREDENTIAL_FLAGS.QUIC_CREDENTIAL_FLAG_INDICATE_CERTIFICATE_RECEIVED;
         flags |= QUIC_CREDENTIAL_FLAGS.QUIC_CREDENTIAL_FLAG_NO_CERTIFICATE_VALIDATION;
@@ -35,7 +35,7 @@ internal static partial class MsQuicConfiguration
         }
         else if (authenticationOptions.LocalCertificateSelectionCallback != null)
         {
-            X509Certificate? selectedCertificate = authenticationOptions.LocalCertificateSelectionCallback(
+            var selectedCertificate = authenticationOptions.LocalCertificateSelectionCallback(
                 options,
                 authenticationOptions.TargetHost ?? string.Empty,
                 authenticationOptions.ClientCertificates ?? new X509CertificateCollection(),
@@ -59,7 +59,7 @@ internal static partial class MsQuicConfiguration
         }
         else if (authenticationOptions.ClientCertificates != null)
         {
-            foreach (X509Certificate clientCertificate in authenticationOptions.ClientCertificates)
+            foreach (var clientCertificate in authenticationOptions.ClientCertificates)
             {
                 if (clientCertificate.HasPrivateKey())
                 {
@@ -81,9 +81,9 @@ internal static partial class MsQuicConfiguration
 
     public static MsQuicConfigurationSafeHandle Create(QuicServerConnectionOptions options, string? targetHost)
     {
-        SslServerAuthenticationOptions authenticationOptions = options.ServerAuthenticationOptions;
+        var authenticationOptions = options.ServerAuthenticationOptions;
 
-        QUIC_CREDENTIAL_FLAGS flags = QUIC_CREDENTIAL_FLAGS.QUIC_CREDENTIAL_FLAG_NONE;
+        var flags = QUIC_CREDENTIAL_FLAGS.QUIC_CREDENTIAL_FLAG_NONE;
         if (authenticationOptions.ClientCertificateRequired)
         {
             flags |= QUIC_CREDENTIAL_FLAGS.QUIC_CREDENTIAL_FLAG_REQUIRE_CLIENT_AUTHENTICATION;
@@ -132,7 +132,7 @@ internal static partial class MsQuicConfiguration
         }
 #pragma warning restore SYSLIB0040
 
-        QUIC_SETTINGS settings = default(QUIC_SETTINGS);
+        var settings = default(QUIC_SETTINGS);
 
         settings.IsSet.PeerUnidiStreamCount = 1;
         settings.PeerUnidiStreamCount = (ushort)options.MaxInboundUnidirectionalStreams;
@@ -176,7 +176,7 @@ internal static partial class MsQuicConfiguration
                     : 0; // 0 disables the timeout
         }
 
-        QUIC_ALLOWED_CIPHER_SUITE_FLAGS allowedCipherSuites = QUIC_ALLOWED_CIPHER_SUITE_FLAGS.QUIC_ALLOWED_CIPHER_SUITE_NONE;
+        var allowedCipherSuites = QUIC_ALLOWED_CIPHER_SUITE_FLAGS.QUIC_ALLOWED_CIPHER_SUITE_NONE;
 
         if (cipherSuitesPolicy != null)
         {
@@ -201,13 +201,13 @@ internal static partial class MsQuicConfiguration
             // MsQuic will not lookup intermediates in local CA store if not explicitly provided,
             // so we build the cert context to get on feature parity with SslStream. Note that this code
             // path runs after the MsQuicConfigurationCache check.
-            SslStreamCertificateContext context = SslStreamCertificateContext.Create(cert, additionalCertificates: null, offline: true, trust: null);
+            var context = SslStreamCertificateContext.Create(cert, additionalCertificates: null, offline: true, trust: null);
             intermediates = context.IntermediateCertificates;
         }
 
         QUIC_HANDLE* handle;
 
-        using MsQuicBuffers msquicBuffers = new MsQuicBuffers();
+        using var msquicBuffers = new MsQuicBuffers();
         msquicBuffers.Initialize(alpnProtocols, alpnProtocol => alpnProtocol.Protocol);
         ThrowHelper.ThrowIfMsQuicError(MsQuicApi.Api.ConfigurationOpen(
             MsQuicApi.Api.Registration,
@@ -218,15 +218,15 @@ internal static partial class MsQuicConfiguration
             (void*)IntPtr.Zero,
             &handle),
             "ConfigurationOpen failed");
-        MsQuicConfigurationSafeHandle configurationHandle = new MsQuicConfigurationSafeHandle(handle);
+        var configurationHandle = new MsQuicConfigurationSafeHandle(handle);
 
         try
         {
-            bool server = (flags & QUIC_CREDENTIAL_FLAGS.QUIC_CREDENTIAL_FLAG_CLIENT) == 0;
+            var server = (flags & QUIC_CREDENTIAL_FLAGS.QUIC_CREDENTIAL_FLAG_CLIENT) == 0;
             using var credential = MsQuicApi.Host.CreateApplicationCredential(server,
                 certificate as X509Certificate2, intermediates);
             // Security configuration retains the identity; private keys need not be exportable.
-            uint status = MsQuicApi.Host.LoadCredential(configurationHandle.QuicHandle, credential, flags, null,
+            var status = MsQuicApi.Host.LoadCredential(configurationHandle.QuicHandle, credential, flags, null,
                 (flags & QUIC_CREDENTIAL_FLAGS.QUIC_CREDENTIAL_FLAG_SET_ALLOWED_CIPHER_SUITES) != 0
                     ? (uint)allowedCipherSuites : 3u);
 
@@ -243,9 +243,9 @@ internal static partial class MsQuicConfiguration
 
     private static QUIC_ALLOWED_CIPHER_SUITE_FLAGS CipherSuitePolicyToFlags(CipherSuitesPolicy cipherSuitesPolicy)
     {
-        QUIC_ALLOWED_CIPHER_SUITE_FLAGS flags = QUIC_ALLOWED_CIPHER_SUITE_FLAGS.QUIC_ALLOWED_CIPHER_SUITE_NONE;
+        var flags = QUIC_ALLOWED_CIPHER_SUITE_FLAGS.QUIC_ALLOWED_CIPHER_SUITE_NONE;
 #pragma warning disable CA1416  // not supported on all platforms
-        foreach (TlsCipherSuite cipher in cipherSuitesPolicy.AllowedCipherSuites)
+        foreach (var cipher in cipherSuitesPolicy.AllowedCipherSuites)
         {
             switch (cipher)
             {

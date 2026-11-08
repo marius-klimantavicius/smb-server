@@ -24,7 +24,7 @@ public sealed class CallbackScope : IDisposable
         failure = parent?.failure ?? orphanFailure;
         orphanFailure = null;
     }
-    public static CallbackScope Enter() => new();
+    public static CallbackScope Enter() => new CallbackScope();
     public static bool HasFailure => current?.failure != null || orphanFailure != null;
     public static void RequireActive()
     {

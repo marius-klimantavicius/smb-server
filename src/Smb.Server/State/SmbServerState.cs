@@ -19,6 +19,8 @@ public sealed class SmbServerState
 
 	private long _persistentIdCounter;
 
+	public CreateReplayRegistry CreateReplays { get; } = new CreateReplayRegistry();
+
 	public SmbServerOptions Options { get; }
 
 	public ShareCollection Shares { get; }

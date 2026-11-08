@@ -55,7 +55,9 @@ public static class NegotiateProcessor
 			smb2Capabilities |= Smb2Capabilities.LargeMtu;
 		}
 
-		if (options.EnableMultichannel && smbDialect.IsSmb3OrLater())
+		if (options.FeaturePolicy.Leasing && smbDialect >= SmbDialect.Smb210 && options.Shares.All.Any(share => Caching.FileCacheCoordinator.Supports(share.FileStore)))
+			smb2Capabilities |= Smb2Capabilities.Leasing;
+		if (options.FeaturePolicy.SupportsMultichannel(smbDialect) && options.EnableMultichannel)
 		{
 			smb2Capabilities |= Smb2Capabilities.MultiChannel;
 		}

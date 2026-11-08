@@ -7,6 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices.Marshalling;
+using Managed.Transport.Hosting;
 using static Managed.Transport.MsQuic;
 
 namespace Managed.Net.Quic;
@@ -60,7 +61,7 @@ internal sealed unsafe partial class MsQuicApi
     internal static bool SupportsAsyncCertValidation => Version > new Version(2, 4);
 
     // Process lifetime, matching the shared API table and registration.
-    internal static Managed.Transport.Hosting.MsQuicHost Host { get; } = new();
+    internal static Managed.Transport.Hosting.MsQuicHost Host { get; } = new MsQuicHost();
 
 #pragma warning disable CA1810 // Initialize all static fields in 'MsQuicApi' when those fields are declared and remove the explicit static constructor
     static MsQuicApi()
@@ -83,7 +84,7 @@ internal sealed unsafe partial class MsQuicApi
         MsQuicOpenVersion = MsQuicFunctionPointers.MsQuicOpenVersion;
         MsQuicClose = MsQuicFunctionPointers.MsQuicClose;
 
-        if (!TryOpenMsQuic(out QUIC_API_TABLE* apiTable, out var openStatus))
+        if (!TryOpenMsQuic(out var apiTable, out var openStatus))
         {
             // Too low version of the library (likely pre-2.0)
             NotSupportedReason = $"MsQuicOpenVersion for version {s_minMsQuicVersion.Major} returned {openStatus} status code.";
@@ -102,7 +103,7 @@ internal sealed unsafe partial class MsQuicApi
             uint status;
 
             paramSize = 4 * sizeof(uint);
-            uint* libVersion = stackalloc uint[4];
+            var libVersion = stackalloc uint[4];
             status = apiTable->GetParam(null, QUIC_PARAM_GLOBAL_LIBRARY_VERSION, &paramSize, libVersion);
             if (StatusFailed(status))
             {
@@ -117,7 +118,7 @@ internal sealed unsafe partial class MsQuicApi
             Version = new Version((int)libVersion[0], (int)libVersion[1], (int)libVersion[2], (int)libVersion[3]);
 
             paramSize = 64 * sizeof(byte);
-            byte* libGitHash = stackalloc byte[64];
+            var libGitHash = stackalloc byte[64];
             status = apiTable->GetParam(null, QUIC_PARAM_GLOBAL_LIBRARY_GIT_HASH, &paramSize, libGitHash);
             if (StatusFailed(status))
             {
@@ -129,7 +130,7 @@ internal sealed unsafe partial class MsQuicApi
                 return;
             }
 
-            string? gitHash = Utf8StringMarshaller.ConvertToManaged(libGitHash);
+            var gitHash = Utf8StringMarshaller.ConvertToManaged(libGitHash);
 
             MsQuicLibraryVersion = $"Managed.MsQuic {Version} ({gitHash})";
 
@@ -163,7 +164,7 @@ internal sealed unsafe partial class MsQuicApi
     {
         Debug.Assert(IsQuicSupported);
 
-        if (!TryOpenMsQuic(out QUIC_API_TABLE* apiTable, out uint openStatus))
+        if (!TryOpenMsQuic(out var apiTable, out var openStatus))
         {
             throw ThrowHelper.GetExceptionForMsQuicStatus(openStatus);
         }

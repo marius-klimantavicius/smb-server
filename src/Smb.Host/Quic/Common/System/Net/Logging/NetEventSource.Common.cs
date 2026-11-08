@@ -151,7 +151,7 @@ namespace System.Net
 
             // If the string representation of the instance would just be its type name,
             // use its id instead.
-            string? toString = value.ToString();
+            var toString = value.ToString();
             if (toString == null || toString == value.GetType().FullName)
             {
                 return IdOf(value);
@@ -171,8 +171,8 @@ namespace System.Net
                 case 2: return string.Format(s.Format, Format(s.GetArgument(0)), Format(s.GetArgument(1)));
                 case 3: return string.Format(s.Format, Format(s.GetArgument(0)), Format(s.GetArgument(1)), Format(s.GetArgument(2)));
                 default:
-                    string?[] formattedArgs = new string?[s.ArgumentCount];
-                    for (int i = 0; i < formattedArgs.Length; i++)
+                    var formattedArgs = new string?[s.ArgumentCount];
+                    for (var i = 0; i < formattedArgs.Length; i++)
                     {
                         formattedArgs[i] = Format(s.GetArgument(i));
                     }
@@ -195,7 +195,7 @@ namespace System.Net
             fixed (char* arg2Ptr = arg2)
             {
                 const int NumEventDatas = 3;
-                EventData* descrs = stackalloc EventData[NumEventDatas];
+                var descrs = stackalloc EventData[NumEventDatas];
 
                 descrs[0] = new EventData
                 {

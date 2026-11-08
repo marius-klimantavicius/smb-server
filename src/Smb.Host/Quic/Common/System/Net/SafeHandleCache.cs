@@ -33,7 +33,7 @@ namespace System.Net
     {
         private const int CheckExpiredModulo = 32;
 
-        private readonly ConcurrentDictionary<TKey, THandle> _cache = new();
+        private readonly ConcurrentDictionary<TKey, THandle> _cache = new ConcurrentDictionary<TKey, THandle>();
 
         /// <summary>
         /// Gets the handle from the cache if it exists, otherwise creates a new one using the
@@ -48,7 +48,7 @@ namespace System.Net
         /// </summary>
         internal THandle GetOrCreate<TContext>(TKey key, Func<TContext, THandle> factory, TContext factoryContext)
         {
-            if (_cache.TryGetValue(key, out THandle? handle) && handle.TryAddRentCount())
+            if (_cache.TryGetValue(key, out var handle) && handle.TryAddRentCount())
             {
                 if (NetEventSource.Log.IsEnabled())
                 {
@@ -121,7 +121,7 @@ namespace System.Net
                             NetEventSource.Info(this, $"Current size: {_cache.Count}.");
                         }
 
-                        foreach ((TKey key, THandle handle) in _cache)
+                        foreach ((var key, var handle) in _cache)
                         {
                             if (!handle.TryMarkForDispose())
                             {
@@ -135,7 +135,7 @@ namespace System.Net
                                 NetEventSource.Info(this, $"Evicting cached {handle}.");
                             }
 
-                            bool removed = _cache.TryRemove(key, out _);
+                            var removed = _cache.TryRemove(key, out _);
                             Debug.Assert(removed);
                             handle.Dispose();
 

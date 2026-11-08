@@ -1,0 +1,19 @@
+SMB-Server 2.1.1 source reconstruction and correctness repairs
+Original package attribution: KaimoSystemSolutions (assembly metadata also names kaimoSystem).
+The original Apache-2.0 LICENSE remains unchanged.
+
+Pre-existing src/Smb.Host/Quic contains copied/translated third-party source:
+- .NET Foundation / Microsoft: System.Net.Quic wrappers and common helpers, MIT.
+- Microsoft MsQuic: translated transport core, MIT.
+- DeNA Co., Ltd. / Kazuho Oku: translated picotls core, MIT.
+- Sebastian Godelet / DotCC: generated embedded managed C runtime and host scaffolding, MIT.
+Corresponding license texts are retained in docs/notices/.
+
+This notice records demonstrated component attribution; it does not certify a
+complete file-by-file provenance chain. docs/correctness/provenance.md records
+candidate upstream pins and unresolved modifications/generator lineage. Historical
+inspection found exact current/generated/historical matches for 47 of 80 files;
+33 remained unmatched. These historical observations do not assess later edits.
+Do not infer that the package Apache license replaces these component licenses.
+No QUIC source or behavior was changed by P8. This checkout is not an unqualified
+redistribution/provenance or security certification.

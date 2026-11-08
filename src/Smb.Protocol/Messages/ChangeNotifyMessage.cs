@@ -48,14 +48,10 @@ public static class ChangeNotifyMessage
 			growableWriter.WriteUInt32(changes[i].Action);
 			growableWriter.WriteUInt32((uint)bytes.Length);
 			growableWriter.WriteBytes(bytes);
+			var padding = (4 - growableWriter.Position % 4) % 4;
+			if (padding > 0) growableWriter.WriteZeros(padding);
 			if (i < changes.Count - 1)
 			{
-				var num = (4 - growableWriter.Position % 4) % 4;
-				if (num > 0)
-				{
-					growableWriter.WriteZeros(num);
-				}
-
 				growableWriter.PatchUInt32(position2, (uint)(growableWriter.Position - position));
 			}
 		}

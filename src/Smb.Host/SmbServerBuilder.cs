@@ -171,6 +171,7 @@ public sealed class SmbServerBuilder
 	/// <summary>Adds a share.</summary>
 	public SmbServerBuilder AddShare(IShare share)
 	{
+		_options.FeaturePolicy.ValidateShare(share);
 		_options.Shares.Add(share);
 		return this;
 	}
@@ -179,11 +180,13 @@ public sealed class SmbServerBuilder
 	/// Adds a disk share backed by a <see cref="T:Smb.FileSystem.Local.LocalFileStore" /> over <paramref name="directory" /> —
 	/// the common case, without hand-building a <see cref="T:Smb.FileSystem.Share" />. <paramref name="remark" /> is the
 	/// share description shown to clients (net view / Explorer), <paramref name="encrypt" /> forces
-	/// per-share SMB3 encryption, and <paramref name="continuousAvailability" /> grants persistent handles
-	/// (SMB2_SHARE_CAP_CONTINUOUS_AVAILABILITY).
+	/// per-share SMB3 encryption. Continuous availability is unavailable in the restricted profile.
 	/// </summary>
 	public SmbServerBuilder AddDiskShare(string name, string directory, bool readOnly = false, string remark = "", bool encrypt = false, bool continuousAvailability = false)
 	{
+		if (continuousAvailability && !_options.FeaturePolicy.ContinuousAvailability)
+			throw new InvalidOperationException("Continuous availability is unavailable until backend recovery gates pass.");
+
 		_options.Shares.Add(new Share
 		{
 			Name = name,
@@ -282,57 +285,41 @@ public sealed class SmbServerBuilder
 		return this;
 	}
 
-	/// <summary>
-	/// Sets durable/persistent handle storage (Phase 4 / C2). Default is process-local
-	/// (<see cref="T:Smb.Server.Durable.InMemoryDurableHandleStore" />): durable handles survive a TCP drop but not a restart.
-	/// A custom <see cref="T:Smb.Server.Durable.IDurableHandleStore" /> — e.g. <see cref="T:Smb.Server.Durable.FileDurableHandleStore" /> — can persist
-	/// continuously-available (persistent) handles across a full server restart.
-	/// </summary>
+	/// <summary>Supplies storage without enabling durable grants or reconnect. Persistent
+	/// stores are rejected by the restricted policy at Build.</summary>
 	public SmbServerBuilder UseDurableHandleStore(IDurableHandleStore store)
 	{
 		_options.DurableHandleStore = store;
 		return this;
 	}
 
-	/// <summary>
-	/// Persists continuously-available (persistent) handles to <paramref name="directory" /> so they survive a
-	/// full server restart (C2): after a restart a reconnecting client's handle is rehydrated (backend re-opened,
-	/// share-mode re-reserved). Requires a share with <see cref="P:Smb.FileSystem.Share.ContinuousAvailability" />. Convenience for
-	/// <c>UseDurableHandleStore(new FileDurableHandleStore(directory))</c>.
-	/// </summary>
+	/// <summary>Unavailable until the persistent-recovery gate passes; throws before accessing disk.</summary>
 	public SmbServerBuilder UsePersistentDurableHandles(string directory)
 	{
+		if (!_options.FeaturePolicy.PersistentHandles)
+			throw new InvalidOperationException("Persistent handles are unavailable until backend recovery gates pass.");
+
 		return UseDurableHandleStore(new FileDurableHandleStore(directory));
 	}
 
-	/// <summary>
-	/// Sets oplock management (SMB2 oplocks, Context §15). Default is process-local
-	/// (<see cref="T:Smb.Server.Oplocks.InMemoryOplockManager" />); pass <see cref="T:Smb.Server.Oplocks.NullOplockManager" /> to disable oplocks
-	/// (CREATE then always grants <c>None</c>), or a custom <see cref="T:Smb.Server.Oplocks.IOplockManager" /> to delegate to a
-	/// cluster coordinator.
-	/// </summary>
+	/// <summary>Supplies a manager. The restricted policy withholds all oplock grants
+	/// regardless of the manager until the coherency gate passes.</summary>
 	public SmbServerBuilder UseOplockManager(IOplockManager manager)
 	{
 		_options.OplockManager = manager;
 		return this;
 	}
 
-	/// <summary>
-	/// Sets lease management (SMB 2.1+ leases, Context §15). Default is process-local
-	/// (<see cref="T:Smb.Server.Leases.InMemoryLeaseManager" />); pass <see cref="T:Smb.Server.Leases.NullLeaseManager" /> to disable leasing
-	/// (clients fall back to classic oplocks), or a custom <see cref="T:Smb.Server.Leases.ILeaseManager" />.
-	/// </summary>
+	/// <summary>Supplies a manager without enabling lease grants. Unsupported lease
+	/// contexts are ignored under the restricted policy.</summary>
 	public SmbServerBuilder UseLeaseManager(ILeaseManager manager)
 	{
 		_options.LeaseManager = manager;
 		return this;
 	}
 
-	/// <summary>
-	/// Sets the durable/persistent-handle store (Phase 4) and optionally the post-drop retention window.
-	/// Default is <see cref="T:Smb.Server.Durable.InMemoryDurableHandleStore" /> (survives transport drops but not a process
-	/// restart); supply a serializable store to also survive restarts for persistent (CA) handles.
-	/// </summary>
+	/// <summary>Supplies storage and retention settings without enabling durable grants
+	/// or reconnect. Persistent stores are rejected at Build.</summary>
 	public SmbServerBuilder UseDurableHandleStore(IDurableHandleStore store, TimeSpan? timeout)
 	{
 		_options.DurableHandleStore = store;
@@ -427,10 +414,14 @@ public sealed class SmbServerBuilder
 
 	/// <summary>
 	/// Toggles multichannel (Phase 6): whether <c>SMB2_GLOBAL_CAP_MULTICHANNEL</c> is advertised and
-	/// FSCTL_QUERY_NETWORK_INTERFACE_INFO served so clients open additional channels. On by default.
+	/// FSCTL_QUERY_NETWORK_INTERFACE_INFO served so clients open additional channels. Unavailable
+	/// in the restricted profile; enabling it throws.
 	/// </summary>
 	public SmbServerBuilder EnableMultichannel(bool enable = true)
 	{
+		if (enable && !_options.FeaturePolicy.Multichannel)
+			throw new InvalidOperationException("Multichannel is unavailable until identity and channel lifecycle gates pass.");
+
 		_options.EnableMultichannel = enable;
 		return this;
 	}

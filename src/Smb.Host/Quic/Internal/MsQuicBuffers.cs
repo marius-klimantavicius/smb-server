@@ -33,7 +33,7 @@ internal unsafe struct MsQuicBuffers : IDisposable
 
     private void FreeNativeMemory()
     {
-        QUIC_BUFFER* buffers = _buffers;
+        var buffers = _buffers;
         _buffers = null;
         _count = 0;
         NativeMemory.Free(buffers);
@@ -70,7 +70,7 @@ internal unsafe struct MsQuicBuffers : IDisposable
     public void Initialize<T>(IList<T> inputs, Func<T, ReadOnlyMemory<byte>> toBuffer)
     {
         Reserve(inputs.Count);
-        for (int i = 0; i < inputs.Count; ++i)
+        for (var i = 0; i < inputs.Count; ++i)
         {
             SetBuffer(i, toBuffer(inputs[i]));
         }
@@ -92,13 +92,13 @@ internal unsafe struct MsQuicBuffers : IDisposable
     /// </summary>
     public void Reset()
     {
-        for (int i = 0; i < _count; ++i)
+        for (var i = 0; i < _count; ++i)
         {
             if (_buffers[i].Buffer is null)
             {
                 break;
             }
-            byte* buffer = _buffers[i].Buffer;
+            var buffer = _buffers[i].Buffer;
             _buffers[i].Buffer = null;
             _buffers[i].Length = 0;
             NativeMemory.Free(buffer);

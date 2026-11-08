@@ -2,12 +2,14 @@ SMB Server Correctness Repair Plan
 
 Package: SMB-Server 2.1.1
 Prepared: 2026-11-07
-Status: Correctness repairs planned. Source-only repository scaffolding prepared; behavioral repairs and runtime validation remain pending.
-Maintained repository: /home/marius/p/SmbServer
-Original evidence archive (external; not copied into this repository): /mnt/storage/SMB-Server
-Basis: docs/review/astra-protocol-review.txt, findings F01 through F16 and its additional coverage notes.
+Status: Windows/Linux implementation reviewed and current Linux JIT/AOT delivery passes 854/854 tests per mode plus actual LocalFileStore TCP workloads. Native Windows execution remains outstanding for the user. Both-platform and strict M1/M2 acceptance remain incomplete: historical test-first exceptions are unapproved, external clients are blocked in excluded authentication, and pre-existing QUIC provenance remains incomplete. See docs/correctness/platform-validation.md, docs/correctness/acceptance.md, docs/correctness/findings.md and docs/correctness/provenance.md. Historical preparation/import observations below are retained as dated evidence, not current-state assertions.
+Maintained repository: this checkout.
+Original evidence archive: external, read-only; no source/build/test dependency or machine-specific default.
+Basis: original static review, retained externally; findings F01 through F16 and additional coverage notes are summarized in docs/correctness/findings.md.
 
 1. Intended outcome and scope
+
+Active platform correction (2026-11-08): Windows AND Linux LocalFileStore support is required. The prior Linux-only backend decision is superseded. Stable object identity must come from acquired OS handles: Linux statx device/inode and documented Win32 volume/stable file IDs. Preserve shared-delete, rename, hard-link, metadata, bounded enumeration and cleanup guarantees on each host. Platform-neutral contracts and the actual LocalFileStore TCP workload must run under JIT and Native AOT on both linux-x64 and win-x64. Windows execution remains an acceptance gate even when access is unavailable; Linux execution, Windows cross-build and Wine are separate evidence and cannot certify native Windows AOT. Preserve all historical phase results as dated evidence, not validation of later changed source. Current formatting edits are concurrent user work: apply narrow semantic patches after rereading files; do not overwrite, format, stage or reset those edits.
 
 Produce a maintainable, fully C# SMB2/3 server library that can be published with Native AOT and has explicit, tested protocol and filesystem contracts. Preserve the Apache-2.0 package license and notices. Any new dependency must use a permissive license; do not introduce GPL/LGPL/AGPL code or a native SMB implementation. MPL is not assumed approved for new dependencies.
 
@@ -15,7 +17,7 @@ This plan covers non-security correctness: file operations, deletion, handle ide
 
 Authorization, authentication, signature verification, encryption, key derivation, preauthentication integrity, and security-oriented path isolation remain excluded as requested. Preserve those existing boundaries while editing adjacent protocol code. Routine client sessions may use existing configuration, but this plan does not certify those mechanisms or weaken client/server settings to make tests pass. A failure originating in an excluded subsystem must be recorded as a blocker for that scenario, not silently bypassed or counted as a pass.
 
-All 16 findings currently have static evidence only. Confirm the relevant control flow and applicable specification requirement before implementing each repair. Inspect original IL when decompilation leaves ambiguity. A finding may be narrowed or rejected by stronger evidence; retain the reasoning in the issue record. The upstream README and existing DLL behavior are not conformance authorities.
+The original review identified 16 findings using static evidence. Current dispositions and qualifications are in docs/correctness/findings.md. Confirm relevant control flow and applicable specification requirements before each further repair. Inspect original IL when decompilation leaves ambiguity. A finding may be narrowed or rejected by stronger evidence; retain the reasoning in the issue record. The upstream README and existing DLL behavior are not conformance authorities.
 
 Two delivery milestones are proposed:
 
@@ -25,28 +27,29 @@ M2: the desired advanced feature set restored after the corresponding state mach
 
 2. Evidence and workspace layout
 
-Preserve these inputs unchanged in the external /mnt/storage/SMB-Server evidence archive:
+Preserve these inputs unchanged in the explicitly configured external evidence archive:
   packages/smb-server.2.1.1.nupkg
   package/                         Original DLLs, README, nuspec and LICENSE
   decompiled/                      Raw ILSpy 11.2.0.10050 output
   manifest.json
   review/astra-protocol-review.txt
 
+Any maintained archive tools must take explicit input/output paths and reject missing or invalid configuration before work or writes. Routine restore/build/test/publish and LocalFileStore workloads must run without the archive. Preserve historical raw evidence logs, scripts, reports, diffs and manifests externally verbatim, including the original paths they recorded; maintained documentation and executable checks must not refer to those transient paths.
+
 Package SHA-256:
   decda113d70df16bcd5805f1da941642fd6c54faf3fc9ebaf9618ed151774185
 
-The maintained repository is now /home/marius/p/SmbServer:
+The maintained repository contains:
   src/                             Six source projects with project references
   docs/correctness-repair-plan.txt  This active repair plan
-  docs/review/                     Preserved static review
-  docs/provenance/                 Original decompilation manifest
+  docs/correctness/                Durable capability, finding, acceptance and provenance summaries
   tests/                          Planned protocol/backend/lifecycle tests
   test-host/                      Planned minimal JIT and Native AOT host
-  validation/                     Planned results and feature support records
+  scripts/                        Portable build/test runners with explicitly supplied output directories
 
 The solution uses the installed .NET 10 SDK and targets net10.0. Source files were copied from the preserved decompilation; project scaffolding replaces binary references with ProjectReference entries. These setup steps do not complete P0 or establish correctness/AOT compatibility. The original plan in the evidence archive remains unchanged.
 
-Use this repository for maintained work; paths previously described as maintained/* map directly to its root. Git is initialized without an initial commit. Record reconstruction changes separately from behavioral fixes. Do not re-decompile over src/. Original binaries may be loaded by a separate baseline test host outside this repository, never by the repaired host.
+Use this repository for maintained work; paths previously described as maintained/* map directly to its root. Record reconstruction changes separately from behavioral fixes. Do not re-decompile over src/. Original binaries may be loaded by a separate baseline test host outside this repository, never by the repaired host. Raw evidence is stored externally, with no repository symlink or generated-evidence import. Do not embed transient output destinations in maintained files.
 
 For each finding record: original location, spec section and revision, observable contract, confidence, confirming test/IL evidence, selected remedy, implementation change, red-test command and observed failure, green-test command and passing result, relevant regression results, and remaining limitations. Line numbers below refer to the preserved decompilation; maintain links as source code moves.
 
@@ -255,7 +258,7 @@ Tasks:
 1. Maintain a feature record keyed by dialect, share/backend capability and host platform. Record advertised capability, accepted request/context, granted result, associated tests and status. Audit configuration defaults, negotiation, CREATE contexts, IOCTLs and share flags together.
 2. Run focused Samba smbtorture cases for the supported non-security surface. Strongly consider adding Microsoft's Windows Protocol Test Suites, specifically the File Server Family suite's MS-SMB2 tests and applicable MS-FSA/MS-FSCC coverage, as an optional independent interoperability layer. External test clients may be native/non-C# programs; they are validation tools, not shipped protocol dependencies. Record exact suite versions, selected cases, unsupported-feature exclusions and known blockers. Do not claim a whole suite passes when cases were skipped.
 3. Exercise Windows Explorer/normal file APIs, macOS Finder/file APIs and Linux CIFS/smbclient with create, append, overwrite, rename, enumeration, deletion, notifications, locks, multiple opens and disconnect/reconnect. Use disposable test roots. Record client versions, negotiated dialect and enabled features.
-4. Publish and run a representative Native AOT test host. As an initial target set use linux-x64 and win-x64 if those environments are available; the final supported RID set must reflect actually tested deployment targets. Add other RIDs only with a build/run result. Execute AOT builds on compatible hosts rather than assuming a cross-publish is supported.
+4. Publish and run representative Native AOT test hosts on both required deployment targets, linux-x64 and win-x64. Missing host access is a validation blocker, not permission to narrow the required platforms. Add other RIDs only with a build/run result. Execute AOT builds on compatible hosts rather than assuming a cross-publish is supported.
 5. Exercise the same ordinary-workload fixtures against JIT and AOT builds. Check trim/dynamic-code warnings and loaded dependencies. Basic runtime tests may exercise existing session setup, but do not become an authentication/encryption audit.
 6. Run bounded concurrency and ordinary backend-failure tests; track open counts, pending requests, watchers, lock waiters, reservations, recovery records, file descriptors and memory trends. Require quiescent resources to return to expected baseline, allowing explicitly retained durable state only within its timeout.
 7. Verify reproducible clean restore/build/test/publish steps and dependency license records. Pin dependencies and remove accidental references to original package assemblies. Keep issue evidence and final feature limitations with release artifacts.

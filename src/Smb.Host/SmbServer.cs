@@ -336,6 +336,15 @@ public sealed class SmbServer : IAsyncDisposable
 			}
 		}
 
+		try
+		{
+			await new Smb2Dispatcher(_state, _log).CloseRetainedHandlesAsync().ConfigureAwait(false);
+		}
+		catch
+		{
+			// ignored
+		}
+
 		_listener = null;
 	}
 

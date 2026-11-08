@@ -6,12 +6,14 @@ using System.Threading.Tasks;
 using Smb.Auth;
 using Smb.Crypto;
 using Smb.Protocol.Enums;
+using Smb.Protocol.Messages;
 
 namespace Smb.Server.State;
 
 public sealed class SmbConnection
 {
 	private long _treeIdCounter;
+	private readonly Lock _legacyIdGate = new Lock();
 
 	private long _fileIdCounter;
 
@@ -32,6 +34,8 @@ public sealed class SmbConnection
 	public long CreatedTicks { get; set; }
 
 	public Action? RequestClose { get; set; }
+
+	public bool ResponseSendFailed { get; set; }
 
 	public SmbDialect Dialect { get; set; }
 
@@ -77,9 +81,7 @@ public sealed class SmbConnection
 
 	public DateTimeOffset CreationTime { get; } = DateTimeOffset.UtcNow;
 
-	public ulong SequenceWindowStart { get; set; }
-
-	public ulong SequenceWindowSize { get; set; } = 1uL;
+	public CreditSequenceLedger Credits { get; } = new CreditSequenceLedger();
 
 	public ushort OutstandingRequestCount { get; set; }
 
@@ -87,14 +89,66 @@ public sealed class SmbConnection
 
 	public ConcurrentDictionary<ulong, PendingAsyncRequest> PendingRequests { get; } = new ConcurrentDictionary<ulong, PendingAsyncRequest>();
 
+	public ConcurrentDictionary<ulong, OrdinaryRequest> OrdinaryRequests { get; } = new ConcurrentDictionary<ulong, OrdinaryRequest>();
+
+	public void CancelOrdinary()
+	{
+		foreach (var operation in OrdinaryRequests.Values) operation.Cancel();
+	}
+
+	public ConcurrentDictionary<ulong, PendingAsyncRequest> AsyncRequests { get; } = new ConcurrentDictionary<ulong, PendingAsyncRequest>();
+
+	public bool RegisterPending(PendingAsyncRequest pending)
+	{
+		pending.OnRemove(() =>
+		{
+			PendingRequests.TryRemove(new System.Collections.Generic.KeyValuePair<ulong, PendingAsyncRequest>(pending.MessageId, pending));
+			AsyncRequests.TryRemove(new System.Collections.Generic.KeyValuePair<ulong, PendingAsyncRequest>(pending.AsyncId, pending));
+		});
+		if (!PendingRequests.TryAdd(pending.MessageId, pending)) return false;
+		if (AsyncRequests.TryAdd(pending.AsyncId, pending)) return true;
+
+		PendingRequests.TryRemove(new System.Collections.Generic.KeyValuePair<ulong, PendingAsyncRequest>(pending.MessageId, pending));
+		return false;
+	}
+
+	/// <summary>Call only after the complete ordered transport write and flush succeeds.</summary>
+	public void ResponseSent(ReadOnlyMemory<byte> response)
+	{
+		var offset = 0;
+		while (response.Length - offset >= 64)
+		{
+			var header = Smb2Header.Read(response.Span.Slice(offset));
+			if (header.IsAsync && header.Status == NtStatus.Pending && AsyncRequests.TryGetValue(header.AsyncId, out var pending)) pending.CommitInterim();
+			if (header.NextCommand == 0) break;
+
+			offset += checked((int)header.NextCommand);
+		}
+	}
+
+	public void AbandonPending()
+	{
+		foreach (var pending in PendingRequests.Values) pending.Abandon();
+	}
+
 	public ulong AllocateTreeId()
 	{
-		return (ulong)Interlocked.Increment(ref _treeIdCounter);
+		lock (_legacyIdGate)
+		{
+			if (_treeIdCounter >= uint.MaxValue - 1L) throw new InvalidOperationException("TreeId namespace exhausted.");
+
+			return (ulong)++_treeIdCounter;
+		}
 	}
 
 	public ulong AllocateFileId()
 	{
-		return (ulong)Interlocked.Increment(ref _fileIdCounter);
+		lock (_legacyIdGate)
+		{
+			if (_fileIdCounter == long.MaxValue) throw new InvalidOperationException("Legacy FileId namespace exhausted.");
+
+			return (ulong)++_fileIdCounter;
+		}
 	}
 
 	public ulong AllocateAsyncId()
@@ -106,9 +160,17 @@ public sealed class SmbConnection
 	{
 		foreach (var value in PendingRequests.Values)
 		{
-			value.Cancel();
+			try { value.Cancel(); }
+			catch (Exception)
+			{
+				/* Continue releasing other pending work after a callback fault. */
+			}
+			finally
+			{
+				value.Abandon();
+				PendingRequests.TryRemove(new System.Collections.Generic.KeyValuePair<ulong, PendingAsyncRequest>(value.MessageId, value));
+				AsyncRequests.TryRemove(new System.Collections.Generic.KeyValuePair<ulong, PendingAsyncRequest>(value.AsyncId, value));
+			}
 		}
-
-		PendingRequests.Clear();
 	}
 }

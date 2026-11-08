@@ -14,7 +14,7 @@ public static class CreateContextList
 			return Array.Empty<CreateContext>();
 		}
 
-		if (contextsOffset < 0 || (uint)contextsOffset > (uint)message.Length || (uint)(contextsOffset + contextsLength) > (uint)message.Length)
+		if (contextsOffset < 0 || (uint)contextsOffset > (uint)message.Length || contextsLength > message.Length - contextsOffset)
 		{
 			throw new SmbWireFormatException("CREATE contexts extend past the message.");
 		}
@@ -32,10 +32,20 @@ public static class CreateContextList
 			var num3 = num;
 			var readOnlySpan = message.Slice(num3, num2 - num3);
 			var num4 = BinaryPrimitives.ReadUInt32LittleEndian(readOnlySpan);
+			if (num4 != 0)
+			{
+				if ((num4 & 7) != 0 || num4 < 16 || num4 > (uint)(num2 - num3 - 16)) throw new SmbWireFormatException("CREATE context Next out of range/alignment.");
+
+				readOnlySpan = readOnlySpan.Slice(0, (int)num4);
+			}
+
 			int offset = BinaryPrimitives.ReadUInt16LittleEndian(readOnlySpan.Slice(4));
 			int length = BinaryPrimitives.ReadUInt16LittleEndian(readOnlySpan.Slice(6));
 			int offset2 = BinaryPrimitives.ReadUInt16LittleEndian(readOnlySpan.Slice(10));
 			var num5 = (int)BinaryPrimitives.ReadUInt32LittleEndian(readOnlySpan.Slice(12));
+			if (num5 < 0) throw new SmbWireFormatException("CREATE context data extends past the context.");
+			if ((length > 0 && (offset & 7) != 0) || (num5 > 0 && (offset2 & 7) != 0)) throw new SmbWireFormatException("CREATE context name/data must be 8-byte aligned.");
+
 			var name = ReadSlice(readOnlySpan, offset, length, "name");
 			var data = ((num5 > 0) ? ReadSlice(readOnlySpan, offset2, num5, "data") : Array.Empty<byte>());
 			list.Add(new CreateContext
@@ -121,7 +131,7 @@ public static class CreateContextList
 			return Array.Empty<byte>();
 		}
 
-		if (offset < 0 || length < 0 || (uint)(offset + length) > (uint)ctx.Length)
+		if (offset < 16 || length < 0 || offset > ctx.Length || length > ctx.Length - offset)
 		{
 			throw new SmbWireFormatException("CREATE context " + what + " extends past the context.");
 		}

@@ -7,4 +7,11 @@
     <Project Path="src/Smb.Protocol/Smb.Protocol.csproj" />
     <Project Path="src/Smb.Server/Smb.Server.csproj" />
   </Folder>
+  <Folder Name="/test-host/">
+    <Project Path="test-host/Smb.TestHost/Smb.TestHost.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Smb.Testing/Smb.Testing.csproj" />
+    <Project Path="tests/Smb.Tests/Smb.Tests.csproj" />
+  </Folder>
 </Solution>

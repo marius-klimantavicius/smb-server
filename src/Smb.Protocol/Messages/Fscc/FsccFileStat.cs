@@ -2,6 +2,8 @@ namespace Smb.Protocol.Messages.Fscc;
 
 public sealed class FsccFileStat
 {
+	public bool DeletePending { get; init; }
+
 	public required string Name { get; init; }
 
 	public uint FileAttributes { get; init; }

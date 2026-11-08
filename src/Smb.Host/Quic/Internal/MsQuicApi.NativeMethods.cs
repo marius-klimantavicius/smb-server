@@ -9,7 +9,7 @@ internal sealed unsafe partial class MsQuicApi
 {
     public void SetContext(MsQuicSafeHandle handle, void* context)
     {
-        bool success = false;
+        var success = false;
         try
         {
             handle.DangerousAddRef(ref success);
@@ -26,7 +26,7 @@ internal sealed unsafe partial class MsQuicApi
 
     public void* GetContext(MsQuicSafeHandle handle)
     {
-        bool success = false;
+        var success = false;
         try
         {
             handle.DangerousAddRef(ref success);
@@ -43,7 +43,7 @@ internal sealed unsafe partial class MsQuicApi
 
     public void SetCallbackHandler(MsQuicSafeHandle handle, void* callback, void* context)
     {
-        bool success = false;
+        var success = false;
         try
         {
             handle.DangerousAddRef(ref success);
@@ -60,7 +60,7 @@ internal sealed unsafe partial class MsQuicApi
 
     public uint SetParam(MsQuicSafeHandle handle, uint param, uint bufferLength, void* buffer)
     {
-        bool success = false;
+        var success = false;
         try
         {
             handle.DangerousAddRef(ref success);
@@ -77,7 +77,7 @@ internal sealed unsafe partial class MsQuicApi
 
     public uint GetParam(MsQuicSafeHandle handle, uint param, uint* bufferLength, void* buffer)
     {
-        bool success = false;
+        var success = false;
         try
         {
             handle.DangerousAddRef(ref success);
@@ -94,7 +94,7 @@ internal sealed unsafe partial class MsQuicApi
 
     public void RegistrationShutdown(MsQuicSafeHandle registration, QUIC_CONNECTION_SHUTDOWN_FLAGS flags, ulong code)
     {
-        bool success = false;
+        var success = false;
         try
         {
             registration.DangerousAddRef(ref success);
@@ -111,7 +111,7 @@ internal sealed unsafe partial class MsQuicApi
 
     public uint ConfigurationOpen(MsQuicSafeHandle registration, QUIC_BUFFER* alpnBuffers, uint alpnBuffersCount, QUIC_SETTINGS* settings, uint settingsSize, void* context, QUIC_HANDLE** configuration)
     {
-        bool success = false;
+        var success = false;
         try
         {
             registration.DangerousAddRef(ref success);
@@ -128,7 +128,7 @@ internal sealed unsafe partial class MsQuicApi
 
     public uint ConfigurationLoadCredential(MsQuicSafeHandle configuration, QUIC_CREDENTIAL_CONFIG* config)
     {
-        bool success = false;
+        var success = false;
         try
         {
             configuration.DangerousAddRef(ref success);
@@ -145,7 +145,7 @@ internal sealed unsafe partial class MsQuicApi
 
     public uint ListenerOpen(MsQuicSafeHandle registration, delegate* <QUIC_HANDLE*, void*, QUIC_LISTENER_EVENT*, uint> callback, void* context, QUIC_HANDLE** listener)
     {
-        bool success = false;
+        var success = false;
         try
         {
             registration.DangerousAddRef(ref success);
@@ -162,7 +162,7 @@ internal sealed unsafe partial class MsQuicApi
 
     public uint ListenerStart(MsQuicSafeHandle listener, QUIC_BUFFER* alpnBuffers, uint alpnBuffersCount, QUIC_ADDR* localAddress)
     {
-        bool success = false;
+        var success = false;
         try
         {
             listener.DangerousAddRef(ref success);
@@ -179,7 +179,7 @@ internal sealed unsafe partial class MsQuicApi
 
     public void ListenerStop(MsQuicSafeHandle listener)
     {
-        bool success = false;
+        var success = false;
         try
         {
             listener.DangerousAddRef(ref success);
@@ -196,7 +196,7 @@ internal sealed unsafe partial class MsQuicApi
 
     public uint ConnectionOpen(MsQuicSafeHandle registration, delegate* <QUIC_HANDLE*, void*, QUIC_CONNECTION_EVENT*, uint> callback, void* context, QUIC_HANDLE** connection)
     {
-        bool success = false;
+        var success = false;
         try
         {
             registration.DangerousAddRef(ref success);
@@ -213,7 +213,7 @@ internal sealed unsafe partial class MsQuicApi
 
     public void ConnectionShutdown(MsQuicSafeHandle connection, QUIC_CONNECTION_SHUTDOWN_FLAGS flags, ulong code)
     {
-        bool success = false;
+        var success = false;
         try
         {
             connection.DangerousAddRef(ref success);
@@ -230,8 +230,8 @@ internal sealed unsafe partial class MsQuicApi
 
     public uint ConnectionStart(MsQuicSafeHandle connection, MsQuicSafeHandle configuration, ushort family, byte* serverName, ushort serverPort)
     {
-        bool connectionSuccess = false;
-        bool configurationSuccess = false;
+        var connectionSuccess = false;
+        var configurationSuccess = false;
         try
         {
             connection.DangerousAddRef(ref connectionSuccess);
@@ -253,8 +253,8 @@ internal sealed unsafe partial class MsQuicApi
 
     public uint ConnectionSetConfiguration(MsQuicSafeHandle connection, MsQuicSafeHandle configuration)
     {
-        bool connectionSuccess = false;
-        bool configurationSuccess = false;
+        var connectionSuccess = false;
+        var configurationSuccess = false;
         try
         {
             connection.DangerousAddRef(ref connectionSuccess);
@@ -276,7 +276,7 @@ internal sealed unsafe partial class MsQuicApi
 
     public uint StreamOpen(MsQuicSafeHandle connection, QUIC_STREAM_OPEN_FLAGS flags, delegate* <QUIC_HANDLE*, void*, QUIC_STREAM_EVENT*, uint> callback, void* context, QUIC_HANDLE** stream)
     {
-        bool success = false;
+        var success = false;
         try
         {
             connection.DangerousAddRef(ref success);
@@ -293,7 +293,7 @@ internal sealed unsafe partial class MsQuicApi
 
     public uint StreamStart(MsQuicSafeHandle stream, QUIC_STREAM_START_FLAGS flags)
     {
-        bool success = false;
+        var success = false;
         try
         {
             stream.DangerousAddRef(ref success);
@@ -310,7 +310,7 @@ internal sealed unsafe partial class MsQuicApi
 
     public uint StreamShutdown(MsQuicSafeHandle stream, QUIC_STREAM_SHUTDOWN_FLAGS flags, ulong code)
     {
-        bool success = false;
+        var success = false;
         try
         {
             stream.DangerousAddRef(ref success);
@@ -327,7 +327,7 @@ internal sealed unsafe partial class MsQuicApi
 
     public uint StreamSend(MsQuicSafeHandle stream, QUIC_BUFFER* buffers, uint buffersCount, QUIC_SEND_FLAGS flags, void* context)
     {
-        bool success = false;
+        var success = false;
         try
         {
             stream.DangerousAddRef(ref success);
@@ -344,7 +344,7 @@ internal sealed unsafe partial class MsQuicApi
 
     public void StreamReceiveComplete(MsQuicSafeHandle stream, ulong length)
     {
-        bool success = false;
+        var success = false;
         try
         {
             stream.DangerousAddRef(ref success);
@@ -361,7 +361,7 @@ internal sealed unsafe partial class MsQuicApi
 
     public uint StreamReceiveSetEnabled(MsQuicSafeHandle stream, byte enabled)
     {
-        bool success = false;
+        var success = false;
         try
         {
             stream.DangerousAddRef(ref success);
@@ -378,7 +378,7 @@ internal sealed unsafe partial class MsQuicApi
 
     public uint DatagramSend(MsQuicSafeHandle connection, QUIC_BUFFER* buffers, uint buffersCount, QUIC_SEND_FLAGS flags, void* context)
     {
-        bool success = false;
+        var success = false;
         try
         {
             connection.DangerousAddRef(ref success);
@@ -395,7 +395,7 @@ internal sealed unsafe partial class MsQuicApi
 
     public uint ConnectionResumptionTicketValidationComplete(MsQuicSafeHandle connection, byte result)
     {
-        bool success = false;
+        var success = false;
         try
         {
             connection.DangerousAddRef(ref success);
@@ -412,7 +412,7 @@ internal sealed unsafe partial class MsQuicApi
 
     public uint ConnectionCertificateValidationComplete(MsQuicSafeHandle connection, byte result, QUIC_TLS_ALERT_CODES alert)
     {
-        bool success = false;
+        var success = false;
         try
         {
             connection.DangerousAddRef(ref success);

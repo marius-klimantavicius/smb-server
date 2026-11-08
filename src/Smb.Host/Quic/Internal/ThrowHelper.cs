@@ -55,7 +55,7 @@ internal static class ThrowHelper
 
     internal static Exception GetExceptionForMsQuicStatus(uint status, long? errorCode = default, string? message = null)
     {
-        Exception ex = GetExceptionInternal(status, errorCode, message);
+        var ex = GetExceptionInternal(status, errorCode, message);
         if (status != 0)
         {
             // Include the raw MsQuic status in the HResult property for better diagnostics
@@ -118,7 +118,7 @@ internal static class ThrowHelper
             //
             if ((uint)status >= (uint)QUIC_STATUS_CLOSE_NOTIFY && (uint)status < (uint)QUIC_STATUS_CLOSE_NOTIFY + 256)
             {
-                TlsAlertMessage alert = (TlsAlertMessage)(status - QUIC_STATUS_CLOSE_NOTIFY);
+                var alert = (TlsAlertMessage)(status - QUIC_STATUS_CLOSE_NOTIFY);
                 return new AuthenticationException(SR.Format(SR.net_auth_tls_alert, alert));
             }
 

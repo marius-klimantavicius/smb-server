@@ -13,6 +13,19 @@ public sealed class InMemoryShareModeManager : IShareModeManager
 
 	private readonly Dictionary<string, List<Entry>> _files = new Dictionary<string, List<Entry>>(StringComparer.Ordinal);
 
+	public int ReservationCount
+	{
+		get
+		{
+			lock (_gate)
+			{
+				var count = 0;
+				foreach (var entries in _files.Values) count += entries.Count;
+				return count;
+			}
+		}
+	}
+
 	public bool TryOpen(string fileKey, object owner, FileAccessIntent access, FileShareMode share)
 	{
 		lock (_gate)

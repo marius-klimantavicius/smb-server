@@ -39,11 +39,13 @@ public static class IoctlMessage
 		var num2 = spanReader.ReadUInt32();
 		var num3 = spanReader.ReadUInt32();
 		spanReader.ReadUInt32();
-		spanReader.ReadUInt32();
-		spanReader.ReadUInt32();
+		var outputOffset = spanReader.ReadUInt32();
+		var outputCount = spanReader.ReadUInt32();
+		RequestBounds.Buffer(message, outputOffset, outputCount, bodyOffset + 56, "IOCTL output");
 		var maxOutputResponse = spanReader.ReadUInt32();
 		var flags = spanReader.ReadUInt32();
 		spanReader.ReadUInt32();
+		RequestBounds.Buffer(message, num2, num3, bodyOffset + 56, "IOCTL input");
 		var input = Array.Empty<byte>();
 		if (num3 != 0)
 		{

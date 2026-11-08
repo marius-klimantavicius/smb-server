@@ -10,7 +10,7 @@ namespace System
         private static readonly bool s_usingResourceKeys = GetUsingResourceKeysSwitchValue();
 
         // This method is a target of ILLink substitution.
-        private static bool GetUsingResourceKeysSwitchValue() => AppContext.TryGetSwitch("System.Resources.UseSystemResourceKeys", out bool usingResourceKeys) ? usingResourceKeys : false;
+        private static bool GetUsingResourceKeysSwitchValue() => AppContext.TryGetSwitch("System.Resources.UseSystemResourceKeys", out var usingResourceKeys) ? usingResourceKeys : false;
 
         // This method is used to decide if we need to append the exception message parameters to the message when calling SR.Format.
         // by default it returns the value of System.Resources.UseSystemResourceKeys AppContext switch or false if not specified.
@@ -57,7 +57,7 @@ namespace System
 #endif
         static string GetResourceString(string resourceKey, string defaultString)
         {
-            string resourceString = GetResourceString(resourceKey);
+            var resourceString = GetResourceString(resourceKey);
 
             return resourceKey == resourceString || resourceString == null ? defaultString : resourceString;
         }

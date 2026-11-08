@@ -4,6 +4,7 @@ using Smb.Auth;
 using Smb.FileSystem;
 using Smb.Protocol.Enums;
 using Smb.Server.Authorization;
+using Smb.Server.Caching;
 using Smb.Server.Dfs;
 using Smb.Server.Diagnostics;
 using Smb.Server.Durable;
@@ -19,6 +20,13 @@ namespace Smb.Server;
 
 public sealed class SmbServerOptions
 {
+	public FileCacheCoordinator CacheCoordinator { get; }
+
+	public SmbServerOptions()
+	{
+		CacheCoordinator = new FileCacheCoordinator(this);
+	}
+
 	public string ServerName { get; set; } = Environment.MachineName;
 
 	public byte[] ServerGuid { get; set; } = Guid.NewGuid().ToByteArray();
@@ -86,11 +94,19 @@ public sealed class SmbServerOptions
 
 	public IDirectoryWatcher DirectoryWatcher { get; set; } = new FileSystemDirectoryWatcher();
 
-	public IOplockManager OplockManager { get; set; } = new InMemoryOplockManager();
+	public IOplockManager OplockManager
+	{
+		get => field ?? CacheCoordinator;
+		set;
+	}
 
 	public TimeSpan OplockBreakTimeout { get; set; } = TimeSpan.FromSeconds(35L);
 
-	public ILeaseManager LeaseManager { get; set; } = new InMemoryLeaseManager();
+	public ILeaseManager LeaseManager
+	{
+		get => field ?? CacheCoordinator;
+		set;
+	}
 
 	public IShareModeManager ShareModeManager { get; set; } = new InMemoryShareModeManager();
 
@@ -100,9 +116,14 @@ public sealed class SmbServerOptions
 
 	public TimeSpan MaxDurableHandleTimeout { get; set; } = TimeSpan.FromMinutes(16L);
 
-	public TimeProvider TimeProvider { get; set; } = System.TimeProvider.System;
+	public TimeProvider TimeProvider { get; set; } = TimeProvider.System;
 
-	public bool EnableMultichannel { get; set; } = true;
+	/// <summary>Requested multichannel support; true is rejected by the restricted policy.</summary>
+	public bool EnableMultichannel { get; set; }
+
+	public IFileIoCoordinator? FileIoCoordinator { get; set; }
+
+	public SmbFeaturePolicy FeaturePolicy { get; set; } = SmbFeaturePolicy.Restricted;
 
 	public INetworkInterfaceProvider NetworkInterfaceProvider { get; set; } = new SystemNetworkInterfaceProvider();
 
@@ -130,6 +151,7 @@ public sealed class SmbServerOptions
 
 	public void Validate()
 	{
+		FeaturePolicy.Validate(this);
 		var serverGuid = ServerGuid;
 		if (serverGuid == null || serverGuid.Length != 16)
 		{

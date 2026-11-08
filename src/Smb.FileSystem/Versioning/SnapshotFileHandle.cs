@@ -8,13 +8,16 @@ internal sealed class SnapshotFileHandle : IFileHandle, IDisposable
 
 	private readonly FileEntryInfo _info;
 
+	public FileIdentity? Identity { get; }
+
 	public string Path { get; }
 
 	public bool IsDirectory => false;
 
-	public SnapshotFileHandle(string path, byte[] content, FileEntryInfo info)
+	public SnapshotFileHandle(string path, byte[] content, FileEntryInfo info, FileIdentity identity)
 	{
 		Path = path;
+		Identity = identity;
 		_content = content;
 		_info = info;
 	}

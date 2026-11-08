@@ -52,10 +52,10 @@ internal struct ReceiveBuffers
             _final = final;
             _buffer.EnsureAvailableSpace(totalLength);
 
-            int totalCopied = 0;
-            for (int i = 0; i < quicBuffers.Length; ++i)
+            var totalCopied = 0;
+            for (var i = 0; i < quicBuffers.Length; ++i)
             {
-                Span<byte> quicBuffer = quicBuffers[i].Span;
+                var quicBuffer = quicBuffers[i].Span;
                 if (totalLength < quicBuffer.Length)
                 {
                     quicBuffer = quicBuffer.Slice(0, totalLength);
@@ -73,10 +73,10 @@ internal struct ReceiveBuffers
     {
         lock (_syncRoot)
         {
-            int copied = 0;
+            var copied = 0;
             if (!_buffer.IsEmpty)
             {
-                MultiMemory activeBuffer = _buffer.ActiveMemory;
+                var activeBuffer = _buffer.ActiveMemory;
                 copied = Math.Min(buffer.Length, activeBuffer.Length);
                 activeBuffer.Slice(0, copied).CopyTo(buffer.Span);
                 _buffer.Discard(copied);

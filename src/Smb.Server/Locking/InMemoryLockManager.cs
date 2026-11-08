@@ -36,64 +36,104 @@ public sealed class InMemoryLockManager : ILockManager
 
 	private readonly Dictionary<string, FileLockState> _files = new Dictionary<string, FileLockState>(StringComparer.OrdinalIgnoreCase);
 
+	public int ActiveLockCount
+	{
+		get
+		{
+			lock (_gate)
+			{
+				var count = 0;
+				foreach (var state in _files.Values) count += state.Active.Count;
+				return count;
+			}
+		}
+	}
+
+	public int PendingLockCount
+	{
+		get
+		{
+			lock (_gate)
+			{
+				var count = 0;
+				foreach (var state in _files.Values) count += state.Waiters.Count;
+				return count;
+			}
+		}
+	}
+
 	public Task<LockOutcome> ApplyAsync(SmbOpen owner, IReadOnlyList<LockElement> elements, bool failImmediately, CancellationToken ct)
 	{
-		if (elements.Count == 0)
-		{
-			return Task.FromResult(LockOutcome.Granted);
-		}
+		if (elements.Count == 0) return Task.FromResult(LockOutcome.Granted);
 
 		var key = FileKey(owner);
+		var decisions = new List<(Waiter, LockOutcome)>();
+		Waiter? waiter = null;
+		LockOutcome outcome;
+		FileLockState state;
 		lock (_gate)
 		{
-			var state = GetOrAdd(key);
-			if (elements[0].Unlock)
+			state = GetOrAdd(key);
+			if (elements[0].Unlock) outcome = ApplyUnlocks(state, owner, elements, decisions);
+			else
 			{
-				return Task.FromResult(ApplyUnlocks(state, owner, elements));
-			}
-
-			var flag = false;
-			foreach (var element in elements)
-			{
-				if (Conflicts(state, owner, element.Offset, element.Length, element.Exclusive))
+				var conflict = false;
+				foreach (var e in elements) conflict |= Conflicts(state, owner, e.Offset, e.Length, e.Exclusive);
+				if (!conflict)
 				{
-					flag = true;
-					break;
+					foreach (var e in elements) state.Active.Add(new ActiveLock(owner, e.Offset, e.Length, e.Exclusive));
+					outcome = LockOutcome.Granted;
+				}
+				else if (failImmediately || elements.Count != 1) outcome = LockOutcome.Conflict;
+				else
+				{
+					var e = elements[0];
+					waiter = new Waiter(owner, e.Offset, e.Length, e.Exclusive, new TaskCompletionSource<LockOutcome>(TaskCreationOptions.RunContinuationsAsynchronously));
+					state.Waiters.Add(waiter);
+					outcome = LockOutcome.Conflict;
 				}
 			}
 
-			if (!flag)
-			{
-				foreach (var element2 in elements)
-				{
-					state.Active.Add(new ActiveLock(owner, element2.Offset, element2.Length, element2.Exclusive));
-				}
+			Prune(key, state);
+		}
 
-				return Task.FromResult(LockOutcome.Granted);
+		Finish(decisions);
+		if (waiter == null) return Task.FromResult(outcome);
+
+		var registration = ct.Register(() =>
+		{
+			bool removed;
+			lock (_gate)
+			{
+				removed = state.Waiters.Remove(waiter);
+				Prune(key, state);
 			}
 
-			if (failImmediately || elements.Count != 1)
-			{
-				return Task.FromResult(LockOutcome.Conflict);
-			}
+			if (removed) Finish([(waiter, LockOutcome.Cancelled)]);
+		});
+		// Register can invoke synchronously, or grant/cancel can win before attachment.
+		bool waiting;
+		lock (_gate)
+		{
+			waiting = state.Waiters.Contains(waiter);
+			if (waiting) waiter.Registration = registration;
+		}
 
-			var lockElement = elements[0];
-			var tcs = new TaskCompletionSource<LockOutcome>(TaskCreationOptions.RunContinuationsAsynchronously);
-			var waiter = new Waiter(owner, lockElement.Offset, lockElement.Length, lockElement.Exclusive, tcs);
-			state.Waiters.Add(waiter);
-			waiter.Registration = ct.Register(() =>
-			{
-				lock (_gate)
-				{
-					if (!state.Waiters.Remove(waiter))
-					{
-						return;
-					}
-				}
+		if (!waiting) registration.Dispose();
+		return waiter.Tcs.Task;
+	}
 
-				tcs.TrySetResult(LockOutcome.Cancelled);
-			});
-			return tcs.Task;
+	private void Prune(string key, FileLockState state)
+	{
+		if (state.Active.Count == 0 && state.Waiters.Count == 0 && _files.TryGetValue(key, out var current) && current == state) _files.Remove(key);
+	}
+
+	private static void Finish(List<(Waiter Waiter, LockOutcome Outcome)> decisions)
+	{
+		foreach (var (waiter, outcome) in decisions)
+		{
+			waiter.Registration.Dispose();
+			waiter.Tcs.TrySetResult(outcome);
 		}
 	}
 
@@ -127,34 +167,27 @@ public sealed class InMemoryLockManager : ILockManager
 	public void ReleaseOwner(SmbOpen owner)
 	{
 		var key = FileKey(owner);
+		var decisions = new List<(Waiter, LockOutcome)>();
 		lock (_gate)
 		{
-			if (!_files.TryGetValue(key, out var value))
-			{
-				return;
-			}
+			if (!_files.TryGetValue(key, out var state)) return;
 
-			value.Active.RemoveAll(a => a.Owner == owner);
-			for (var num = value.Waiters.Count - 1; num >= 0; num--)
-			{
-				if (value.Waiters[num].Owner == owner)
+			state.Active.RemoveAll(a => a.Owner == owner);
+			for (var i = state.Waiters.Count - 1; i >= 0; i--)
+				if (state.Waiters[i].Owner == owner)
 				{
-					var waiter = value.Waiters[num];
-					value.Waiters.RemoveAt(num);
-					waiter.Registration.Dispose();
-					waiter.Tcs.TrySetResult(LockOutcome.Cancelled);
+					decisions.Add((state.Waiters[i], LockOutcome.Cancelled));
+					state.Waiters.RemoveAt(i);
 				}
-			}
 
-			WakeWaiters(value);
-			if (value.Active.Count == 0 && value.Waiters.Count == 0)
-			{
-				_files.Remove(key);
-			}
+			WakeWaiters(state, decisions);
+			Prune(key, state);
 		}
+
+		Finish(decisions);
 	}
 
-	private LockOutcome ApplyUnlocks(FileLockState state, SmbOpen owner, IReadOnlyList<LockElement> elements)
+	private LockOutcome ApplyUnlocks(FileLockState state, SmbOpen owner, IReadOnlyList<LockElement> elements, List<(Waiter, LockOutcome)> decisions)
 	{
 		var list = new List<int>(elements.Count);
 		foreach (var element in elements)
@@ -184,11 +217,11 @@ public sealed class InMemoryLockManager : ILockManager
 			state.Active.RemoveAt(list[num2]);
 		}
 
-		WakeWaiters(state);
+		WakeWaiters(state, decisions);
 		return LockOutcome.Granted;
 	}
 
-	private static void WakeWaiters(FileLockState state)
+	private static void WakeWaiters(FileLockState state, List<(Waiter, LockOutcome)> decisions)
 	{
 		var num = 0;
 		while (num < state.Waiters.Count)
@@ -198,8 +231,7 @@ public sealed class InMemoryLockManager : ILockManager
 			{
 				state.Active.Add(new ActiveLock(waiter.Owner, waiter.Offset, waiter.Length, waiter.Exclusive));
 				state.Waiters.RemoveAt(num);
-				waiter.Registration.Dispose();
-				waiter.Tcs.TrySetResult(LockOutcome.Granted);
+				decisions.Add((waiter, LockOutcome.Granted));
 			}
 			else
 			{
@@ -255,6 +287,6 @@ public sealed class InMemoryLockManager : ILockManager
 
 	private static string FileKey(SmbOpen owner)
 	{
-		return owner.LocalOpen?.PhysicalPath ?? owner.PathName;
+		return owner.IdentityKey;
 	}
 }

@@ -7,6 +7,8 @@ public sealed class SmbTreeConnect
 {
 	public int OpenCount;
 
+	public OpenLifetime Lifetime { get; } = new OpenLifetime();
+
 	public required ulong TreeId { get; init; }
 
 	public required SmbSession Session { get; init; }

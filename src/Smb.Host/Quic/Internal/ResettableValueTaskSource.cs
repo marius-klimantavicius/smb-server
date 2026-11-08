@@ -80,7 +80,7 @@ internal sealed class ResettableValueTaskSource : IValueTaskSource
                 {
                     _cancellationRegistration = cancellationToken.UnsafeRegister(static (obj, cancellationToken) =>
                     {
-                        (ResettableValueTaskSource thisRef, object? target) = ((ResettableValueTaskSource, object?))obj!;
+                        (var thisRef, var target) = ((ResettableValueTaskSource, object?))obj!;
                         lock (thisRef)
                         {
                             thisRef._cancelledToken = cancellationToken;
@@ -90,7 +90,7 @@ internal sealed class ResettableValueTaskSource : IValueTaskSource
                 }
             }
 
-            State state = _state;
+            var state = _state;
 
             // None: prepare for the actual operation happening and transition to Awaiting.
             if (state == State.None)
@@ -148,7 +148,7 @@ internal sealed class ResettableValueTaskSource : IValueTaskSource
         {
             try
             {
-                State state = _state;
+                var state = _state;
 
                 // Completed: nothing to do.
                 if (state == State.Completed)
@@ -255,7 +255,7 @@ internal sealed class ResettableValueTaskSource : IValueTaskSource
         {
             lock (this)
             {
-                State state = _state;
+                var state = _state;
 
                 _hasWaiter = false;
                 _cancelledToken = default;
@@ -266,7 +266,7 @@ internal sealed class ResettableValueTaskSource : IValueTaskSource
                     _state = State.None;
 
                     // Propagate the _finalTaskSource result into _valueTaskSource if completed.
-                    if (_finalTaskSource.TrySignal(out Exception? exception))
+                    if (_finalTaskSource.TrySignal(out var exception))
                     {
                         _state = State.Completed;
 
@@ -322,7 +322,7 @@ internal sealed class ResettableValueTaskSource : IValueTaskSource
                 _finalTaskSource = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
                 if (!_isCompleted)
                 {
-                    GCHandle handle = GCHandle.Alloc(keepAlive);
+                    var handle = GCHandle.Alloc(keepAlive);
                     _finalTaskSource.Task.ContinueWith(static (_, state) =>
                     {
                         ((GCHandle)state!).Free();

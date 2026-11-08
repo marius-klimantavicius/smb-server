@@ -9,6 +9,8 @@ public static class EchoMessage
 
 	public static void ValidateRequest(ReadOnlySpan<byte> body)
 	{
+		if (body.Length < 4) throw new SmbWireFormatException("Incomplete fixed request.");
+
 		var num = new SpanReader(body).ReadUInt16();
 		if (num != StructureSize)
 		{

@@ -34,6 +34,9 @@ public static class QueryDirectoryMessage
 		var num2 = spanReader.ReadUInt16();
 		var num3 = spanReader.ReadUInt16();
 		var outputBufferLength = spanReader.ReadUInt32();
+		RequestBounds.Buffer(message, num2, num3, bodyOffset + 32, "QUERY_DIRECTORY name");
+		if ((num3 & 1) != 0 || (num3 != 0 && (num2 & 1) != 0)) throw new SmbWireFormatException("QUERY_DIRECTORY name must be UTF-16 aligned.");
+
 		var searchPattern = string.Empty;
 		if (num3 > 0 && num2 + num3 <= message.Length)
 		{

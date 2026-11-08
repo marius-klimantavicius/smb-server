@@ -7,7 +7,12 @@ namespace Smb.Server.Notification;
 public sealed class FileSystemDirectoryWatcher : IDirectoryWatcher
 {
 	public IDisposable? Watch(string directoryFullPath, bool watchSubtree, ChangeNotifyFilter filter, Action<IReadOnlyList<FileNotifyEvent>> onChanges)
+		=> Watch(directoryFullPath, watchSubtree, filter, onChanges, _ => { });
+
+	public IDisposable? Watch(string directoryFullPath, bool watchSubtree, ChangeNotifyFilter filter, Action<IReadOnlyList<FileNotifyEvent>> onChanges, Action<Protocol.Enums.NtStatus> onError)
 	{
+		if (MapFilter(filter) == 0) return Directory.Exists(directoryFullPath) ? new EmptySubscription() : null;
+
 		if (string.IsNullOrEmpty(directoryFullPath) || !Directory.Exists(directoryFullPath))
 		{
 			return null;
@@ -43,6 +48,7 @@ public sealed class FileSystemDirectoryWatcher : IDirectoryWatcher
 					new FileNotifyEvent(FileNotifyAction.RenamedNewName, Relative(root, e.FullPath)),
 				]);
 			};
+			fileSystemWatcher.Error += (_, _) => onError(Protocol.Enums.NtStatus.NotifyEnumDir);
 			fileSystemWatcher.EnableRaisingEvents = true;
 			return fileSystemWatcher;
 		}
@@ -56,6 +62,11 @@ public sealed class FileSystemDirectoryWatcher : IDirectoryWatcher
 		{
 			onChanges([new FileNotifyEvent(action, Relative(root, fullPath))]);
 		}
+	}
+
+	private sealed class EmptySubscription : IDisposable
+	{
+		public void Dispose() { }
 	}
 
 	private static NotifyFilters MapFilter(ChangeNotifyFilter f)
@@ -106,7 +117,7 @@ public sealed class FileSystemDirectoryWatcher : IDirectoryWatcher
 			return notifyFilters;
 		}
 
-		return NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.LastWrite;
+		return (NotifyFilters)0;
 	}
 
 	private static string Relative(string root, string fullPath)

@@ -9,3 +9,5 @@ using System.Reflection;
 [assembly: AssemblyTitle("Smb.Host")]
 [assembly: AssemblyMetadata("RepositoryUrl", "https://github.com/KaimoSystemSolutions/SMB-Server")]
 [assembly: AssemblyVersion("2.1.1.0")]
+
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Smb.Tests")]

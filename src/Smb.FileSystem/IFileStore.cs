@@ -15,6 +15,18 @@ public interface IFileStore
 
 	ValueTask<FileStoreResult<int>> WriteAsync(IFileHandle handle, long offset, ReadOnlyMemory<byte> data, CancellationToken cancellationToken = default(CancellationToken));
 
+	ValueTask<FileStoreResult<int>> ReadWithOptionsAsync(IFileHandle handle, long offset, Memory<byte> buffer, FileIoOptions options, CancellationToken cancellationToken = default)
+		=> ReadAsync(handle, offset, buffer, cancellationToken);
+
+	async ValueTask<FileStoreResult<int>> WriteWithOptionsAsync(IFileHandle handle, long offset, ReadOnlyMemory<byte> data, FileIoOptions options, CancellationToken cancellationToken = default)
+	{
+		var result = await WriteAsync(handle, offset, data, cancellationToken).ConfigureAwait(false);
+		if (!result.IsSuccess || !options.WriteThrough) return result;
+
+		var status = await FlushAsync(handle, cancellationToken).ConfigureAwait(false);
+		return status == NtStatus.Success ? result : FileStoreResult<int>.Fail(status);
+	}
+
 	ValueTask<FileStoreResult<IReadOnlyList<FileEntryInfo>>> QueryDirectoryAsync(IFileHandle handle, string searchPattern, CancellationToken cancellationToken = default(CancellationToken));
 
 	async ValueTask<FileStoreResult<BoundedDirectoryListing>> QueryDirectoryAsync(IFileHandle handle, string searchPattern, int maxEntries, CancellationToken cancellationToken = default(CancellationToken))

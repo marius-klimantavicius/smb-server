@@ -107,6 +107,6 @@ public sealed class InMemoryOplockManager : IOplockManager
 
 	private static string FileKey(SmbOpen open)
 	{
-		return open.LocalOpen?.PhysicalPath ?? open.PathName;
+		return open.IdentityKey;
 	}
 }

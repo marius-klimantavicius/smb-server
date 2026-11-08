@@ -115,7 +115,7 @@ public partial class QuicStream : Stream
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
-        byte[] rentedBuffer = ArrayPool<byte>.Shared.Rent(buffer.Length);
+        var rentedBuffer = ArrayPool<byte>.Shared.Rent(buffer.Length);
         CancellationTokenSource? cts = null;
         try
         {
@@ -123,7 +123,7 @@ public partial class QuicStream : Stream
             {
                 cts = new CancellationTokenSource(_readTimeout);
             }
-            int readLength = ReadAsync(new Memory<byte>(rentedBuffer, 0, buffer.Length), cts?.Token ?? default).AsTask().GetAwaiter().GetResult();
+            var readLength = ReadAsync(new Memory<byte>(rentedBuffer, 0, buffer.Length), cts?.Token ?? default).AsTask().GetAwaiter().GetResult();
             rentedBuffer.AsSpan(0, readLength).CopyTo(buffer);
             return readLength;
         }

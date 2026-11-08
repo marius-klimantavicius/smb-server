@@ -9,10 +9,12 @@ using Smb.Protocol.Enums;
 
 namespace Smb.FileSystem.Versioning;
 
-public sealed class VersioningFileStore : IFileStore, ISnapshotStore
+public sealed class VersioningFileStore : IFileStore, ISnapshotStore, IDirectoryCursorStore
 {
 	private sealed record FileVersion(DateTime TimeUtc, byte[] Content, FileEntryInfo Original)
 	{
+		public FileIdentity Identity { get; } = new FileIdentity("snapshot:" + Guid.NewGuid().ToString("N"));
+
 		public FileEntryInfo SnapshotInfo()
 		{
 			return new FileEntryInfo
@@ -124,12 +126,12 @@ public sealed class VersioningFileStore : IFileStore, ISnapshotStore
 				return FileStoreResult<FileCreateResult>.Fail(NtStatus.AccessDenied);
 			}
 
-			if (!TryResolveSnapshot(remainder, snapshotUtc, out var content, out var info))
+			if (!TryResolveSnapshot(remainder, snapshotUtc, out var content, out var info, out var identity))
 			{
 				return FileStoreResult<FileCreateResult>.Fail(NtStatus.ObjectNameNotFound);
 			}
 
-			return FileStoreResult<FileCreateResult>.Ok(new FileCreateResult(new SnapshotFileHandle(remainder, content, info), CreateOutcome.Opened));
+			return FileStoreResult<FileCreateResult>.Ok(new FileCreateResult(new SnapshotFileHandle(remainder, content, info, identity), CreateOutcome.Opened));
 		}
 
 		if (disposition == CreateDispositionIntent.Supersede || (uint)(disposition - 4) <= 1u)
@@ -148,6 +150,39 @@ public sealed class VersioningFileStore : IFileStore, ISnapshotStore
 		}
 
 		return new ValueTask<FileStoreResult<int>>(snapshotFileHandle.Read(offset, buffer.Span));
+	}
+
+	public ValueTask<FileStoreResult<int>> ReadWithOptionsAsync(IFileHandle handle, long offset, Memory<byte> buffer, FileIoOptions options, CancellationToken cancellationToken = default)
+		=> handle is SnapshotFileHandle ? ReadAsync(handle, offset, buffer, cancellationToken) : _inner.ReadWithOptionsAsync(handle, offset, buffer, options, cancellationToken);
+
+	public ValueTask<FileStoreResult<int>> WriteWithOptionsAsync(IFileHandle handle, long offset, ReadOnlyMemory<byte> data, FileIoOptions options, CancellationToken cancellationToken = default)
+		=> handle is SnapshotFileHandle ? WriteAsync(handle, offset, data, cancellationToken) : _inner.WriteWithOptionsAsync(handle, offset, data, options, cancellationToken);
+
+	public ValueTask<FileStoreResult<IDirectoryCursor>> OpenDirectoryCursorAsync(IFileHandle handle, string pattern, CancellationToken cancellationToken = default)
+	{
+		if (handle is SnapshotFileHandle) return new ValueTask<FileStoreResult<IDirectoryCursor>>(FileStoreResult<IDirectoryCursor>.Fail(NtStatus.InvalidParameter));
+
+		return _inner is IDirectoryCursorStore cursors
+			? cursors.OpenDirectoryCursorAsync(handle, pattern, cancellationToken)
+			: new ValueTask<FileStoreResult<IDirectoryCursor>>(FileStoreResult<IDirectoryCursor>.Ok(new LegacyCursor(_inner, handle, pattern)));
+	}
+
+	private sealed class LegacyCursor(IFileStore store, IFileHandle handle, string pattern) : IDirectoryCursor
+	{
+		bool ended;
+
+		public async ValueTask<FileStoreResult<BoundedDirectoryListing>> ReadAsync(int maxEntries, CancellationToken cancellationToken = default)
+		{
+			if (ended) return FileStoreResult<BoundedDirectoryListing>.Ok(new BoundedDirectoryListing(Array.Empty<FileEntryInfo>(), false));
+
+			var result = await store.QueryDirectoryAsync(handle, pattern, maxEntries, cancellationToken).ConfigureAwait(false);
+			if (result.IsSuccess && result.Value.Truncated) return FileStoreResult<BoundedDirectoryListing>.Fail(NtStatus.InsufficientResources);
+
+			ended = true;
+			return result;
+		}
+
+		public void Dispose() => ended = true;
 	}
 
 	public ValueTask<FileStoreResult<int>> WriteAsync(IFileHandle handle, long offset, ReadOnlyMemory<byte> data, CancellationToken cancellationToken = default(CancellationToken))
@@ -331,10 +366,11 @@ public sealed class VersioningFileStore : IFileStore, ISnapshotStore
 		return result;
 	}
 
-	private bool TryResolveSnapshot(string realPath, DateTime snapAt, out byte[] content, [NotNullWhen(true)] out FileEntryInfo? info)
+	private bool TryResolveSnapshot(string realPath, DateTime snapAt, out byte[] content, [NotNullWhen(true)] out FileEntryInfo? info, out FileIdentity identity)
 	{
 		content = Array.Empty<byte>();
 		info = null;
+		identity = default;
 		if (string.IsNullOrEmpty(realPath) || !_history.TryGetValue(Normalize(realPath), out var value))
 		{
 			return false;
@@ -348,6 +384,7 @@ public sealed class VersioningFileStore : IFileStore, ISnapshotStore
 
 		content = fileVersion.Content;
 		info = fileVersion.SnapshotInfo();
+		identity = fileVersion.Identity;
 		return true;
 	}
 

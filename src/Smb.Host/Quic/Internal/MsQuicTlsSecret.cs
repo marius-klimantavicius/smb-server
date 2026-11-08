@@ -24,7 +24,7 @@ internal sealed class MsQuicTlsSecret : IDisposable
         {
             tlsSecrets = (QUIC_TLS_SECRETS*)NativeMemory.AllocZeroed((nuint)sizeof(QUIC_TLS_SECRETS));
             MsQuicHelpers.SetMsQuicParameter(handle, QUIC_PARAM_CONN_TLS_SECRETS, (uint)sizeof(QUIC_TLS_SECRETS), (byte*)tlsSecrets);
-            MsQuicTlsSecret instance = new MsQuicTlsSecret(tlsSecrets);
+            var instance = new MsQuicTlsSecret(tlsSecrets);
             handle.Disposable = instance;
             return instance;
         }
@@ -49,27 +49,27 @@ internal sealed class MsQuicTlsSecret : IDisposable
 
     public unsafe void WriteSecret()
     {
-        ReadOnlySpan<byte> clientRandom = _tlsSecrets->IsSet.ClientRandom != 0
+        var clientRandom = _tlsSecrets->IsSet.ClientRandom != 0
             ? new ReadOnlySpan<byte>(_tlsSecrets->ClientRandom, 32)
             : ReadOnlySpan<byte>.Empty;
 
-        Span<byte> clientHandshakeTrafficSecret = _tlsSecrets->IsSet.ClientHandshakeTrafficSecret != 0
+        var clientHandshakeTrafficSecret = _tlsSecrets->IsSet.ClientHandshakeTrafficSecret != 0
             ? new Span<byte>(_tlsSecrets->ClientHandshakeTrafficSecret, _tlsSecrets->SecretLength)
             : Span<byte>.Empty;
 
-        Span<byte> serverHandshakeTrafficSecret = _tlsSecrets->IsSet.ServerHandshakeTrafficSecret != 0
+        var serverHandshakeTrafficSecret = _tlsSecrets->IsSet.ServerHandshakeTrafficSecret != 0
             ? new Span<byte>(_tlsSecrets->ServerHandshakeTrafficSecret, _tlsSecrets->SecretLength)
             : Span<byte>.Empty;
 
-        Span<byte> clientTrafficSecret0 = _tlsSecrets->IsSet.ClientTrafficSecret0 != 0
+        var clientTrafficSecret0 = _tlsSecrets->IsSet.ClientTrafficSecret0 != 0
             ? new Span<byte>(_tlsSecrets->ClientTrafficSecret0, _tlsSecrets->SecretLength)
             : Span<byte>.Empty;
 
-        Span<byte> serverTrafficSecret0 = _tlsSecrets->IsSet.ServerTrafficSecret0 != 0
+        var serverTrafficSecret0 = _tlsSecrets->IsSet.ServerTrafficSecret0 != 0
             ? new Span<byte>(_tlsSecrets->ServerTrafficSecret0, _tlsSecrets->SecretLength)
             : Span<byte>.Empty;
 
-        Span<byte> clientEarlyTrafficSecret = _tlsSecrets->IsSet.ClientEarlyTrafficSecret != 0
+        var clientEarlyTrafficSecret = _tlsSecrets->IsSet.ClientEarlyTrafficSecret != 0
             ? new Span<byte>(_tlsSecrets->ClientEarlyTrafficSecret, _tlsSecrets->SecretLength)
             : Span<byte>.Empty;
 
@@ -127,7 +127,7 @@ internal sealed class MsQuicTlsSecret : IDisposable
                 return;
             }
 
-            QUIC_TLS_SECRETS* tlsSecrets = _tlsSecrets;
+            var tlsSecrets = _tlsSecrets;
             _tlsSecrets = null;
             NativeMemory.Free(tlsSecrets);
         }

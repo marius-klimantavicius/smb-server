@@ -38,7 +38,7 @@ namespace System
 
         private static bool GetCachedSwitchValueInternal(string switchName, string? envVariable, ref int cachedSwitchValue, bool defaultValue)
         {
-            if (!AppContext.TryGetSwitch(switchName, out bool isSwitchEnabled))
+            if (!AppContext.TryGetSwitch(switchName, out var isSwitchEnabled))
             {
                 if (envVariable == null || !TryGetBooleanEnvironmentVariable(envVariable, out isSwitchEnabled))
                 {
@@ -46,7 +46,7 @@ namespace System
                 }
             }
 
-            AppContext.TryGetSwitch("TestSwitch.LocalAppContext.DisableCaching", out bool disableCaching);
+            AppContext.TryGetSwitch("TestSwitch.LocalAppContext.DisableCaching", out var disableCaching);
             if (!disableCaching)
             {
                 cachedSwitchValue = isSwitchEnabled ? 1 /*true*/ : -1 /*false*/;

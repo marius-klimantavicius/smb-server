@@ -73,8 +73,8 @@ namespace System
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ToBytesBuffer(byte value, Span<byte> buffer, int startingIndex = 0, Casing casing = Casing.Upper)
         {
-            uint difference = (((uint)value & 0xF0U) << 4) + ((uint)value & 0x0FU) - 0x8989U;
-            uint packedResult = ((((uint)(-(int)difference) & 0x7070U) >> 4) + difference + 0xB9B9U) | (uint)casing;
+            var difference = (((uint)value & 0xF0U) << 4) + ((uint)value & 0x0FU) - 0x8989U;
+            var packedResult = ((((uint)(-(int)difference) & 0x7070U) >> 4) + difference + 0xB9B9U) | (uint)casing;
 
             buffer[startingIndex + 1] = (byte)packedResult;
             buffer[startingIndex] = (byte)(packedResult >> 8);
@@ -83,8 +83,8 @@ namespace System
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ToCharsBuffer(byte value, Span<char> buffer, int startingIndex = 0, Casing casing = Casing.Upper)
         {
-            uint difference = (((uint)value & 0xF0U) << 4) + ((uint)value & 0x0FU) - 0x8989U;
-            uint packedResult = ((((uint)(-(int)difference) & 0x7070U) >> 4) + difference + 0xB9B9U) | (uint)casing;
+            var difference = (((uint)value & 0xF0U) << 4) + ((uint)value & 0x0FU) - 0x8989U;
+            var packedResult = ((((uint)(-(int)difference) & 0x7070U) >> 4) + difference + 0xB9B9U) | (uint)casing;
 
             buffer[startingIndex + 1] = (char)(packedResult & 0xFF);
             buffer[startingIndex] = (char)(packedResult >> 8);
@@ -194,7 +194,7 @@ namespace System
                 return;
             }
 #endif
-            for (int pos = 0; pos < source.Length; pos++)
+            for (var pos = 0; pos < source.Length; pos++)
             {
                 ToBytesBuffer(source[pos], utf8Destination, pos * 2, casing);
             }
@@ -211,7 +211,7 @@ namespace System
                 return;
             }
 #endif
-            for (int pos = 0; pos < source.Length; pos++)
+            for (var pos = 0; pos < source.Length; pos++)
             {
                 ToCharsBuffer(source[pos], destination, pos * 2, casing);
             }
@@ -220,7 +220,7 @@ namespace System
         public static unsafe string ToString(ReadOnlySpan<byte> bytes, Casing casing = Casing.Upper)
         {
 #if NET
-            SpanCasingPair args = new() { Bytes = bytes, Casing = casing };
+            var args = new SpanCasingPair { Bytes = bytes, Casing = casing };
             return string.Create(bytes.Length * 2, args, static (chars, args) =>
                 EncodeToUtf16(args.Bytes, chars, args.Casing));
 #else
@@ -457,10 +457,10 @@ namespace System
             Debug.Assert((utf8Source.Length % 2) == 0, "Un-even number of characters provided");
             Debug.Assert((utf8Source.Length / 2) == destination.Length, "Target buffer not right-sized for provided characters");
 
-            int i = 0;
-            int j = 0;
-            int byteLo = 0;
-            int byteHi = 0;
+            var i = 0;
+            var j = 0;
+            var byteLo = 0;
+            var byteHi = 0;
 
             while (j < destination.Length)
             {
@@ -492,10 +492,10 @@ namespace System
             Debug.Assert((source.Length % 2) == 0, "Un-even number of characters provided");
             Debug.Assert((source.Length / 2) == destination.Length, "Target buffer not right-sized for provided characters");
 
-            int i = 0;
-            int j = 0;
-            int byteLo = 0;
-            int byteHi = 0;
+            var i = 0;
+            var j = 0;
+            var byteLo = 0;
+            var byteHi = 0;
 
             while (j < destination.Length)
             {
@@ -572,8 +572,8 @@ namespace System
                 // the case if both `i` was in fact the index of a set bit in the magic constant, and also
                 // `c` was in the allowed range (this ensures that false positive bit shifts are ignored).
                 ulong i = (uint)c - '0';
-                ulong shift = 18428868213665201664UL << (int)i;
-                ulong mask = i - 64;
+                var shift = 18428868213665201664UL << (int)i;
+                var mask = i - 64;
 
                 return (long)(shift & mask) < 0 ? true : false;
             }

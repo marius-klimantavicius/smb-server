@@ -2,6 +2,8 @@ namespace Smb.FileSystem;
 
 public sealed class FileEntryInfo
 {
+	public bool DeletePending { get; init; }
+
 	public required string Name { get; init; }
 
 	public SmbFileAttributes Attributes { get; init; }

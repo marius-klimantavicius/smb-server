@@ -58,7 +58,7 @@ public sealed partial class QuicListener : IAsyncDisposable
         // Validate and fill in defaults for the options.
         options.Validate(nameof(options));
 
-        QuicListener listener = new QuicListener(options);
+        var listener = new QuicListener(options);
 
         if (NetEventSource.Log.IsEnabled())
         {
@@ -118,7 +118,7 @@ public sealed partial class QuicListener : IAsyncDisposable
     /// <param name="options">Options to start the listener.</param>
     private unsafe QuicListener(QuicListenerOptions options)
     {
-        GCHandle context = GCHandle.Alloc(this, GCHandleType.Weak);
+        var context = GCHandle.Alloc(this, GCHandleType.Weak);
         try
         {
             QUIC_HANDLE* handle;
@@ -142,9 +142,9 @@ public sealed partial class QuicListener : IAsyncDisposable
         _pendingConnectionsCapacity = options.ListenBacklog;
 
         // Start the listener, from now on MsQuic events will come.
-        using MsQuicBuffers alpnBuffers = new MsQuicBuffers();
+        using var alpnBuffers = new MsQuicBuffers();
         alpnBuffers.Initialize(options.ApplicationProtocols, applicationProtocol => applicationProtocol.Protocol);
-        QuicAddr address = options.ListenEndPoint.ToQuicAddr();
+        var address = options.ListenEndPoint.ToQuicAddr();
         if (options.ListenEndPoint.Address.Equals(IPAddress.IPv6Any))
         {
             // For IPv6Any, MsQuic would listen only for IPv6 connections. This would make it impossible
@@ -177,10 +177,10 @@ public sealed partial class QuicListener : IAsyncDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
-        GCHandle keepObject = GCHandle.Alloc(this);
+        var keepObject = GCHandle.Alloc(this);
         try
         {
-            object item = await _acceptQueue.Reader.ReadAsync(cancellationToken).ConfigureAwait(false);
+            var item = await _acceptQueue.Reader.ReadAsync(cancellationToken).ConfigureAwait(false);
             Interlocked.Increment(ref _pendingConnectionsCapacity);
 
             if (item is QuicConnection connection)
@@ -218,22 +218,22 @@ public sealed partial class QuicListener : IAsyncDisposable
         // or other operations on other connections.
         await Task.CompletedTask.ConfigureAwait(ConfigureAwaitOptions.ForceYielding);
 
-        bool wrapException = false;
+        var wrapException = false;
         CancellationToken cancellationToken = default;
 
         // In certain cases MsQuic will not impose the handshake idle timeout on their side, see
         // https://github.com/microsoft/msquic/discussions/2705.
         // This will be assigned to before the linked CTS is cancelled
-        TimeSpan handshakeTimeout = QuicDefaults.HandshakeTimeout;
+        var handshakeTimeout = QuicDefaults.HandshakeTimeout;
         try
         {
-            using CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(_disposeCts.Token, connection.ConnectionShutdownToken);
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(_disposeCts.Token, connection.ConnectionShutdownToken);
             cancellationToken = linkedCts.Token;
             // Initial timeout for retrieving connection options.
             linkedCts.CancelAfter(handshakeTimeout);
 
             wrapException = true;
-            QuicServerConnectionOptions options = await _connectionOptionsCallback(connection, clientHello, cancellationToken).ConfigureAwait(false);
+            var options = await _connectionOptionsCallback(connection, clientHello, cancellationToken).ConfigureAwait(false);
             wrapException = false;
 
             options.Validate(nameof(options));
@@ -273,7 +273,7 @@ public sealed partial class QuicListener : IAsyncDisposable
                 NetEventSource.Error(connection, $"{connection} Connection handshake timed out: {oce}");
             }
 
-            Exception ex = ExceptionDispatchInfo.SetCurrentStackTrace(new QuicException(QuicError.ConnectionTimeout, null, SR.Format(SR.net_quic_handshake_timeout, handshakeTimeout), oce));
+            var ex = ExceptionDispatchInfo.SetCurrentStackTrace(new QuicException(QuicError.ConnectionTimeout, null, SR.Format(SR.net_quic_handshake_timeout, handshakeTimeout), oce));
             await connection.DisposeAsync().ConfigureAwait(false);
             if (!_acceptQueue.Writer.TryWrite(ex))
             {
@@ -293,7 +293,7 @@ public sealed partial class QuicListener : IAsyncDisposable
                 // Since the inner _connectedTcs is already transitioned to faulted state (because ConnectionShutdownToken
                 // fired), the parameters to FinishHandshakeAsync are not going to be validated and it will return the
                 // faulted task.
-                ValueTask task = connection.FinishHandshakeAsync(null!, null!, default);
+                var task = connection.FinishHandshakeAsync(null!, null!, default);
                 Debug.Assert(task.IsCompleted);
 
                 // Unwrap AggregateException and propagate it to the accept queue.
@@ -334,14 +334,14 @@ public sealed partial class QuicListener : IAsyncDisposable
             return QUIC_STATUS_CONNECTION_REFUSED;
         }
 
-        QuicConnection connection = new QuicConnection(data.Connection, data.Info);
+        var connection = new QuicConnection(data.Connection, data.Info);
 
         if (NetEventSource.Log.IsEnabled())
         {
             NetEventSource.Info(this, $"{this} New inbound connection {connection}.");
         }
 
-        SslClientHelloInfo clientHello = new SslClientHelloInfo(data.Info->ServerNameLength > 0 ? Encoding.UTF8.GetString((byte*)data.Info->ServerName, data.Info->ServerNameLength) : "", SslProtocols.Tls13);
+        var clientHello = new SslClientHelloInfo(data.Info->ServerNameLength > 0 ? Encoding.UTF8.GetString((byte*)data.Info->ServerName, data.Info->ServerNameLength) : "", SslProtocols.Tls13);
 
         // Kicks off the rest of the handshake in the background, the process itself will enqueue the result in the accept queue.
         StartConnectionHandshake(connection, clientHello);
@@ -365,7 +365,7 @@ public sealed partial class QuicListener : IAsyncDisposable
 
     private static unsafe uint NativeCallback(QUIC_HANDLE* listener, void* context, QUIC_LISTENER_EVENT* listenerEvent)
     {
-        GCHandle stateHandle = GCHandle.FromIntPtr((IntPtr)context);
+        var stateHandle = GCHandle.FromIntPtr((IntPtr)context);
 
         // Check if the instance hasn't been collected.
         if (!stateHandle.IsAllocated || stateHandle.Target is not QuicListener instance)
@@ -413,7 +413,7 @@ public sealed partial class QuicListener : IAsyncDisposable
         }
 
         // Check if the listener has been shut down and if not, shut it down.
-        if (_shutdownTcs.TryInitialize(out ValueTask valueTask, this))
+        if (_shutdownTcs.TryInitialize(out var valueTask, this))
         {
             MsQuicApi.Api.ListenerStop(_handle);
         }
@@ -425,7 +425,7 @@ public sealed partial class QuicListener : IAsyncDisposable
         // Flush the queue and dispose all remaining connections.
         await _disposeCts.CancelAsync().ConfigureAwait(false);
         _acceptQueue.Writer.TryComplete(ExceptionDispatchInfo.SetCurrentStackTrace(new ObjectDisposedException(GetType().FullName)));
-        while (_acceptQueue.Reader.TryRead(out object? item))
+        while (_acceptQueue.Reader.TryRead(out var item))
         {
             if (item is QuicConnection connection)
             {
