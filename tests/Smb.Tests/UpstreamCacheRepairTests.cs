@@ -188,7 +188,19 @@ internal static class UpstreamCacheRepairTests
         Check.That(!b.Sent.Any(n => RawSmb.U16(n, 12) == 5), "invalid ACK does not complete CREATE");
         Status(await a.Send(f, Ack(notice)), Ok, "ACK on owning session");
         var peer = Id(await b.Final(interim));
-        Status(await b.Send(f, RawSmb.Write(peer, Bytes, 0, 0, 0, 0)), Ok, "cross-session write after ACK");
+        // The compatible CREATE may retain HANDLE caching. A later WRITE
+        // must acknowledge that separate break before it can complete
+        // (MS-SMB2 3.3.4.7, 3.3.5.22.2); its interim is not a failed WRITE.
+        var written = await b.Send(f, RawSmb.Write(peer, Bytes, 0, 0, 0, 0));
+        if (RawSmb.U32(written, 8) == Pending)
+        {
+            var invalidation = await a.Receive(n => RawSmb.U16(n, 12) == 18);
+            Check.Equal(3u, RawSmb.U32(invalidation, 88), "compatible open retained RH before WRITE");
+            Check.Equal(0u, RawSmb.U32(invalidation, 92), "foreign WRITE revokes retained RH");
+            Status(await a.Send(f, Ack(invalidation)), Ok, "separate WRITE downgrade ACK");
+            written = await b.Final(written);
+        }
+        Status(written, Ok, "cross-session write after ACK");
         await Data(f, a, owner, Bytes);
     }
     static async Task PendingMember(bool v2)

@@ -1,5 +1,11 @@
 # Cache, durable and admission repair handoff
 
+Later [multichannel/durable repairs](multichannel-durable-reconnect.md) extend
+compatible RH grants, shared-member routing and retained-member purge, repair
+both bounded complex sequences and implement SMB311 recovery. This report's
+earlier results and limitations remain historical evidence; the later report
+records current fixture corrections and unresolved cache workflows.
+
 This allocation extends the completed [file/protocol handoff](upstream-repairs.md).
 It preserves the existing authentication, encryption, replay-delivery and
 multichannel-send repairs. No staging, commit, restore, formatting, source-test

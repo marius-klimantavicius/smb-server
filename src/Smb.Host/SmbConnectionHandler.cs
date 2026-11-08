@@ -139,6 +139,7 @@ internal sealed class SmbConnectionHandler
 					var prefix = new byte[4];
 					var sendStream = stream;
 					connection.SendRawAsync = (raw, forceEncrypt) => SendFramedAsync(sendStream, connection, raw, forceEncrypt, connCt);
+					connection.SendEncryptedRawAsync = (raw, owner) => SendFramedAsync(sendStream, connection, raw, true, connCt, owner);
 					while (!readCt.IsCancellationRequested && await TryReadExactAsync(stream, prefix, readCt))
 					{
 						var num = NbssFrame.ReadLength(prefix);
@@ -188,11 +189,12 @@ internal sealed class SmbConnectionHandler
 							continue;
 						}
 
+						connection.Sessions.TryGetValue(controlHeader?.SessionId ?? 0, out var responseSession);
 						await DrainInflightAsync().ConfigureAwait(continueOnCapturedContext: false);
 						var array = await _dispatcher.ProcessMessageAsync(connection, message, transportEncrypted).ConfigureAwait(continueOnCapturedContext: false);
 						if (array.Length != 0)
 						{
-							await SendFramedAsync(stream, connection, array, forceEncrypt: false, connCt);
+							await SendFramedAsync(stream, connection, array, transportEncrypted, connCt, responseSession);
 						}
 
 						if (!connection.MustTerminate)
@@ -226,6 +228,7 @@ internal sealed class SmbConnectionHandler
 				connection.AbandonPending();
 				connection.CancelOrdinary();
 				connection.SendRawAsync = null;
+				connection.SendEncryptedRawAsync = null;
 				connection.RequestClose = null;
 				var retirement = _dispatcher.OnConnectionClosedAsync(connection, connection.ResponseSendFailed ? Smb2Dispatcher.CloseReason.SendFailure : (hardCt.IsCancellationRequested || drainToken.IsCancellationRequested) ? Smb2Dispatcher.CloseReason.Shutdown : Smb2Dispatcher.CloseReason.ConnectionLoss).AsTask();
 				await DrainInflightAsync().ConfigureAwait(false);
@@ -362,8 +365,9 @@ internal sealed class SmbConnectionHandler
 	{
 		try
 		{
+			connection.Sessions.TryGetValue(Smb2Header.Read(message.Span).SessionId, out var responseSession);
 			var response = await _dispatcher.ProcessMessageAsync(connection, message, encrypted).ConfigureAwait(false);
-			if (response.Length != 0) await SendFramedAsync(stream, connection, response, false, ct).ConfigureAwait(false);
+			if (response.Length != 0) await SendFramedAsync(stream, connection, response, encrypted, ct, responseSession).ConfigureAwait(false);
 		}
 		catch
 		{
@@ -477,9 +481,9 @@ internal sealed class SmbConnectionHandler
 	}
 
 	/// <summary>Encrypts or compresses the response if needed, frames it as NBSS and writes it in serialized fashion.</summary>
-	private async Task SendFramedAsync(Stream stream, SmbConnection connection, byte[] rawResponse, bool forceEncrypt, CancellationToken ct)
+	private async Task SendFramedAsync(Stream stream, SmbConnection connection, byte[] rawResponse, bool forceEncrypt, CancellationToken ct, SmbSession? responseSession = null)
 	{
-		var array = EncodeOutbound(connection, rawResponse, forceEncrypt);
+		var array = EncodeOutbound(connection, rawResponse, forceEncrypt, responseSession);
 		var framed = NbssFrame.Wrap(array);
 		await _writeLock.WaitAsync(ct).ConfigureAwait(continueOnCapturedContext: false);
 		try
@@ -509,11 +513,17 @@ internal sealed class SmbConnectionHandler
 	/// Otherwise, if compression was negotiated (M10.3) and the frame is large enough to benefit, the
 	/// response is compressed. The two are never combined — compressing is always the sender's choice.
 	/// </summary>
-	private byte[] EncodeOutbound(SmbConnection connection, byte[] response, bool forceEncrypt)
+	private byte[] EncodeOutbound(SmbConnection connection, byte[] response, bool forceEncrypt, SmbSession? responseSession = null)
 	{
 		var num = ReadResponseSessionId(response);
+		if (num == 0 && forceEncrypt && responseSession != null) num = responseSession.SessionId;
 		var command = response.Length >= 64 ? (SmbCommand)BinaryPrimitives.ReadUInt16LittleEndian(response.AsSpan(12, 2)) : SmbCommand.Negotiate;
-		if (num != 0L && _server.SessionGlobalList.TryGetValue(num, out var value) &&
+		// LOGOFF removes the session indexes before its final response is sent.
+		// Retain only this request's encryption owner through the ordered send;
+		// it never re-enters a session/channel lookup or authorizes new requests.
+		var value = _server.SessionGlobalList.TryGetValue(num, out var active) ? active
+			: responseSession?.SessionId == num ? responseSession : null;
+		if (num != 0L && value != null &&
 			(forceEncrypt || command is not (SmbCommand.Negotiate or SmbCommand.SessionSetup) &&
 				(value.EncryptData || (TryReadResponseTreeId(response, out var treeId) && value.TreeConnects.TryGetValue(treeId, out var value2) && value2.EncryptData))))
 		{

@@ -1,5 +1,10 @@
 # Samba second-campaign inventory and adaptations
 
+Subsequent [multichannel/durable implementation](multichannel-durable-reconnect.md)
+extends these historical adaptations. Current SMB311 behavior, terminal-binding
+GSS retirement, valid async fixture corrections and remaining source differences
+are documented there; original source mappings and results below are retained.
+
 Pinned source: [`2816d12d5346c4e6258d8263f68eb653fd44fd5e`](https://github.com/samba-team/samba/tree/2816d12d5346c4e6258d8263f68eb653fd44fd5e/source4/torture/smb2).
 The survey contains every file named by that directory's `wscript_build`: 48 C
 files, plus the build manifest and three headers (52 files). All 48 downloaded C

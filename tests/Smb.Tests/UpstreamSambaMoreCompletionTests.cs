@@ -181,15 +181,35 @@ internal static partial class UpstreamSambaMoreTests
         await using var f = new CacheFixture(); var d = f.D; var owner = Id(await d.Send(Lease(Create(disposition: 3), shape == "getinfo-middle" ? 7u : 3u))); await Write(d, owner, Payload);
         byte[][] packets = shape == "getinfo-middle" ? [Create(), Query(Inherit, 4), RawSmb.Close(Inherit, 0, 1, 42)] : shape == "rename-last" ? [Lease(Create(), 0, 2), Rename(Inherit, "renamed")] : [Create(), Rename(Inherit, "renamed"), RawSmb.Close(Inherit, 0, 1, 42)];
         var task = Chain(d, packets); while (!f.Transport.Sends.Any(x => RawSmb.U16(x.Message, 12) == 18)) await f.Transport.WaitForSendAsync().WaitAsync(Check.Timeout);
-        List<byte[]>? interim = null;
-        if (task.IsCompleted)
-        {
-            interim = Split(await task, d.Connection.Dialect); Check.That(interim.All(x => RawSmb.U32(x, 8) == 0x103), "no dependent compound operation reports success before held cache ACK");
-        }
-        var notice = f.Transport.Sends.First(x => RawSmb.U16(x.Message, 12) == 18).Message;
+        // MS-SMB2 3.3.4.2 / 3.3.5.2.7.2 permit mixed synchronous and
+        // asynchronous components. ACK can race the return of the interim frame.
+        // Inspect the actual frame after ACK, then follow every pending AsyncId.
+        Check.That(File.ReadAllBytes(Path.Combine(f.Root.Path, "file")).SequenceEqual(Payload), "no data mutation before ACK");
+        Check.That(!File.Exists(Path.Combine(f.Root.Path, "renamed")), "no rename before ACK");
+        Check.That(!f.Transport.Sends.Any(x => RawSmb.U16(x.Message, 12) != 18), "no async final before ACK");
+        var notice = f.Transport.Sends.Single(x => RawSmb.U16(x.Message, 12) == 18).Message;
         Status(await d.Send(LeaseAck(1, RawSmb.U32(notice, 92))), Ok, "ACK actual advertised downgrade releases compound continuation");
-        if (interim == null) { var final = Split(await task.WaitAsync(Check.Timeout), d.Connection.Dialect); foreach (var part in final) Status(part, Ok, "synchronous compound completes after ACK"); }
-        else foreach (var pending in interim) Status(await AsyncFinal(f.Transport, pending, RawSmb.U16(pending, 12)), Ok, "each deferred component receives successful terminal response after ACK");
+        var replies = Split(await task.WaitAsync(Check.Timeout), d.Connection.Dialect);
+        Check.Equal(packets.Length, replies.Count, "one initial response for every compound command");
+        var finals = new List<byte[]>(); var ids = new HashSet<ulong>();
+        foreach (var reply in replies)
+        {
+            if (RawSmb.U32(reply, 8) == 0x103)
+            {
+                Check.That((RawSmb.U32(reply, 16) & 2) != 0, "pending component has async header");
+                Check.That(RawSmb.U64(reply, 32) != 0 && ids.Add(RawSmb.U64(reply, 32)), "nonzero unique outstanding AsyncId");
+                var final = Split(await AsyncFinal(f.Transport, reply, RawSmb.U16(reply, 12)), d.Connection.Dialect).Single();
+                Check.Equal(RawSmb.U64(reply, 24), RawSmb.U64(final, 24), "terminal response retains component MessageId");
+                Check.Equal(RawSmb.U64(reply, 32), RawSmb.U64(final, 32), "terminal response retains AsyncId");
+                finals.Add(final);
+            }
+            else finals.Add(reply);
+        }
+        foreach (var final in finals) Status(final, Ok, "every compound command reaches successful terminal completion");
+        using (var timeout = new CancellationTokenSource(Check.Timeout))
+            while (!d.Connection.PendingRequests.IsEmpty) await Task.Delay(1, timeout.Token);
+        foreach (var id in ids) Check.Equal(1, f.Transport.Sends.Count(x => (RawSmb.U32(x.Message, 16) & 2) != 0 && RawSmb.U64(x.Message, 32) == id && RawSmb.U32(x.Message, 8) != 0x103), "exactly one terminal response per AsyncId");
+        Check.Equal(1, f.Transport.Sends.Count(x => RawSmb.U16(x.Message, 12) == 18), "one cache break for compound");
         if (shape == "getinfo-middle") await Data(d, owner, Payload); else { Status(await d.Send(Create()), Missing, "rename continuation removes old name"); await Data(d, await Open(d, "renamed"), Payload); }
     }
 }

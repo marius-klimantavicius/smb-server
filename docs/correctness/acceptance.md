@@ -47,8 +47,12 @@ Strict M1/M2 acceptance remains incomplete. Other limits persist:
 - The earlier external-auth blocker was reproduced and repaired. Fresh signed
   Samba operations and two pinned independent Go clients execute selected file
   workflows; this establishes those selections, not entire-suite interoperability.
-- SMB 3.1.1 bound signing/preauthentication blocked advanced recovery validation;
-  multichannel and durable recovery remain withheld for that dialect.
+- The historical SMB 3.1.1 binding/preauthentication blocker is repaired by the
+  [multichannel/durable delivery](multichannel-durable-reconnect.md). Explicit
+  profiles now support its authenticated channels and in-memory reconnect;
+  default Restricted remains unchanged. The integrated 3,515-case harness has
+  100 retained failures, so whole-project acceptance remains failed. Current
+  published-mode results are recorded in [platform validation](platform-validation.md).
 - Persistent handles and continuous availability lack an atomic recovery journal
   and process-restart/failover tests; they remain unavailable.
 - QUIC import/generation provenance is incomplete. Later user edits require their

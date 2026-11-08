@@ -1,5 +1,12 @@
 # Samba continuation: public file and protocol tests
 
+The subsequent [recovery delivery](multichannel-durable-reconnect.md) repairs
+durable/cache/replay workflows and both bounded complex lease sequences, and
+corrects documented async fixture assumptions. Its settled continuation is
+653/737, with 84 ordinary failures. See [exact current failure names](recovery-failure-differences.txt).
+The earlier counts, withholding decisions and diagnoses below describe their
+historical captures and are preserved rather than rewritten.
+
 Pinned source: [Samba smb2 torture](https://github.com/samba-team/samba/tree/2816d12d5346c4e6258d8263f68eb653fd44fd5e/source4/torture/smb2), `2816d12d5346c4e6258d8263f68eb653fd44fd5e`.
 
 This appendix supplements the [original inventory](upstream-samba-tests.md), without rewriting its original rows. Ownership excludes `session.c`, `sessid.c`, `connect.c`, `tcon.c`, and `smb3error.c`. The original machine ledger contains 550 remaining function symbols, 510 of them registered definitions. This allocation contains 482 symbols, including 445 registered definitions. Symbols, initializer entries, protocol matrix rows, and independent workflows are distinct counts.

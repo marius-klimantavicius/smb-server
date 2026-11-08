@@ -1,5 +1,11 @@
 # Final bounded IOCTL and reauthentication repairs
 
+Subsequent [multichannel/durable work](multichannel-durable-reconnect.md) adds
+SMB311 channel transcripts and response-protection retirement fixes while keeping
+all 17 regressions here passing. It also reconciles terminal binding GSS failure
+with primary-spec teardown. Counts and source hashes below identify this earlier
+handoff; current results are in the later report and platform validation.
+
 This report follows the settled 737-case Samba continuation handoff (523 PASS,
 214 FAIL). It addresses the three assessed findings only. Earlier cache,
 authentication/parser, descriptor, CREATE authorization and grant repairs remain

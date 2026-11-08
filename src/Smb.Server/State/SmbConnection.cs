@@ -77,6 +77,8 @@ public sealed class SmbConnection
 
 	public ConcurrentDictionary<ulong, SmbSession> Sessions { get; } = new ConcurrentDictionary<ulong, SmbSession>();
 
+	internal Lock BindingGate { get; } = new Lock();
+
 	public ConcurrentDictionary<ulong, ChannelBindInProgress> PendingBindings { get; } = new ConcurrentDictionary<ulong, ChannelBindInProgress>();
 
 	public DateTimeOffset CreationTime { get; } = DateTimeOffset.UtcNow;
@@ -86,6 +88,10 @@ public sealed class SmbConnection
 	public ushort OutstandingRequestCount { get; set; }
 
 	public Func<byte[], bool, Task>? SendRawAsync { get; set; }
+
+	// Unsolicited lease notifications have inner SessionId zero. Their transform
+	// still needs the encryption owner, without changing the protocol header.
+	public Func<byte[], SmbSession, Task>? SendEncryptedRawAsync { get; set; }
 
 	public ConcurrentDictionary<ulong, PendingAsyncRequest> PendingRequests { get; } = new ConcurrentDictionary<ulong, PendingAsyncRequest>();
 

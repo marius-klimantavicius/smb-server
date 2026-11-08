@@ -413,14 +413,14 @@ public sealed class SmbServerBuilder
 	}
 
 	/// <summary>
-	/// Toggles multichannel (Phase 6): whether <c>SMB2_GLOBAL_CAP_MULTICHANNEL</c> is advertised and
-	/// FSCTL_QUERY_NETWORK_INTERFACE_INFO served so clients open additional channels. Unavailable
-	/// in the restricted profile; enabling it throws.
+	/// Toggles multichannel: whether <c>SMB2_GLOBAL_CAP_MULTICHANNEL</c> is advertised and
+	/// FSCTL_QUERY_NETWORK_INTERFACE_INFO served so clients open additional channels. Select an explicit
+	/// multichannel feature profile before enabling it.
 	/// </summary>
 	public SmbServerBuilder EnableMultichannel(bool enable = true)
 	{
 		if (enable && !_options.FeaturePolicy.Multichannel)
-			throw new InvalidOperationException("Multichannel is unavailable until identity and channel lifecycle gates pass.");
+			throw new InvalidOperationException("Multichannel requires an explicit feature profile that permits multichannel.");
 
 		_options.EnableMultichannel = enable;
 		return this;

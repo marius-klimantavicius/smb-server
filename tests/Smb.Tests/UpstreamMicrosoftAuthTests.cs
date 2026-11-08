@@ -156,7 +156,15 @@ internal static partial class UpstreamMicrosoftTests
         await using var a = await AuthWire.Connect(host.Server.Endpoint); await a.Negotiate(0x300); await a.Login();
         await using var b = await AuthWire.Connect(host.Server.Endpoint); await b.Negotiate(0x300);
         await b.Login(password: "wrong-fixture-password", finalStatus: 0xc000006d, bindTo: a);
+        // MS-SMB2 3.3.5.5.3 removes the established session on terminal
+        // GSS error, including a binding exchange with a valid signature.
+        await a.Exchange(a.Echo(), 0xc0000203, true);
+        await b.Exchange(b.Echo(), 0xc0000203, true);
+        var retired = a.Session;
+        await a.Login(); Check.That(a.Session != retired, "fresh authentication allocates a new session after terminal binding failure");
         await a.Exchange(a.Echo(), 0, true); await b.Login(bindTo: a); await b.Exchange(b.Echo(), 0, true);
+        await b.Login(password: "wrong-fixture-password", finalStatus: 0xc000006d, reauthenticate: true);
+        await a.Exchange(a.Echo(), 0xc0000203, true); await b.Exchange(b.Echo(), 0xc0000203, true);
     }
     static async Task EncryptionPolicy(bool global)
     {

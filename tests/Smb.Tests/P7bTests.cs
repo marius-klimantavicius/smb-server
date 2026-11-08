@@ -59,7 +59,9 @@ internal static class P7bTests
     {
         await using var h=new HostFixture();h.Server.State.Options.FeaturePolicy=Profile("MultichannelOnly");h.Server.State.Options.EnableMultichannel=true;
         await h.StartAsync();await using var a=new WireClient();await a.ConnectAsync(h.Server.Endpoint,HostFixture.Domain,HostFixture.User,HostFixture.Password,0x311);
-        Check.That((h.Server.State.SessionGlobalList[a.Session].Connection.ServerCapabilities&Smb2Capabilities.MultiChannel)==0,"unvalidated SMB311 must not advertise restored multichannel");
+        Check.That((h.Server.State.SessionGlobalList[a.Session].Connection.ServerCapabilities&Smb2Capabilities.MultiChannel)!=0,"validated SMB311 opt-in advertises multichannel");
+        await using var b=new WireClient();await b.BindAsync(h.Server.Endpoint,a);
+        Check.Equal(2,h.Server.State.SessionGlobalList[a.Session].Channels.Count,"SMB311 gate requires actual authenticated binding");
     }
     static async Task Bind(ushort dialect)
     {

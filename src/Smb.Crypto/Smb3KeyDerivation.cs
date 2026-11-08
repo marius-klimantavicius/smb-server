@@ -35,8 +35,8 @@ public static class Smb3KeyDerivation
 		{
 			signingKey = Sp800108CounterKdf.DeriveKey(sessionKey, Label311Signing, preauthHash, 16);
 			applicationKey = Sp800108CounterKdf.DeriveKey(sessionKey, Label311App, preauthHash, 16);
-			encryptionKey = Sp800108CounterKdf.DeriveKey(sessionKey, Label311S2C, preauthHash, outputBytes);
-			decryptionKey = Sp800108CounterKdf.DeriveKey(sessionKey, Label311C2S, preauthHash, outputBytes);
+			encryptionKey = Sp800108CounterKdf.DeriveKey(flag2 ? fullSessionKey : sessionKey, Label311S2C, preauthHash, outputBytes);
+			decryptionKey = Sp800108CounterKdf.DeriveKey(flag2 ? fullSessionKey : sessionKey, Label311C2S, preauthHash, outputBytes);
 		}
 		else
 		{

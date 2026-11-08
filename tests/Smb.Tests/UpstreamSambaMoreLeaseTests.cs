@@ -181,7 +181,17 @@ internal static partial class UpstreamSambaMoreTests
                 }
                 var final = sender.Sends.LastOrDefault(n => RawSmb.U16(n.Message, 12) == RawSmb.U16(req, 12) && RawSmb.U64(n.Message, 32) == RawSmb.U64(result, 32));
                 if (final != null) return final.Message;
-                await Task.WhenAny(f.Transport.WaitForSendAsync(), sender.WaitForSendAsync()).WaitAsync(Check.Timeout);
+                // Either connection may carry the next frame (MS-SMB2 3.3.4.7).
+                // Cancel and join the losing wait before the next iteration:
+                // an orphan wait can consume the next notification/final signal.
+                using var wake = new CancellationTokenSource(Check.Timeout);
+                var waits = new[] { f.Transport.WaitForSendAsync(wake.Token), sender.WaitForSendAsync(wake.Token) };
+                try { await await Task.WhenAny(waits); }
+                finally
+                {
+                    await wake.CancelAsync();
+                    try { await Task.WhenAll(waits); } catch (OperationCanceledException) { }
+                }
             }
         }
         var upgraded = await Other(Lease(Create(), 7, v2: v2)); LeaseState(upgraded, 7, 1); Status(await Send(f, s, RawSmb.Close(Id(upgraded), 0, 1, 42)), Ok, "close upgrading member keeps common grant");

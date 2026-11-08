@@ -16,9 +16,15 @@ See [platform validation](platform-validation.md) and [acceptance](acceptance.md
 | Durable / DurableWithCopy | Optional | Yes | No | Yes |
 | DurableWithMultichannel / DurableWithMultichannelAndCopy | Optional | Yes | Yes | Yes |
 
-Multichannel also requires `EnableMultichannel=true`. Advanced multichannel and
-durable recovery are limited to SMB 3.0/3.0.2. Mandatory SMB3 channel sequencing
-applies under every profile. SMB 3.1.1 recovery remains withheld.
+Multichannel also requires `EnableMultichannel=true` and supports SMB 3.0, 3.0.2
+and 3.1.1, with independently negotiated and authenticated TCP channels. The
+configurable `MaxChannelsPerSession` defaults to 32, including the original
+channel. Mandatory SMB3 channel sequencing applies under every profile.
+In-memory durable v1 reconnect supports SMB 2.0.2, 2.1, 3.0, 3.0.2 and 3.1.1;
+v2 requires SMB3. Grants require eligible Batch or HANDLE-caching file opens,
+an explicit Durable profile and a coherent backend. Reconnect retains the
+original acquired handle within the running process and its retention timeout.
+See [configuration examples](multichannel-durable-configuration.md).
 
 | Surface | Contract and practical limit |
 |---|---|
@@ -39,6 +45,11 @@ The [adapted upstream campaign](upstream-tests.md) adds pinned independent
 CREATE/namespace, lock/cancel, compound/credit, enumeration/notify and supported
 lease/durable/replay assertions. Local enumeration applies SMB `*.*` and DOS
 wildcard semantics while retaining the explicit host case contract.
+
+The [recovery delivery](multichannel-durable-reconnect.md) records the completed
+feature gates, independent native clients and source/spec mappings. Its published
+Linux modes execute 3,515 cases with 100 retained failures; whole-project and
+native Windows acceptance remain incomplete.
 
 The test harness uses independent raw-wire expectations and real local TCP
 workloads. Passing selected cases does not establish whole-dialect conformance or

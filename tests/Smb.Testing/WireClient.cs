@@ -14,6 +14,7 @@ public sealed class WireClient : IAsyncDisposable
     private ushort _dialect;
     private readonly Smb.Crypto.PreauthIntegrityHash _preauth = new PreauthIntegrityHash();
     private byte[]? _sessionKey;
+    private byte[]? _originalSigningKey;
     static byte[] Negotiate(ulong mid,ushort dialect)
     {
         var b=RawSmb.Negotiate(mid);RawSmb.Put16(b,100,dialect);
@@ -46,6 +47,7 @@ public sealed class WireClient : IAsyncDisposable
         _dialect = dialect;
         _sessionKey=ntlm.ExportedSessionKey;
         _key = dialect >= 0x300 ? Smb.Crypto.Smb3KeyDerivation.Derive((Smb.Protocol.Enums.SmbDialect)dialect, Smb.Protocol.Enums.SmbCipherId.None, ntlm.ExportedSessionKey, ntlm.ExportedSessionKey, dialect==0x311?_preauth.Value:new byte[64]).SigningKey : ntlm.ExportedSessionKey; // Existing excluded auth helper; no SMB wire expectations from it.
+        _originalSigningKey = _key;
         b = await ExchangeAsync(RawSmb.TreeConnect("\\\\localhost\\P0", _mid++, Session), size: 16);
         Tree = RawSmb.U32(b, 36); Check.That(Tree != 0, "allocated TreeId");
     }
@@ -56,14 +58,15 @@ public sealed class WireClient : IAsyncDisposable
         await _client.ConnectAsync(endpoint.Address, endpoint.Port, timeout.Token);
         _dialect=primary._dialect;var negotiate = Negotiate(_mid++,_dialect);
         await ExchangeAsync(negotiate,size:65);
-        _dialect=primary._dialect; _key=primary._key; Session=primary.Session; Tree=primary.Tree;
+        _dialect=primary._dialect; _key=primary._originalSigningKey; _originalSigningKey=primary._originalSigningKey; _sessionKey=primary._sessionKey; Session=primary.Session; Tree=primary.Tree;
         var ntlm = new NtlmClient(HostFixture.Domain,HostFixture.User,HostFixture.Password);
         var request=RawSmb.SessionSetup(ntlm.BuildNegotiate(),_mid++,Session);request[66]=1;
         var b=await ExchangeAsync(request,0xc0000016,9);
         var challenge=RawSmb.Buffer(b,RawSmb.U16(b,68),RawSmb.U16(b,70));
         request=RawSmb.SessionSetup(ntlm.BuildAuthenticate(challenge),_mid++,Session);request[66]=1;
-        await ExchangeAsync(request,size:9);
+        var final=await ExchangeAsync(request,size:9);
         _key=Smb.Crypto.Smb3KeyDerivation.Derive((Smb.Protocol.Enums.SmbDialect)_dialect,Smb.Protocol.Enums.SmbCipherId.None,ntlm.ExportedSessionKey,ntlm.ExportedSessionKey,_dialect==0x311?_preauth.Value:new byte[64]).SigningKey;
+        Check.That((RawSmb.U32(final,16)&8)!=0 && Smb2Signer.Verify(Smb2Signer.ResolveAlgorithm((Smb.Protocol.Enums.SmbDialect)_dialect,Smb.Protocol.Enums.SmbSigningAlgorithmId.AesCmac),_key,final,RawSmb.U64(final,24),true,false),"bound SESSION_SETUP signature");
     }
     public async Task<byte[]> ExchangeAsync(byte[] request, uint status = 0, ushort? size = null)
     {

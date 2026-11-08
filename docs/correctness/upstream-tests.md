@@ -1,5 +1,12 @@
 # Adapted upstream correctness campaign
 
+Current follow-up: [multichannel and in-memory durable reconnect](multichannel-durable-reconnect.md)
+implements SMB311 recovery and repairs requested retained cache/replay workflows.
+It expands the harness to 3,515 cases, with 100 retained failures and 127 resolved
+baseline names; [exact differences](recovery-failure-differences.txt) and current
+[platform results](platform-validation.md) supersede the feature-withholding and
+final-count statements below. The original campaign captures remain historical.
+
 Campaign started 2026-11-08 against the 854-test baseline; the initial Linux JIT
 harness passed 854/854 before additions or production repairs. This campaign
 adapts test scenarios and independent expected results, without importing server

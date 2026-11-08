@@ -30,11 +30,11 @@ internal static class P8Profiles
             d.Options.FeaturePolicy=policy;d.Options.EnableMultichannel=policy.Multichannel;d.Options.MinDialect=d.Options.MaxDialect=(Smb.Protocol.Enums.SmbDialect)dialect;policy.Validate(d.Options);
             // Client offers LargeMTU/Leasing/Multichannel, no encryption change or security assertion.
             var response=Smb.Server.NegotiateProcessor.BuildResponse(d.Connection,new Smb.Protocol.Messages.NegotiateRequest { Dialects=[(Smb.Protocol.Enums.SmbDialect)dialect],Capabilities=(Smb.Protocol.Enums.Smb2Capabilities)14,SecurityMode=(Smb.Protocol.Enums.SmbSecurityMode)3 },d.Options,[]);
-            var expected=(dialect>=0x210?4u:0u)|(policy.Leasing&&exclusive&&dialect>=0x210?2u:0u)|(policy.Multichannel&&dialect is 0x300 or 0x302?8u:0u);
+            var expected=(dialect>=0x210?4u:0u)|(policy.Leasing&&exclusive&&dialect>=0x210?2u:0u)|(policy.Multichannel&&dialect is 0x300 or 0x302 or 0x311?8u:0u);
             Check.Equal(expected,(uint)response.Capabilities,"negotiated non-security bits");Check.That(((uint)response.SecurityMode&2)!=0,"signing still required");
             var create=P7cTests.Request("a",Guid.NewGuid());var wire=await d.Send(create);Check.Equal(0u,RawSmb.U32(wire,8),"batch plus DH2Q CREATE succeeds");
             var id=P7cTests.Id(wire);var open=d.Session.Opens[id];var cache=policy.Oplocks&&exclusive;
-            Check.Equal(cache?(byte)9:(byte)0,wire[66],"file Batch grant gate");Check.Equal(policy.DurableHandles&&cache&&dialect is 0x300 or 0x302,open.IsDurable,"durable gate");Check.That(!open.IsPersistentHandle,"no persistent handles");
+            Check.Equal(cache?(byte)9:(byte)0,wire[66],"file Batch grant gate");Check.Equal(policy.DurableHandles&&cache&&dialect is 0x300 or 0x302 or 0x311,open.IsDurable,"durable gate");Check.That(!open.IsPersistentHandle,"no persistent handles");
             // Actual FSCTL resume-key gate, rather than only reading policy.
             var ioctl=RawSmb.Header(11,57,0,1,42);RawSmb.Put16(ioctl,64,57);RawSmb.Put32(ioctl,68,0x140078);RawSmb.Put64(ioctl,72,id.P);RawSmb.Put64(ioctl,80,id.V);RawSmb.Put32(ioctl,108,32);RawSmb.Put32(ioctl,112,1);
             Check.Equal(policy.CopyChunk?0u:0xc00000bbu,RawSmb.U32(await d.Send(ioctl),8),"copy resume-key gate");

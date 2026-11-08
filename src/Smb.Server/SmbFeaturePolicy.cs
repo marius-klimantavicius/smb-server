@@ -11,7 +11,7 @@ namespace Smb.Server;
 /// Selectable correctness profiles. Restricted is the default; CopyOnly adds coordinated
 /// server-side copy after its P5 gate. Caching/CachingWithCopy add coordinated file
 /// caching only on a backend with an explicit coherence contract. Multichannel profiles
-/// opt in to tested SMB300/302 connection sets. Durability, directory leases and recovery remain unavailable.
+/// opt in to tested SMB300/302/311 connection sets. Directory leases and persistent recovery remain unavailable.
 /// </summary>
 public sealed class SmbFeaturePolicy
 {
@@ -36,9 +36,9 @@ public sealed class SmbFeaturePolicy
 	public bool Oplocks => _caching;
 	public bool Leasing => _caching;
 	public bool Multichannel => _multichannel;
-    public bool SupportsMultichannel(SmbDialect dialect) => Multichannel && dialect is SmbDialect.Smb300 or SmbDialect.Smb302;
+    public bool SupportsMultichannel(SmbDialect dialect) => Multichannel && dialect is SmbDialect.Smb300 or SmbDialect.Smb302 or SmbDialect.Smb311;
 	public bool DurableHandles => _durable;
-    public bool SupportsDurable(SmbDialect dialect) => _durable && dialect is SmbDialect.Smb300 or SmbDialect.Smb302;
+    public bool SupportsDurable(SmbDialect dialect) => _durable && dialect is SmbDialect.Smb202 or SmbDialect.Smb210 or SmbDialect.Smb300 or SmbDialect.Smb302 or SmbDialect.Smb311;
 	public bool PersistentHandles => false;
 	public bool ContinuousAvailability => false;
 	public bool CopyChunk => _copy;
@@ -59,7 +59,7 @@ public sealed class SmbFeaturePolicy
         if (Oplocks && (options.OplockBreakTimeout <= TimeSpan.Zero || options.OplockBreakTimeout.TotalMilliseconds > uint.MaxValue - 1))
             throw new InvalidOperationException("Caching requires a positive, finite break acknowledgment timeout.");
 		if (options.EnableMultichannel && !Multichannel)
-			throw new InvalidOperationException("Multichannel is unavailable until identity and channel lifecycle gates pass.");
+			throw new InvalidOperationException("Multichannel requires an explicit feature profile that permits multichannel.");
 		if (options.DurableHandleStore is IPersistentHandleStore && !PersistentHandles)
 			throw new InvalidOperationException("Persistent handle storage cannot enable recovery before its lifecycle gate passes.");
 		foreach (var share in options.Shares.All)

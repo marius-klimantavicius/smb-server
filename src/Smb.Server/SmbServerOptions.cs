@@ -80,6 +80,9 @@ public sealed class SmbServerOptions
 
 	public bool ConcurrentMetadataOps { get; set; }
 
+	/// <summary>Maximum authenticated channels per session, including its original connection.</summary>
+	public int MaxChannelsPerSession { get; set; } = 32;
+
 	public int MaxOpenHandlesPerSession { get; set; } = 16384;
 
 	public int MaxDirectoryEnumerationEntries { get; set; } = 1048576;
@@ -152,6 +155,7 @@ public sealed class SmbServerOptions
 	public void Validate()
 	{
 		FeaturePolicy.Validate(this);
+		if (MaxChannelsPerSession < 1) throw new InvalidOperationException("At least one session channel is required.");
 		var serverGuid = ServerGuid;
 		if (serverGuid == null || serverGuid.Length != 16)
 		{

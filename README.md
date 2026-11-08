@@ -38,13 +38,13 @@ has been reviewed; the first upstream campaign passed **940/940** in Linux JIT
 and Native AOT plus actual LocalFileStore TCP workloads. That result is historical.
 Native Windows execution is outstanding and
 will be tested by the user. See [platform validation](docs/correctness/platform-validation.md).
-The [broader upstream campaign](docs/correctness/upstream-tests.md) now has **3,144
+The historical [broader upstream campaign](docs/correctness/upstream-tests.md) has **3,144
 registered cases**: the previous 940 plus 2,068 protocol/auth adaptations and 136
 focused repair regressions. It surveys pinned Samba, Microsoft FileServer and five
 Go server/client projects. Run `--filter upstream.` for upstream-related cases;
 some deliberately retain failing compatibility expectations. Use the platform
 driver's `--keep-going` to capture all independent gates with a failing final exit.
-Final Linux JIT and Native AOT each pass **2,917/3,144**, with the same **227
+That campaign's Linux JIT and Native AOT each pass **2,917/3,144**, with the same **227
 failures**. Both host/TCP workloads and repeated stress/expiry checks pass; the
 aggregate gate remains failed. See the campaign report for exact dispositions.
 
@@ -58,12 +58,15 @@ aggregate gate remains failed. See the campaign report for exact dispositions.
 | Durable / DurableWithCopy | Optional | Yes | No | Yes |
 | DurableWithMultichannel / DurableWithMultichannelAndCopy | Optional | Yes | Yes | Yes |
 
-Multichannel also requires `EnableMultichannel=true`. Advanced multichannel and
-durability are limited to **SMB 3.0/3.0.2**. SMB 3.1.1 primary local TCP workloads
-pass; multichannel and durable recovery remain withheld there. The newer campaign
-includes standalone signing/encryption and supported SMB300/302 binding tests.
-Mandatory SMB3 channel
-sequencing applies under every profile, including Restricted.
+Multichannel also requires `EnableMultichannel=true` and supports **SMB
+3.0/3.0.2/3.1.1**. In-memory durable v1 supports **SMB 2.0.2 through 3.1.1**;
+v2 requires SMB3. Mandatory SMB3 channel sequencing applies under every profile,
+including Restricted. The [recovery delivery](docs/correctness/multichannel-durable-reconnect.md)
+adds 371 regressions, bringing the harness to **3,515 cases**. Its settled
+integration run passes **3,415**, with **100 retained failures** and no new
+failing names. See [platform validation](docs/correctness/platform-validation.md)
+for published-mode results and [Linux/Windows recovery examples](docs/correctness/multichannel-durable-configuration.md)
+for explicit opt-in configuration.
 
 Caching/durable grants require a stable-identity coherent backend and an explicit
 exclusive-server-access assertion. `new LocalFileStore(root, false)` permits

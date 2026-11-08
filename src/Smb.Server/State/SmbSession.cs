@@ -131,13 +131,13 @@ public sealed class SmbSession
 	private bool _channelsClosing;
 
 	// Only channel-set publication/retirement is serialized. No backend work or await under this gate.
-	public bool TryAttachChannel(SmbChannel channel)
+	public bool TryAttachChannel(SmbChannel channel, int maximum = int.MaxValue)
 	{
 		var connection = channel.Connection;
 		lock (_channelGate)
 		{
 			if (_channelsClosing || Lifetime.State != OpenState.Active || connection.ResponseSendFailed || connection.MustTerminate) return false;
-			if (Channels.ContainsKey(connection.ConnectionId)) return false;
+			if (Channels.Count >= maximum || Channels.ContainsKey(connection.ConnectionId)) return false;
 
 			var added = connection.Sessions.TryAdd(SessionId, this);
 			if (!added && (!connection.Sessions.TryGetValue(SessionId, out var current) || !ReferenceEquals(current, this))) return false;

@@ -1,0 +1,345 @@
+Multichannel/durable recovery: exact failure-name comparison
+
+Baseline: clean 1def1af, 3144 total / 2917 pass / 227 fail.
+Final published Linux JIT and Native AOT: each 3515 total / 3415 pass / 100 fail.
+Both modes have identical failing names; all 371 new tests pass.
+Executable/test/script manifests are stable across all 26 platform-driver stages.
+
+Resolved baseline failures (127):
+upstream.samba.more.cache.mixed.True.3.1
+upstream.samba.more.cache.mixed.True.3.8
+upstream.samba.more.cache.mixed.True.3.9
+upstream.samba.more.cache.mixed.True.7.1
+upstream.samba.more.cache.mixed.True.7.8
+upstream.samba.more.cache.mixed.True.7.9
+upstream.samba.more.durable.delete-disconnect-new-create
+upstream.samba.more.durable.disconnected-conflict.True.False
+upstream.samba.more.durable.ignored-reconnect-fields.False.False
+upstream.samba.more.durable.ignored-reconnect-fields.False.True
+upstream.samba.more.durable.ignored-reconnect-fields.True.False
+upstream.samba.more.durable.ignored-reconnect-fields.True.True
+upstream.samba.more.durable.multi-open.different-key
+upstream.samba.more.durable.multi-open.nonstat-first
+upstream.samba.more.durable.multi-open.same-key
+upstream.samba.more.durable.multi-open.set-eof
+upstream.samba.more.durable.multi-open.stat-first
+upstream.samba.more.durable.multi-open.stat-lease-first
+upstream.samba.more.durable.previous-session-delete-on-close
+upstream.samba.more.durable.previous-session-wire.False.False
+upstream.samba.more.durable.previous-session-wire.False.True
+upstream.samba.more.durable.previous-session-wire.True.False
+upstream.samba.more.durable.previous-session-wire.True.True
+upstream.samba.more.durable.retained-two-owners.rename
+upstream.samba.more.durable.retained-two-owners.rh
+upstream.samba.more.durable.retained-two-owners.rwh
+upstream.samba.more.durable.retained-two-owners.share-none
+upstream.samba.more.durable.retained-two-owners.stat
+upstream.samba.more.durable.retained-two-owners.write
+upstream.samba.more.durable.retained.3.read-lease
+upstream.samba.more.durable.retained.3.rwh-lease
+upstream.samba.more.durable.retained.3.share-none
+upstream.samba.more.durable.retained.7.share-none
+upstream.samba.more.lease.conflict.1.3
+upstream.samba.more.lease.conflict.1.7
+upstream.samba.more.lease.conflict.3.1
+upstream.samba.more.lease.conflict.3.3
+upstream.samba.more.lease.conflict.3.5
+upstream.samba.more.lease.conflict.3.7
+upstream.samba.more.lease.conflict.5.1
+upstream.samba.more.lease.conflict.5.3
+upstream.samba.more.lease.conflict.5.5
+upstream.samba.more.lease.conflict.5.7
+upstream.samba.more.lease.conflict.7.1
+upstream.samba.more.lease.conflict.7.3
+upstream.samba.more.lease.conflict.7.5
+upstream.samba.more.lease.conflict.7.7
+upstream.samba.more.lease.cross-session-complex.False
+upstream.samba.more.lease.cross-session-complex.True
+upstream.samba.more.lease.pending-client-disconnect
+upstream.samba.more.lease.pending.False.ack-subset
+upstream.samba.more.lease.pending.False.close-member
+upstream.samba.more.lease.pending.False.invalid-ack
+upstream.samba.more.lease.pending.False.open
+upstream.samba.more.lease.pending.True.ack-subset
+upstream.samba.more.lease.pending.True.close-member
+upstream.samba.more.lease.pending.True.invalid-ack
+upstream.samba.more.lease.pending.True.open
+upstream.samba.more.lease.rename-directory.True.True.True.True.0
+upstream.samba.more.lease.rename-single-interim-policy.False
+upstream.samba.more.lease.stat-owner-share-none
+upstream.samba.more.lease.two-handle-breaks-before-close
+upstream.samba.more.lease.unlink-sequence.3
+upstream.samba.more.lease.unlink-sequence.7
+upstream.samba.more.lease.upgrade-contended.1.3.0
+upstream.samba.more.lease.upgrade-contended.1.3.1
+upstream.samba.more.lease.upgrade-contended.1.3.5
+upstream.samba.more.lease.upgrade-contended.1.3.7
+upstream.samba.more.lease.upgrade-contended.3.1.0
+upstream.samba.more.lease.upgrade-contended.3.1.1
+upstream.samba.more.lease.upgrade-contended.3.1.3
+upstream.samba.more.lease.upgrade-contended.3.1.5
+upstream.samba.more.lease.upgrade-contended.3.1.7
+upstream.samba.more.lease.upgrade-contended.3.3.0
+upstream.samba.more.lease.upgrade-contended.3.3.1
+upstream.samba.more.lease.upgrade-contended.3.3.3
+upstream.samba.more.lease.upgrade-contended.3.3.5
+upstream.samba.more.lease.upgrade-contended.3.3.7
+upstream.samba.more.lease.v2.cross-session-ack
+upstream.samba.more.lease.v2.same-key-epoch
+upstream.samba.more.oplock.1.stat-overwrite
+upstream.samba.more.oplock.8.lock
+upstream.samba.more.oplock.8.second-read
+upstream.samba.more.oplock.8.second-write
+upstream.samba.more.oplock.8.stat-overwrite
+upstream.samba.more.oplock.8.stat-overwrite-II
+upstream.samba.more.oplock.9.lock
+upstream.samba.more.oplock.9.second-read
+upstream.samba.more.oplock.9.second-write
+upstream.samba.more.oplock.9.stat-overwrite
+upstream.samba.more.oplock.9.stat-overwrite-II
+upstream.samba.more.oplock.exclusive-disposition-table
+upstream.samba.more.oplock.no-cache-peer-brl.False
+upstream.samba.more.oplock.no-cache-peer-brl.True
+upstream.samba.more.oplock.sequence.double-break
+upstream.samba.more.oplock.sequence.level-II-ack
+upstream.samba.more.oplock.sequence.stat-owner
+upstream.samba.more.oplock.sequence.stat-owner-and-stat-peer
+upstream.samba.more.oplock.sequence.stream-two-grants
+upstream.samba.more.oplock.sequence.two-level-II-write
+upstream.samba.more.replay.pending.batch.batch.1
+upstream.samba.more.replay.pending.batch.batch.2
+upstream.samba.more.replay.pending.batch.batch.4
+upstream.samba.more.replay.pending.batch.lease.1
+upstream.samba.more.replay.pending.batch.lease.2
+upstream.samba.more.replay.pending.batch.lease.4
+upstream.samba.more.replay.pending.batch.none.1
+upstream.samba.more.replay.pending.batch.none.2
+upstream.samba.more.replay.pending.batch.none.4
+upstream.samba.more.replay.pending.lease.batch.1
+upstream.samba.more.replay.pending.lease.batch.2
+upstream.samba.more.replay.pending.lease.batch.4
+upstream.samba.more.replay.pending.lease.lease.1
+upstream.samba.more.replay.pending.lease.lease.2
+upstream.samba.more.replay.pending.lease.lease.4
+upstream.samba.more.replay.pending.lease.none.1
+upstream.samba.more.replay.pending.lease.none.2
+upstream.samba.more.replay.pending.lease.none.4
+upstream.samba.more.replay.query-retires-cache
+upstream.samba.more.replay.sharing-violation.ack
+upstream.samba.more.replay.sharing-violation.close
+upstream.samba.more.replay.unsent-final.batch.batch
+upstream.samba.more.replay.unsent-final.batch.lease
+upstream.samba.more.replay.unsent-final.batch.none
+upstream.samba.more.replay.unsent-final.lease.batch
+upstream.samba.more.replay.unsent-final.lease.lease
+upstream.samba.more.replay.unsent-final.lease.none
+
+New failing names (0):
+(none)
+
+Retained failures (100), with published JIT first diagnostics:
+upstream.inventory.lock.invalid-flags-0
+  System.InvalidOperationException: NTSTATUS cmd=10: expected 3221225485, actual 0
+upstream.inventory.lock.invalid-flags-16
+  System.InvalidOperationException: NTSTATUS cmd=10: expected 3221225485, actual 0
+upstream.inventory.metadata.archive-on-modification-False
+  System.InvalidOperationException: MS-FSA source policy sets ARCHIVE on modification (SHOULD)
+upstream.inventory.metadata.archive-on-modification-True
+  System.InvalidOperationException: MS-FSA source policy sets ARCHIVE on modification (SHOULD)
+upstream.inventory.negotiate.valid-max-dialects
+  System.InvalidOperationException: NTSTATUS cmd=0: expected 0, actual 3221225485
+upstream.inventory.query.unsupported-16
+  System.InvalidOperationException: NTSTATUS cmd=16: expected 3221225659, actual 3221225475
+upstream.inventory.query.unsupported-17
+  System.InvalidOperationException: NTSTATUS cmd=16: expected 3221225659, actual 3221225475
+upstream.inventory.query.unsupported-21
+  System.InvalidOperationException: NTSTATUS cmd=16: expected 3221225659, actual 3221225475
+upstream.inventory.query.unsupported-28
+  System.InvalidOperationException: NTSTATUS cmd=16: expected 3221225659, actual 3221225475
+upstream.inventory.query.unsupported-29
+  System.InvalidOperationException: NTSTATUS cmd=16: expected 3221225659, actual 3221225475
+upstream.inventory.query.unsupported-30
+  System.InvalidOperationException: NTSTATUS cmd=16: expected 3221225659, actual 3221225475
+upstream.inventory.query.unsupported-39
+  System.InvalidOperationException: NTSTATUS cmd=16: expected 3221225659, actual 3221225475
+upstream.inventory.query.unsupported-46
+  System.InvalidOperationException: NTSTATUS cmd=16: expected 3221225659, actual 3221225475
+upstream.inventory.query.unsupported-54
+  System.InvalidOperationException: NTSTATUS cmd=16: expected 3221225659, actual 3221225475
+upstream.inventory.query.unsupported-8
+  System.InvalidOperationException: NTSTATUS cmd=16: expected 3221225659, actual 3221225475
+upstream.samba.more.cache.mixed.False.1.1
+  System.InvalidOperationException: independent expected lease grant: expected 1, actual 0
+upstream.samba.more.cache.mixed.False.1.8
+  System.InvalidOperationException: independent expected lease grant: expected 1, actual 0
+upstream.samba.more.cache.mixed.False.1.9
+  System.InvalidOperationException: independent expected lease grant: expected 1, actual 0
+upstream.samba.more.cache.mixed.False.3.1
+  System.InvalidOperationException: independent expected lease grant: expected 1, actual 0
+upstream.samba.more.cache.mixed.False.3.8
+  System.InvalidOperationException: independent expected lease grant: expected 1, actual 0
+upstream.samba.more.cache.mixed.False.3.9
+  System.InvalidOperationException: independent expected lease grant: expected 1, actual 0
+upstream.samba.more.cache.mixed.False.5.1
+  System.InvalidOperationException: independent expected lease grant: expected 1, actual 0
+upstream.samba.more.cache.mixed.False.5.8
+  System.InvalidOperationException: independent expected lease grant: expected 1, actual 0
+upstream.samba.more.cache.mixed.False.5.9
+  System.InvalidOperationException: independent expected lease grant: expected 1, actual 0
+upstream.samba.more.cache.mixed.False.7.1
+  System.InvalidOperationException: independent expected lease grant: expected 1, actual 0
+upstream.samba.more.cache.mixed.False.7.8
+  System.InvalidOperationException: independent expected lease grant: expected 1, actual 0
+upstream.samba.more.cache.mixed.False.7.9
+  System.InvalidOperationException: independent expected lease grant: expected 1, actual 0
+upstream.samba.more.cache.mixed.True.1.1
+  System.InvalidOperationException: lease/oplock compatibility table grant: expected 1, actual 0
+upstream.samba.more.cache.mixed.True.1.8
+  System.InvalidOperationException: lease/oplock compatibility table grant: expected 1, actual 0
+upstream.samba.more.cache.mixed.True.1.9
+  System.InvalidOperationException: lease/oplock compatibility table grant: expected 1, actual 0
+upstream.samba.more.cache.mixed.True.5.1
+  System.InvalidOperationException: lease/oplock compatibility table grant: expected 1, actual 0
+upstream.samba.more.cache.mixed.True.5.8
+  System.InvalidOperationException: lease/oplock compatibility table grant: expected 1, actual 0
+upstream.samba.more.cache.mixed.True.5.9
+  System.InvalidOperationException: lease/oplock compatibility table grant: expected 1, actual 0
+upstream.samba.more.cache.source-stat-table.True
+  System.InvalidOperationException: source stat-only partition mask 20000, lease=True: expected 0, actual 1
+upstream.samba.more.compound.bad-read
+  System.InvalidOperationException: bad-read component 1: expected 3221225485, actual 3221225489
+upstream.samba.more.compound.complete.invalid-first-reset
+  System.InvalidOperationException: invalid-first-reset component 0: expected 3221225485, actual 3221225987
+upstream.samba.more.compound.complete.invalid-session-reset
+  System.InvalidOperationException: invalid-session-reset component 4: expected 3221225485, actual 3221225987
+upstream.samba.more.compound.complete.stat-under-batch
+  System.InvalidOperationException: stat-under-batch component 0: expected 0, actual 259
+upstream.samba.more.durable.1.lock-no-write-lease
+  System.InvalidOperationException: durable reconnect public validation/result: expected 3221225524, actual 0
+upstream.samba.more.durable.2.lock-no-write-lease
+  System.InvalidOperationException: durable reconnect public validation/result: expected 3221225524, actual 0
+upstream.samba.more.lease.cross-version-epoch-lifetime
+  System.InvalidOperationException: existing v1 lease retains its wire version despite v2 same-key request: expected 32, actual 52
+upstream.samba.more.lease.epoch-with-declined-read-cache
+  System.InvalidOperationException: declined READ grant preserves supplied epoch without a successful promotion: expected 100, actual 0
+upstream.samba.more.lease.escalation.False
+  System.InvalidOperationException: second break RH to R: expected 1, actual 0
+upstream.samba.more.lease.escalation.True
+  System.InvalidOperationException: second break RH to R: expected 1, actual 0
+upstream.samba.more.lease.lock-before-peer-open.False
+  System.InvalidOperationException: independent expected lease grant: expected 3, actual 0
+upstream.samba.more.lease.lock-before-peer-open.True
+  System.InvalidOperationException: independent expected lease grant: expected 3, actual 0
+upstream.samba.more.lease.pending.False.rename
+  System.InvalidOperationException: rename retains foreign READ cache: expected 1, actual 0
+upstream.samba.more.lease.pending.True.rename
+  System.InvalidOperationException: rename retains foreign READ cache: expected 1, actual 0
+upstream.samba.more.lease.rename-directory.False.False.False.False.0
+  System.InvalidOperationException: source directory rename requires descendant handles to close; concurrent new descendant participates: expected 3221225506, actual 0
+upstream.samba.more.lease.rename-directory.False.False.True.True.0
+  System.InvalidOperationException: source directory rename requires descendant handles to close; concurrent new descendant participates: expected 3221225506, actual 0
+upstream.samba.more.lease.rename-directory.True.False.True.True.0
+  System.InvalidOperationException: source directory rename requires descendant handles to close; concurrent new descendant participates: expected 3221225506, actual 0
+upstream.samba.more.lease.rename-directory.True.True.False.False.0
+  System.InvalidOperationException: source directory rename requires descendant handles to close; concurrent new descendant participates: expected 3221225506, actual 0
+upstream.samba.more.lease.rename-directory.True.True.True.False.0
+  System.InvalidOperationException: source directory rename requires descendant handles to close; concurrent new descendant participates: expected 3221225506, actual 0
+upstream.samba.more.lease.rename-directory.True.True.True.True.1
+  System.InvalidOperationException: source directory rename requires descendant handles to close; concurrent new descendant participates: expected 3221225506, actual 0
+upstream.samba.more.lease.rename-directory.True.True.True.True.2
+  System.InvalidOperationException: source directory rename requires descendant handles to close; concurrent new descendant participates: expected 3221225506, actual 0
+upstream.samba.more.lease.shared-members-one-break
+  System.InvalidOperationException: READ lease coexists with level II: expected 1, actual 0
+upstream.samba.more.lease.stat.20080
+  System.InvalidOperationException: CREATE: expected 0, actual 259
+upstream.samba.more.lease.three-client-range-locks
+  System.InvalidOperationException: independent expected lease grant: expected 3, actual 0
+upstream.samba.more.lease.two-readers-cross-writes.False
+  System.InvalidOperationException: independent expected lease grant: expected 1, actual 0
+upstream.samba.more.lease.two-readers-cross-writes.True
+  System.InvalidOperationException: independent expected lease grant: expected 1, actual 0
+upstream.samba.more.lease.upgrade-contended.1.1.3
+  System.InvalidOperationException: independent expected lease grant: expected 3, actual 1
+upstream.samba.more.lease.upgrade-contended.1.3.3
+  System.InvalidOperationException: independent expected lease grant: expected 3, actual 1
+upstream.samba.more.lease.v2.share-failure-two-breaks
+  System.InvalidOperationException: Sequence contains no matching element
+upstream.samba.more.notify.delete-directory.False.False
+  System.TimeoutException: No recorded send
+upstream.samba.more.notify.delete-directory.False.True
+  System.TimeoutException: The operation has timed out.
+upstream.samba.more.notify.delete-directory.True.False
+  System.TimeoutException: The operation has timed out.
+upstream.samba.more.notify.delete-directory.True.True
+  System.TimeoutException: The operation has timed out.
+upstream.samba.more.notify.security-update.100.False
+  System.TimeoutException: The operation has timed out.
+upstream.samba.more.notify.security-update.100.True
+  System.TimeoutException: The operation has timed out.
+upstream.samba.more.notify.security-update.fff.False
+  System.TimeoutException: The operation has timed out.
+upstream.samba.more.notify.security-update.fff.True
+  System.TimeoutException: The operation has timed out.
+upstream.samba.more.oplock.9.share-denial
+  System.InvalidOperationException: exclusive share denial versus batch handle-cache invalidation: expected 1, actual 0
+upstream.samba.more.oplock.parent-directory-rename.8.False
+  System.InvalidOperationException: source open-descendant directory rename policy: expected 3221225506, actual 0
+upstream.samba.more.oplock.parent-directory-rename.8.True
+  System.InvalidOperationException: source open-descendant directory rename policy: expected 3221225506, actual 0
+upstream.samba.more.oplock.parent-directory-rename.9.False
+  System.InvalidOperationException: source open-descendant directory rename policy: expected 3221225506, actual 0
+upstream.samba.more.oplock.parent-directory-rename.9.True
+  System.InvalidOperationException: source open-descendant directory rename policy: expected 3221225506, actual 0
+upstream.samba.more.oplock.sequence.ack-none
+  System.InvalidOperationException: one batch break: expected 1, actual 0
+upstream.samba.more.oplock.sequence.close-on-delete
+  System.InvalidOperationException: close versus ACK on batch delete-open conflict: expected 0, actual 3221225539
+upstream.samba.more.oplock.sequence.disposition
+  System.InvalidOperationException: second open denied while delete pending: expected 3221225558, actual 259
+upstream.samba.more.oplock.sequence.overwrite
+  System.InvalidOperationException: both level-II owners notified exactly once: expected 2, actual 1
+upstream.samba.more.oplock.sequence.query-all
+  System.InvalidOperationException: QUERY_INFO: expected 0, actual 259
+upstream.samba.more.oplock.sequence.set-attributes
+  System.InvalidOperationException: attribute-only SET does not mutate file data: expected 0, actual 259
+upstream.samba.more.oplock.sequence.supersede
+  System.InvalidOperationException: both level-II owners notified exactly once: expected 2, actual 1
+upstream.samba.more.oplock.share-failure-then-own-write
+  System.InvalidOperationException: Sequence contains no matching element
+upstream.samba.more.rename.parent-reservation.False.0
+  System.InvalidOperationException: source parent-directory access/share reservation policy: expected 3221225539, actual 0
+upstream.samba.more.rename.parent-reservation.True.0
+  System.InvalidOperationException: source parent-directory access/share reservation policy: expected 3221225539, actual 0
+upstream.samba.more.rename.parent-reservation.True.7
+  System.InvalidOperationException: source parent-directory access/share reservation policy: expected 3221225539, actual 0
+upstream.samba.more.replay.recovery.disconnected
+  System.InvalidOperationException: CREATE: expected 0, actual 3221226026
+upstream.samba.more.replay.recovery.previous-session
+  System.InvalidOperationException: CREATE: expected 0, actual 3221226026
+upstream.samba.more.replay.recovery.twice-after-reconnect
+  System.InvalidOperationException: CREATE: expected 0, actual 3221226026
+upstream.samba.more.replay.source.batch-none
+  System.InvalidOperationException: source adapts response to requested no-oplock without changing retained batch: expected 0, actual 9
+upstream.samba.more.replay.source.batch-to-lease
+  System.InvalidOperationException: replay requires matching original lease presence and key: expected 3221225506, actual 0
+upstream.samba.more.security.inheritance-control-table
+  System.InvalidOperationException: source inherited ACE flag follows auto-inherit control, file clears OI/CI: expected 0, actual 16
+upstream.samba.more.stream.rename.base-prefixed
+  System.InvalidOperationException: pinned stream rename outcome: expected 3221225539, actual 3221225659
+upstream.samba.more.stream.rename.collision
+  System.InvalidOperationException: pinned stream rename outcome: expected 3221225525, actual 3221225659
+upstream.samba.more.stream.rename.default
+  System.InvalidOperationException: pinned stream rename outcome: expected 0, actual 3221225659
+upstream.samba.more.stream.rename.new
+  System.InvalidOperationException: pinned stream rename outcome: expected 0, actual 3221225659
+upstream.samba.more.stream.rename.replace
+  System.InvalidOperationException: pinned stream rename outcome: expected 0, actual 3221225659
+upstream.samba.more.stream.rename.same
+  System.InvalidOperationException: pinned stream rename outcome: expected 0, actual 3221225659
+upstream.samba.session.smb3error.os2-name
+  System.InvalidOperationException: pinned source OS2 legacy filename result: expected 3221225524, actual 0
+
+Native AOT diagnostic differences for the same failing names:
+upstream.samba.more.notify.delete-directory.False.False
+  JIT: System.TimeoutException: No recorded send
+  Native AOT: System.TimeoutException: The operation has timed out.

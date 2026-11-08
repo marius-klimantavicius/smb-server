@@ -24,6 +24,7 @@ internal static class P7cTests
         yield return ("p7c.stress.recovery",Stress);
         yield return ("p7c.registry.late-publish",RegistryLate);
         yield return ("p7c.reconnect.expiry-preparation",ExpiryPreparation);
+        yield return ("p7c.reconnect.deadline-during-preparation",DeadlinePreparation);
         yield return ("p7c.replay-close.physical", ReplayClose);
         foreach(var mode in new[]{ "batch", "lease", "same-client-lease" })yield return ("p7c.cache.disconnected-"+mode,()=>CacheLoss(mode));
         foreach(var dialect in new ushort[]{0x300,0x302})foreach(var mode in new[]{ "v1", "v2", "lease1", "lease2", "expire", "shutdown", "replay-after-reconnect" })yield return ($"p7c.tcp.{dialect:x}.{mode}",()=>Tcp(dialect,mode));
@@ -86,7 +87,7 @@ internal static class P7cTests
         if(mode=="persistent")RawSmb.Put32(req,(int)RawSmb.U32(req,112)+28,2);
         var response=await d.Send(req);Status(response,NtStatus.Success,"valid request");
         var ctx=ResponseContext(response,v1?"DHnQ":"DH2Q");
-        if(mode is "exclusive" or "none" or "directory" or "legacy" or "202" or "210" or "311") { Check.That(ctx==null,"ineligible durable context withheld");return; }
+        if(mode is "exclusive" or "none" or "directory" or "legacy" or "202" or "210") { Check.That(ctx==null,"ineligible durable context withheld");return; }
         Check.That(ctx!=null,"eligible file receives durable response");var open=d.Session.Opens[Id(response)];Check.That(open.IsDurable&&!open.IsPersistentHandle,"basic durability without persistence");
         if(!v1) { Check.Equal(mode=="timeout"?300000u:2000u,RawSmb.U32(ctx!,0),"specified bounded timeout");Check.Equal(0u,RawSmb.U32(ctx!,4),"no persistent flag on ordinary share"); }
         await d.Send(RawSmb.Close(Id(response),0,1,42));
@@ -215,6 +216,17 @@ internal static class P7cTests
         try { await Task.WhenAny(expiry,Task.Delay(150));Check.That(!expiry.IsCompleted&&!handle.Disposed,"expiry cannot dispose during reconnect metadata preparation"); }
         finally { barrier.Release();await reconnect.WaitAsync(Check.Timeout);await expiry.WaitAsync(Check.Timeout);await d.Dispatcher.OnConnectionClosedAsync(session.Connection,Smb2Dispatcher.CloseReason.Shutdown); }
         Check.Equal("Closed",open.Lifetime.State.ToString(),"expiry wins unpublished reconnect");Check.That(session.Opens.IsEmpty,"expired reconnect cannot publish");
+    }
+    static async Task DeadlinePreparation()
+    {
+        using var root=new Root();await using var fixture=new DurableFixture(root.Store());var d=fixture.Direct;d.Options.FeaturePolicy=Profile();d.Connection.Dialect=SmbDialect.Smb300;var clock=new ManualClock();d.Options.TimeProvider=clock;
+        var guid=Guid.NewGuid();var first=await d.Send(Request("a",guid));var id=Id(first);var open=d.Session.Opens[id];await d.Dispatcher.OnConnectionClosedAsync(d.Connection);
+        var session=NewSession(d);var barrier=new AsyncBarrier();open.LocalOpen=new FaultHandle(open.LocalOpen!){Barrier=barrier};
+        var request=Context(RawSmb.Create("a",false,1,2,43),"DH2C",DurableHandleMessages.BuildV2ReconnectData(id.P,id.V,guid,false));
+        var reconnect=d.Send(request,session.Connection);await barrier.Entered.WaitAsync(Check.Timeout);
+        clock.Advance(TimeSpan.FromSeconds(3));barrier.Release();
+        try { Status(await reconnect.WaitAsync(Check.Timeout),NtStatus.ObjectNameNotFound,"deadline checked again before reconnect publication without a scavenger");Check.That(session.Opens.IsEmpty,"expired preparation cannot publish ownership"); }
+        finally { await d.Dispatcher.OnConnectionClosedAsync(session.Connection,Smb2Dispatcher.CloseReason.Shutdown); }
     }
     static async Task ReplayClose()
     {

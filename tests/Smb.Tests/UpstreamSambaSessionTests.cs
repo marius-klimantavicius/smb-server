@@ -405,9 +405,19 @@ internal static partial class UpstreamSambaTests
         try
         {
             await Bind(new NtlmClient("P0", mode == "different-user" ? "other" : "user", mode == "invalid-auth" ? "bad-password" : "password"), true, d.Session.SigningKey, mode == "invalid-auth" ? 0xc000006du : 0xc00000bbu);
-            Status(await Send(Query(id, 14), d.Session.SigningKey), 0xc0000203, "source failed bind leaves channel unauthorized"); Status(await d.Send(Query(id, 14)), Ok, "source failed bind isolates original session");
-            var boundKey = await Bind(new NtlmClient("P0", "user", "password"), true, d.Session.SigningKey, Ok); Status(await Send(Query(id, 14), boundKey), Ok, "source correct-identity retry binds same connection");
+            Status(await Send(Query(id, 14), d.Session.SigningKey), 0xc0000203, "failed bind leaves channel unauthorized");
             if (mode == "invalid-auth")
+            {
+                // The original source's survival/retry convention conflicts with
+                // MS-SMB2 3.3.5.5.3 terminal GSS teardown. Bad signatures fail
+                // before GSS; foreign authenticated identity follows another rule.
+                Status(await d.Send(Query(id, 14)), 0xc0000203, "terminal binding GSS failure retires original session");
+                Check.That(d.Session.Opens.IsEmpty && d.Session.TreeConnects.IsEmpty && d.Session.Channels.IsEmpty, "terminal failure releases opens, trees and all channels");
+                Check.That(!d.State.SessionGlobalList.ContainsKey(d.Session.SessionId), "terminal session removed from global index");
+                return;
+            }
+            Status(await d.Send(Query(id, 14)), Ok, "foreign identity rejection preserves original session");
+            var boundKey = await Bind(new NtlmClient("P0", "user", "password"), true, d.Session.SigningKey, Ok); Status(await Send(Query(id, 14), boundKey), Ok, "source correct-identity retry binds same connection");
             {
                 await Bind(new NtlmClient("P0", "user", "bad-password"), false, boundKey, 0xc000006d);
                 Status(await d.Send(Query(id, 14)), 0xc0000203, "source bad reauth on bound channel retires original channel too"); Status(await Send(Query(id, 14), boundKey), 0xc0000203, "source bad reauth retires all channels");

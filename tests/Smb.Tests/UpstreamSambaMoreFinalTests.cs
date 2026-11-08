@@ -77,11 +77,41 @@ internal static partial class UpstreamSambaMoreTests
     }
     static async Task RenameInterim(bool same)
     {
-        await using var f = new CacheFixture(); var d = f.D; Id(await d.Send(Lease(Create(disposition: 3), 3)));
+        await using var f = new CacheFixture(); var d = f.D; var owner = Id(await d.Send(Lease(Create(disposition: 3), 3))); await Write(d, owner, Payload);
         var peer = Id(await Complete(f, Lease(Create(), 3, 2))); var before = f.Transport.Sends.Length;
-        var response = await Complete(f, Rename(peer, same ? "file" : "renamed")); Status(response, Ok, "standalone rename completes after lease downgrade");
-        Check.That((RawSmb.U32(response, 16) & 2) == 0, "source Windows standalone SET_INFO rename does not choose an async interim");
+        var response = await d.Send(Rename(peer, same ? "file" : "renamed"));
+        // The upstream Windows scheduling convention is synchronous. MS-SMB2
+        // 3.3.4.2 explicitly permits an interim for SET_INFO too; completion,
+        // signatures, withheld-ACK safety and metadata remain mandatory here.
+        if (RawSmb.U32(response, 8) == 0x103)
+        {
+            Check.That((RawSmb.U32(response, 16) & 2) != 0 && RawSmb.U64(response, 32) != 0, "valid rename interim");
+            Check.That(File.ReadAllBytes(Path.Combine(f.Root.Path, "file")).SequenceEqual(Payload), "rename preserves original bytes before ACK");
+            Check.That(!File.Exists(Path.Combine(f.Root.Path, "renamed")), "rename has no namespace mutation before ACK");
+            var notice = f.Transport.Sends.Skip(before).Single(x => RawSmb.U16(x.Message, 12) == 18).Message;
+            var target = RawSmb.U32(notice, 92);
+            Check.That((target & ~1u) == 0, "foreign RH key loses HANDLE without acquiring new rights");
+            Check.That(!f.Transport.Sends.Skip(before).Any(x => RawSmb.U16(x.Message, 12) == 17), "no terminal rename before ACK");
+            Status(await d.Send(LeaseAck(1, target)), Ok, "ACK exact advertised foreign HANDLE downgrade");
+            while (!f.Transport.Sends.Skip(before).Any(x => RawSmb.U16(x.Message, 12) == 17))
+            {
+                Check.Equal(1, f.Transport.Sends.Skip(before).Count(x => RawSmb.U16(x.Message, 12) == 18), "source and same-object destination need only one foreign-key break");
+                await f.Transport.WaitForSendAsync().WaitAsync(Check.Timeout);
+            }
+            var final = Split(await AsyncFinal(f.Transport, response, 17), d.Connection.Dialect).Single();
+            Check.Equal(RawSmb.U64(response, 24), RawSmb.U64(final, 24), "rename final retains MessageId");
+            Check.Equal(RawSmb.U64(response, 32), RawSmb.U64(final, 32), "rename final retains AsyncId");
+            using (var timeout = new CancellationTokenSource(Check.Timeout))
+                while (!d.Connection.PendingRequests.IsEmpty) await Task.Delay(1, timeout.Token);
+            Check.Equal(1, f.Transport.Sends.Skip(before).Count(x => RawSmb.U16(x.Message, 12) == 17), "rename completes exactly once");
+            response = final;
+        }
+        Status(response, Ok, "standalone rename completes after lease downgrade");
         Check.Equal(1, f.Transport.Sends.Skip(before).Count(x => RawSmb.U16(x.Message, 12) == 18), "same/different-name rename invalidates foreign HANDLE key once");
+        Check.That(File.Exists(Path.Combine(f.Root.Path, same ? "file" : "renamed")), "final destination exists");
+        if (!same) Check.That(!File.Exists(Path.Combine(f.Root.Path, "file")), "old name gone after final");
+        await Data(d, peer, Payload); await Close(d, peer);
+
     }
     static async Task ReplaySource(string shape)
     {

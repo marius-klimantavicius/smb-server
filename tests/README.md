@@ -7,13 +7,26 @@ or test adapter is needed. Empty selection exits 2, assertion failure exits 1,
 all selected tests passing exits 0. Each test has a 60-second outer bound; I/O,
 barriers and cleanup have shorter 10-second bounds. Default runs now require F08 to pass. Historical P0 logs preserve its original failure; later final-source gates require all tests green.
 
-The complete harness now registers **3,144** cases. The second campaign adds
+The historical second campaign registers **3,144** cases. That campaign adds
 2,068 source-derived public protocol/auth cases and 136 repair regressions to the
 previous 940. Published Linux JIT and Native AOT each pass **2,917/3,144**; the
 same **227 failures remain** in both, including compatibility expectations and
 unresolved cache/notify reproducers. No skip or expected-failure mechanism is used.
 Both modes' host selftests, real local TCP workloads and stress/expiry checks pass.
 Native Windows remains unexecuted.
+
+The subsequent [multichannel/durable delivery](../docs/correctness/multichannel-durable-reconnect.md)
+adds **371** cases, for **3,515 unique registrations**. Its settled integration
+run passes **3,415**, with **100 inherited failures** and no new failing names.
+Published Linux JIT and Native AOT both reproduce **3,415/3,515**, with identical
+failing names. Both local TCP workloads and repeated stress/expiry checks pass.
+Focused TCP filters are `channel-wire.` (131), `durable.tcp.` (151),
+`cache.sequence.tcp.` (28) and `channel-composition.` (60); the additional
+`p7c.reconnect.deadline-during-preparation` covers suspended expiry. The composition
+matrix covers signed/encrypted SMB300/302/311 v1/v2 Batch and file leases,
+one-channel/final-channel loss, reconnect, replay and controlled teardown races.
+See [platform validation](../docs/correctness/platform-validation.md) for final
+published-mode counts and [the exact failure differences](../docs/correctness/recovery-failure-differences.txt).
 
 `--filter upstream.` selects all upstream-related cases, including the first
 campaign's 86 (`upstream.create.` 29, `upstream.protocol.` 27, `upstream.state.` 30).
@@ -42,7 +55,7 @@ focused tests here without creating new fixtures or loading original DLLs.
 | Helper | Integration contract |
 | --- | --- |
 | `HostFixture` | Real `Smb.Host.SmbServer`, loopback ephemeral port, fake storage, existing authenticated session configuration and required signing. Exposes `Server.State`, `Store`, `Watcher`; async disposal shuts the server down with a bounded drain. |
-| `WireClient` | Authenticated SMB 2.0.2–3.1.1 primary connection using independent raw SMB packets; optional dialect argument, with SMB300/302 binding helpers. `Session`, `Tree`, `NextMessageId()` and `ExchangeAsync(request, expectedStatus, structureSize)` support new command-specific tests. IDs increase per connection. Existing `NtlmClient` is used only for excluded session setup. |
+| `WireClient` | Authenticated SMB 2.0.2–3.1.1 primary connection using independent raw SMB packets; optional dialect argument, with SMB300/302/311 binding helpers. `Session`, `Tree`, `NextMessageId()` and `ExchangeAsync(request, expectedStatus, structureSize)` support new command-specific tests. IDs increase per connection. It uses existing NTLM/KDF/signing primitives; the newer acceptance peers provide separate transcript, KDF and signature oracles. |
 | `RawSmb` | Byte builders for negotiate/session/tree/create/read/write/close/enumeration/disconnect. Public little endian accessors permit deliberate boundary mutations. `Response`, `Buffer`, `Names` validate independent wire structure; no production protocol serializers or decoders are used. |
 | `FakeFileStore` | In-memory nodes, normal create/read/write/query/resize/rename/flush. `Seed`, `Contents`, `Handles`, `ActiveHandles` expose state. No real files or external share access. `Control` counts each method invocation before blocking/faulting. |
 | `FakeFileHandle` | `DisposeCalls`, `IsDisposed`, path/metadata. Async disposal is countable, blockable and throwable. `PhysicalPath` is a synthetic watcher input only. |

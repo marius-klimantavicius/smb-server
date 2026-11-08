@@ -1,7 +1,8 @@
 # Windows and Linux platform correction — 2026-11-08
 
-The local backend now has Windows and Linux implementations. The latest expanded
-Linux capture completed with 227 failing cases in each mode; its result is below.
+The local backend now has Windows and Linux implementations. The recovery
+delivery's published Linux modes each execute 3,515 cases, with 100 retained
+failures. Its results follow the historical 227-failure campaign below.
 Earlier all-green deliveries are historical. Native Windows JIT/AOT execution
 is unexecuted; the user will test it later. Both-platform acceptance remains open.
 
@@ -196,3 +197,61 @@ Native Windows, UNC and actual Windows AOT execution remain **unexecuted**.
 No Wine, cross-build or simulated runner branch is presented as native evidence.
 The test-port inventory is complete for the stated surveyed families; functional
 acceptance and both-platform acceptance remain open.
+
+
+## Multichannel and in-memory durable delivery — Linux
+
+The [recovery delivery](multichannel-durable-reconnect.md) adds 371 ordinary
+regressions and implements explicit SMB300/302/311 channels plus legal v1/v2
+in-memory durable reconnection. Its initial clean `1def1af` baseline reproduced
+2,917/3,144 and exactly the previous 227 failing names before implementation.
+
+The native Linux x64 driver uses the unchanged portable command:
+
+```sh
+python3 scripts/validate-platform.py --out "$SMB_VALIDATION_OUTPUT" --keep-going
+```
+
+Choose a new external output directory. This runs restore/rebuild, all four
+publications, full harnesses, selftests, actual local-backend TCP workloads,
+three stress and three expiry-race selections per mode, and dependency inspection.
+
+| Published mode | Full harness | Host selftest | Actual LocalFileStore TCP | Repeated selections |
+|---|---|---|---|---|
+| Self-contained JIT | 3,415 PASS / 100 FAIL / 3,515 total | Pass | 12 rounds, pass | 3 x 8 stress and 3 x 1 expiry, all pass |
+| Native AOT | 3,415 PASS / 100 FAIL / 3,515 total | Pass | 12 rounds, pass | 3 x 8 stress and 3 x 1 expiry, all pass |
+
+The two modes have identical failing names. Relative to the clean baseline,
+127 previously failing names now pass, zero new failing names appear, and all
+371 added cases pass. [Exact name differences and retained first diagnostics](recovery-failure-differences.txt)
+are maintained separately. Of the remaining failures, 84 are Samba continuation
+and 16 are inherited inventory/original-Samba rows. Their primary-spec, source
+compatibility and unresolved-workflow distinctions are in the recovery report.
+The full harness and aggregate platform result remain **fail**, exit **1**.
+There are 24 passing stages, two failed full-harness stages and no blocked stages.
+
+The first published capture recorded documentation-only source drift:
+`tests/README.md` changed during Native AOT execution. Every executable and test
+code hash remained unchanged; both modes had exactly equal results and first
+failure diagnostics. Its 430 artifact hashes verified. That capture is preserved
+with its original drift indication; it is not relabeled fully source-stable.
+After freezing the tracked inputs, a separate complete platform capture was
+completed with the same counts and failing names, without changing executable
+behavior or test expectations. All 52 per-stage before/after source manifests
+match its initial manifest; no source drift occurred. All 430 published artifact
+hashes verify. No further broad retest followed this settled gate.
+One retained case, `upstream.samba.more.notify.delete-directory.False.False`,
+reports "No recorded send" in JIT and the general timeout in Native AOT; its
+failing name is unchanged. The exact per-mode diagnostics are in the name report.
+
+The Release builds add no warnings. Publication retains the existing
+IL2026/IL3050 diagnostics in unsupported persistent JSON APIs; no analyzer
+suppression or persistent capability was introduced. Native client selections
+are recorded separately: Samba 36/39 processes pass (three older v2 filename
+status expectations retained), and the pinned public Go client passes 6/6.
+Those selections include SMB311 binding; they are not whole-client-suite or
+all-cipher/domain certification.
+
+Native Windows JIT/AOT and UNC execution remain **unexecuted**. The portable
+implementation and runnable Windows configuration are provided, with no Wine,
+cross-build or Linux substitute presented as native Windows acceptance.
