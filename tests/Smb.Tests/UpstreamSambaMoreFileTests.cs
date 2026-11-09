@@ -159,8 +159,11 @@ internal static partial class UpstreamSambaMoreTests
     }
     static async Task QueryAccess(byte cls)
     {
-        using var root = new P7cTests.Root(); await using var d = new P2Tests.Direct(root.Store()); await Close(d, await Open(d, disposition: 3)); var id = await Open(d, access: 1);
-        var expected = cls is 4 or 18 or 34 or 35 ? Denied : cls is 16 or 17 ? 0xc0000003u : Ok; Status(await d.Send(Query(id, cls)), expected, "MS-SMB2 QUERY_INFO class-specific access check");
+        using var root = new P7cTests.Root(); await using var d = new P2Tests.Direct(root.Store()); var seed = await Open(d, disposition: 3); await Write(d, seed, Payload); await Close(d, seed); var id = await Open(d, access: 1);
+        // MS-SMB2 3.3.5.20.1: known unsupported classes retain the selected
+        // NOT_SUPPORTED policy even on a READ_DATA-only open.
+        var expected = cls is 4 or 18 or 34 or 35 ? Denied : cls is 16 or 17 ? 0xc00000bbu : Ok; Status(await d.Send(Query(id, cls)), expected, "MS-SMB2 QUERY_INFO class-specific access check");
+        await Data(d, id, Payload); Status(await d.Send(RawSmb.Write(id, [99], 0, 0, 1, 42)), Denied, "query cannot enlarge original read-only access"); await Close(d, id);
     }
     static readonly Dictionary<byte, int> QuerySizes = new() { [4] = 40, [5] = 24, [6] = 8, [7] = 4, [14] = 8, [16] = 4, [17] = 4, [34] = 56, [35] = 8 };
     static async Task QueryBuffer(byte cls)
@@ -168,8 +171,10 @@ internal static partial class UpstreamSambaMoreTests
         using var root = new P7cTests.Root(); await using var d = new P2Tests.Direct(root.Store()); var id = await Open(d, disposition: 3); await Write(d, id, Payload); var size = QuerySizes[cls];
         if (cls is 16 or 17)
         {
-            Status(await d.Send(Query(id, cls, (uint)size - 1)), 0xc0000003, "unsupported class rejected with short allowance");
-            Status(await d.Send(Query(id, cls, (uint)size)), 0xc0000003, "larger allowance cannot falsely enable unsupported class"); await Data(d, id, Payload); return;
+            // MS-SMB2 3.3.5.20.1 selected known-class rejection precedes sizing.
+            Status(await d.Send(Query(id, cls, (uint)size - 1)), 0xc00000bb, "unsupported class rejected with short allowance");
+            Status(await d.Send(Query(id, cls, (uint)size)), 0xc00000bb, "larger allowance cannot falsely enable unsupported class"); await Data(d, id, Payload);
+            await Close(d, id); id = await Open(d); await Data(d, id, Payload); await Close(d, id); return;
         }
         Status(await d.Send(Query(id, cls, (uint)size - 1)), 0xc0000004, "fixed FSCC record cannot be truncated");
         var bytes = Output(await d.Send(Query(id, cls, (uint)size))); Check.Equal(size, bytes.Length, "exact output allowance succeeds"); await Data(d, id, Payload);

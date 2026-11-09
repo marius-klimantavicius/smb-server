@@ -195,12 +195,12 @@ internal static partial class UpstreamSambaMoreTests
             return b;
         }
         var result = await Send(f, s, Reconnect(false));
-        var invalid = shape is "active" or "wrong-name" or "wrong-key" or "missing-lease" or "wrong-client" or "wrong-guid" or "lock-no-write-lease";
+        var invalid = shape is "active" or "wrong-name" or "wrong-key" or "missing-lease" or "wrong-client" or "wrong-guid";
         Status(result, shape == "wrong-name" && v1 ? Invalid : invalid ? Missing : Ok, "durable reconnect public validation/result");
         if (invalid)
         {
             if (shape == "wrong-client") s.Connection.ClientGuid = d.Connection.ClientGuid.ToArray();
-            if (shape is "active" or "lock-no-write-lease") return;
+            if (shape == "active") return;
             result = await Send(f, s, Reconnect(true)); Status(result, Ok, "invalid reconnect preserves valid retained claim");
         }
         var recovered = Id(result); Check.Equal(id.P, recovered.P, "persistent FileId retained");

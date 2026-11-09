@@ -12,17 +12,18 @@ internal sealed class NamedStreamHandle : IFileHandle, IDisposable
 
 	private readonly IFileHandle _base;
 	public FileIdentity? Identity { get; }
-	public bool DeletePending => Data.DeletePending;
+	public bool DeletePending => Data.DeletePending || _base.DeletePending;
+	public bool IsDefaultStream => StreamName.Length == 0;
 	public string BaseFullPath => _base.PhysicalPath!;
 	internal LocalFileHandle BaseHandle => (LocalFileHandle)_base;
 
-	public string StreamName { get; }
+	public string StreamName => Data.Name;
 
 	internal LocalFileStore.StreamData Data { get; }
 	private int _closed;
 	internal bool IsClosed => Volatile.Read(ref _closed) != 0;
 
-	public string Path => System.IO.Path.GetFileName(BaseFullPath) + ":" + StreamName;
+	public string Path => _base.Path + (StreamName.Length == 0 ? "" : ":" + StreamName);
 
 	public bool IsDirectory => false;
 
@@ -32,9 +33,8 @@ internal sealed class NamedStreamHandle : IFileHandle, IDisposable
 	{
 		_store = store;
 		Data = store.GetStreamData(baseFullPath, streamName);
-		_base = store.CreateAsync(System.IO.Path.GetRelativePath(store.RootPath, baseFullPath), FileAccessIntent.Read, CreateDispositionIntent.Open, false, true).GetAwaiter().GetResult().Value.Handle;
+		_base = store.OpenStreamBase(baseFullPath);
 		Identity = _base.Identity!.Value with { StreamId = Data.Identity };
-		StreamName = streamName;
 	}
 
 	public FileEntryInfo GetInfo()

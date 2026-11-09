@@ -9,6 +9,9 @@ public interface IFileHandle : IDisposable
 {
 	FileIdentity? Identity => null;
 
+	/// <summary>Logical unnamed data stream; independent of its stable stream identity.</summary>
+	bool IsDefaultStream => Identity is not { } id || id.StreamId.Length == 0;
+
 	/// <summary>Current shared object/stream disposition, sampled for metadata queries.</summary>
 	bool DeletePending => false;
 

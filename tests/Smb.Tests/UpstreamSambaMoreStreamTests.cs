@@ -40,8 +40,16 @@ internal static partial class UpstreamSambaMoreTests
         await Write(d, baseId, [41, 42]); var source = await Open(d, "file:source", 3); await Write(d, source, Payload);
         if (shape is "replace" or "collision") { var target = await Open(d, "file:target", 3); await Write(d, target, [97]); await Close(d, target); }
         var name = shape switch { "same" => ":source:$DATA", "default" => "::$DATA", "base-prefixed" => "file:target", _ => ":target:$DATA" };
-        var expected = shape == "collision" ? Collision : shape == "base-prefixed" ? Sharing : Ok;
+        var expected = shape == "collision" ? Collision : shape == "base-prefixed" ? Sharing : shape == "replace" ? Invalid : Ok;
         Status(await d.Send(Rename(source, name, shape is "replace" or "default" or "same")), expected, "pinned stream rename outcome");
+        if (shape == "replace")
+        {
+            // MS-FSA 2.1.5.15.12.1 requires rejection of a nonempty target.
+            // Preserve it, empty it explicitly, close it, then retry the same rename.
+            await Data(d, source, Payload); var target = await Open(d, "file:target"); await Data(d, target, [97]);
+            Status(await d.Send(Set(target, 20, new byte[8])), Ok, "empty replacement target"); await Close(d, target);
+            Status(await d.Send(Rename(source, name, true)), Ok, "closed empty target can be replaced"); expected = Ok;
+        }
         await Data(d, source, Payload);
         if (expected != Ok)
         {

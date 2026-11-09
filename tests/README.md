@@ -28,6 +28,15 @@ one-channel/final-channel loss, reconnect, replay and controlled teardown races.
 See [platform validation](../docs/correctness/platform-validation.md) for final
 published-mode counts and [the exact failure differences](../docs/correctness/recovery-failure-differences.txt).
 
+The [remaining-failure repair campaign](../docs/correctness/remaining-failure-repairs.md)
+adds **382** ordinary regressions, for **3,897 unique registrations**. Its settled
+full integration run passes **3,897/3,897**, including all 100 formerly failing
+names, the original 940 and all 371 recovery-feature additions. Production
+repairs and specification/profile-backed fixture corrections are documented
+separately; no tests are skipped or converted to expected failures. Final native
+Linux JIT/AOT, host/TCP and stress results are in platform validation. Native
+Windows execution and full Windows ACL/stream fidelity remain outside that claim.
+
 `--filter upstream.` selects all upstream-related cases, including the first
 campaign's 86 (`upstream.create.` 29, `upstream.protocol.` 27, `upstream.state.` 30).
 The broader source selections are `upstream.samba.` (811 plus 737 under

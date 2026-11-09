@@ -70,6 +70,8 @@ tests = tests.Concat(UpstreamFinalProtocolTests.Cases()).ToArray();
 tests = tests.Concat(DurableRecoveryTcpTests.Cases()).ToArray();
 tests = tests.Concat(MultichannelWireTests.Cases()).ToArray();
 tests = tests.Concat(CacheSequenceRecoveryTests.Cases()).ToArray();
+tests = tests.Concat(NotifyBoundaryRepairTests.Cases()).ToArray();
+tests = tests.Concat(DurableRecoveryTcpTests.InheritanceNameCases()).ToArray();
 if (args is ["--list"]) { foreach (var test in tests) Console.WriteLine(test.Name); return 0; }
 var filter = args switch { [] => "", ["--filter", var value] => value, _ => throw new ArgumentException("Usage: [--list | --filter <case-insensitive-substring>]") };
 var selected = tests.Where(t => t.Name.Contains(filter, StringComparison.OrdinalIgnoreCase)).ToArray();

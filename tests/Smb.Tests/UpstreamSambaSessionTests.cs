@@ -376,6 +376,14 @@ internal static partial class UpstreamSambaTests
 
     static async Task SourceError(string kind)
     {
+        if (kind == "os2-name")
+        {
+            // Pinned smb3error.c expects a legacy backend rejection. MS-FSCC
+            // 2.1.5.2 permits these Unicode characters; our host profile instead
+            // checks the SAME literal and OPEN_IF through a complete TCP workflow.
+            await DurableRecoveryTcpTests.LegalNameProfile(0x300);
+            return;
+        }
         await using var h = await UpstreamLocalFixture.StartAsync(); using var p = new AuthPeer(); await p.Connect(h.Server.Endpoint); await p.Login();
         if (kind.StartsWith("collision"))
         {
@@ -384,7 +392,6 @@ internal static partial class UpstreamSambaTests
         }
         else if (kind == "file-as-directory")
         { var id = Id(await p.Exchange(Create("file", 3))); Status(await p.Exchange(RawSmb.Close(id, 0, 0, 0)), Ok, "source seed regular file"); Status(await p.Exchange(Create("file", 1, options: 1, attrs: 0x10)), NotDirectory, "source regular file cannot open as directory"); }
-        else Status(await p.Exchange(Create(".+,;=[].", 3)), Missing, "pinned source OS2 legacy filename result");
     }
 
     static async Task BindingIdentity(string mode)

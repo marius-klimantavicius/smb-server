@@ -1,5 +1,14 @@
 # Correctness acceptance
 
+Current follow-up: [remaining-failure repairs](remaining-failure-repairs.md)
+resolve all 100 failures from the recovery delivery. The settled integration
+harness and both published Linux modes pass 3,897/3,897; all 26 platform stages
+pass. Details are recorded in
+[platform validation](platform-validation.md). Primary/profile oracle corrections
+are explicit, with original source/results retained. Native Windows execution,
+historical test-first qualifications and broader conformance limits remain open.
+The campaign counts below describe their historical source versions.
+
 The first upstream campaign's Linux JIT/AOT delivery on 2026-11-08 passed
 940/940 tests per mode plus actual LocalFileStore
 TCP workloads. See [platform validation](platform-validation.md) for commands and
@@ -50,8 +59,8 @@ Strict M1/M2 acceptance remains incomplete. Other limits persist:
 - The historical SMB 3.1.1 binding/preauthentication blocker is repaired by the
   [multichannel/durable delivery](multichannel-durable-reconnect.md). Explicit
   profiles now support its authenticated channels and in-memory reconnect;
-  default Restricted remains unchanged. The integrated 3,515-case harness has
-  100 retained failures, so whole-project acceptance remains failed. Current
+  default Restricted remains unchanged. That delivery's 3,515-case harness had
+  100 retained failures, resolved by the later repair campaign above. Current
   published-mode results are recorded in [platform validation](platform-validation.md).
 - Persistent handles and continuous availability lack an atomic recovery journal
   and process-restart/failover tests; they remain unavailable.

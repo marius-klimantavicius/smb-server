@@ -1,8 +1,8 @@
 # Windows and Linux platform correction — 2026-11-08
 
-The local backend now has Windows and Linux implementations. The recovery
-delivery's published Linux modes each execute 3,515 cases, with 100 retained
-failures. Its results follow the historical 227-failure campaign below.
+The local backend now has Windows and Linux implementations. The latest
+failure-repair delivery passes 3,897/3,897 in both published Linux modes, with
+all 26 platform stages passing. Its results follow the historical campaigns below.
 Earlier all-green deliveries are historical. Native Windows JIT/AOT execution
 is unexecuted; the user will test it later. Both-platform acceptance remains open.
 
@@ -255,3 +255,58 @@ all-cipher/domain certification.
 Native Windows JIT/AOT and UNC execution remain **unexecuted**. The portable
 implementation and runnable Windows configuration are provided, with no Wine,
 cross-build or Linux substitute presented as native Windows acceptance.
+
+
+## Remaining-failure repair delivery — settled Linux capture
+
+The [follow-up repair campaign](remaining-failure-repairs.md) starts at clean
+`c296735` and reproduces 3,415/3,515 with the same 100 failing names before
+implementation. The final source retains every original registration and adds
+382 ordinary wire/lifecycle cases. Original source failures, intermediate
+regressions and specification/profile fixture corrections remain externally
+preserved and are distinguished in the report.
+
+The unchanged portable driver ran once after final integration and test-input
+freeze, with a new external output directory:
+
+```sh
+python3 scripts/validate-platform.py --out "$SMB_VALIDATION_OUTPUT" --keep-going
+```
+
+| Executed mode | Full harness | Host selftest | Actual LocalFileStore TCP | Repeated selections |
+|---|---|---|---|---|
+| Published self-contained JIT | 3,897/3,897 PASS | Pass | 12 rounds, pass | 3 x 8 stress; 3 x 1 expiry, all pass |
+| Published Native AOT | 3,897/3,897 PASS | Pass | 12 rounds, pass | 3 x 8 stress; 3 x 1 expiry, all pass |
+
+All **26 stages pass**, aggregate **pass**, exit **0**. Restore/rebuild, all four
+publications and native dependency inspection pass. All 52 stage before/after
+source manifests equal the initial manifest; there is no source drift. All
+**430 published artifact hashes** verify. The test README was updated before
+freeze; later documentation changes are outside the captured input set.
+
+The comparison finds **100 resolved original failing names**, zero retained
+failures, zero new failures, zero missing baseline registrations and all 382
+new registrations passing in each mode. Both modes retain the original 940 and
+all 371 recovery tests. Samba continuation is 737/737, all maintained Samba
+registrations 1,548/1,548, inventory 140/140, Go adaptations 83/83 and Microsoft
+adaptations 297/297. These are maintained adaptations and profile oracles, not
+execution or certification of entire original upstream suites.
+
+[Exact original-name dispositions](remaining-failure-results.txt) and the
+[repair/specification report](remaining-failure-repairs.md) describe the change.
+No test was skipped, removed, retried into success or converted to expected
+failure. Corrected backend-convention/invalid-profile oracles are explicit and
+include complete data, identity, rights, rejection/retry and cleanup assertions.
+This does not claim 100 independent production defects or full Windows fidelity.
+
+Release builds add no warnings. Publication retains the known IL2026/IL3050
+categories in unsupported persistent JSON APIs; no suppression or persistent
+capability was added. No further broad Linux test loop follows this settled gate.
+Native Windows JIT/AOT and UNC execution remain **unexecuted**. Historical strict
+acceptance qualifications, broader conformance and provenance limits remain open.
+
+A subsequent bounded independent native Samba check against this published
+Native AOT host passes 27/27 processes: eighteen signed/default and nine required
+encryption probes across SMB300/302/311, including actual channel binding and
+durable reconnect. Both test hosts stop normally. These processes are separate
+from the 3,897-case harness and do not certify the complete native client suite.

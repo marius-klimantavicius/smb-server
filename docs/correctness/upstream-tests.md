@@ -1,5 +1,11 @@
 # Adapted upstream correctness campaign
 
+Latest follow-up: [remaining-failure repairs](remaining-failure-repairs.md)
+resolve the recovery delivery's 100 failing registrations and pass 3,897/3,897
+in both published Linux modes. The 737-case Samba continuation, 140 inventory
+cases and all earlier registrations pass under the documented supported-profile
+oracles. Historical counts and source-convention distinctions are retained below.
+
 Current follow-up: [multichannel and in-memory durable reconnect](multichannel-durable-reconnect.md)
 implements SMB311 recovery and repairs requested retained cache/replay workflows.
 It expands the harness to 3,515 cases, with 100 retained failures and 127 resolved

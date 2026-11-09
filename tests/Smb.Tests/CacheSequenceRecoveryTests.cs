@@ -13,10 +13,11 @@ using Smb.Testing;
 // Real TCP, independently ordered commands and literal lease states. No cache,
 // retained-open or session state is seeded. See MS-SMB2 3.3.4.7, 3.3.5.9.8/.11,
 // 3.3.5.22.2. The signing/KDF peer is local to this suite.
-internal static class CacheSequenceRecoveryTests
+internal static partial class CacheSequenceRecoveryTests
 {
     public static IEnumerable<(string Name, Func<Task> Run)> Cases()
     {
+        foreach (var test in RepairCases()) yield return test;
         foreach (var dialect in new ushort[] { 0x210, 0x300, 0x302, 0x311 })
         {
             foreach (var durable in new[] { false, true })
@@ -33,13 +34,14 @@ internal static class CacheSequenceRecoveryTests
     {
         internal readonly P7cTests.Root Root = new();
         internal readonly SmbServer Server;
+        internal SmbServerOptions Options { get; private set; } = null!;
         internal Fixture(bool durable = true)
         {
             Server = SmbServerBuilder.Create().WithEndpoint(IPAddress.Loopback, 0)
                 .UseAuthentication(new NtlmSpnegoNegotiator(new InMemoryIdentityBackend()
                     .AddUser(HostFixture.Domain, HostFixture.User, HostFixture.Password)))
                 .AddShare(new Share { Name = "P0", FileStore = Root.Store() })
-                .Configure(o => { o.FeaturePolicy = durable ? SmbFeaturePolicy.Durable : SmbFeaturePolicy.Caching;
+                .Configure(o => { Options = o; o.FeaturePolicy = durable ? SmbFeaturePolicy.Durable : SmbFeaturePolicy.Caching;
                     o.DurableHandleTimeout = TimeSpan.FromMinutes(2); o.OplockBreakTimeout = TimeSpan.FromMinutes(2); }).Build();
         }
         internal async Task<Peer> Connect(ushort dialect, Guid client)
@@ -136,8 +138,10 @@ internal static class CacheSequenceRecoveryTests
         await Begin(c, overwrite); await Reply(c, overwrite, 0x103);
         var member = await a.Exchange(Lease(dialect, 7)); Grant(member, 7); Check.Equal(2u, RawSmb.U32(Context(member), 20), "queued conflict preserves common breaking state");
         await a.Exchange(RawSmb.Close(Id(member), 0, 0, 0)); await a.Exchange(Ack(notice, 3));
-        var second = await Notice(a, 3, 0); if (dialect >= 0x300) Check.Equal((ushort)(RawSmb.U16(notice, 66) + 1), RawSmb.U16(second, 66), "new break increments epoch");
-        await a.Exchange(Ack(second, 3), 0xc00000d0); await a.Exchange(Ack(second, 0));
+        var second = await Notice(a, 3, 1); if (dialect >= 0x300) Check.Equal((ushort)(RawSmb.U16(notice, 66) + 1), RawSmb.U16(second, 66), "new break increments epoch");
+        await a.Exchange(Ack(second, 3), 0xc00000d0); await a.Exchange(Ack(second, 1));
+        var third = await Notice(a, 1, 0);
+        if (dialect >= 0x300) Check.Equal((ushort)(RawSmb.U16(second, 66) + 1), RawSmb.U16(third, 66), "no-ACK invalidation advances epoch");
         var opened = Id(await Reply(b, ordinary)); var truncated = Id(await Reply(c, overwrite));
         await a.Exchange(RawSmb.Read(owner, 1, 0, 0, 0, 0), 0xc0000011);
         var current = await a.Exchange(Lease(dialect, 0)); Grant(current, 0); Check.Equal(0u, RawSmb.U32(Context(current), 20), "no break remains after both creates");

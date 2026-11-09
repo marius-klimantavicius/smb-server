@@ -25,11 +25,14 @@ public sealed class DirectoryNotificationState : IDisposable
 	private readonly Lazy<bool> _initialize;
 	private IDisposable? _watcher;
 	private bool _closed;
+	private bool _deleted;
+	private readonly bool _subtree;
 	private int _bytes;
 	private NtStatus? _error;
 
 	public DirectoryNotificationState(IDirectoryWatcher watcher, string path, bool subtree, uint filter, uint capacity)
 	{
+		_subtree = subtree;
 		_filter = (ChangeNotifyFilter)(filter & 0xfff);
 		_capacity = (int)Math.Min(capacity, 65536u);
 		_initialize = new Lazy<bool>(() =>
@@ -53,7 +56,7 @@ public sealed class DirectoryNotificationState : IDisposable
 	{
 		lock (_gate)
 		{
-			if (_waiters.Count != 0 || (_events.Count == 0 && !_error.HasValue))
+			if (_waiters.Count != 0 || (_events.Count == 0 && !_error.HasValue && !_deleted))
 			{
 				result = default;
 				return false;
@@ -86,12 +89,42 @@ public sealed class DirectoryNotificationState : IDisposable
 		}
 	}
 
+	// Process-memory metadata cannot be observed by the native filesystem watcher.
+	// The caller supplies current acquired-open paths, so a renamed watched directory
+	// and a renamed child are evaluated in the same namespace as the successful SET.
+	internal void Publish(string directoryPath, string changedPath, ChangeNotifyFilter filter)
+	{
+		if ((_filter & filter) == 0) return;
+		var relative = System.IO.Path.GetRelativePath(directoryPath, changedPath);
+		if (relative == "." || relative == ".." || System.IO.Path.IsPathRooted(relative) ||
+		    relative.StartsWith(".." + System.IO.Path.DirectorySeparatorChar, StringComparison.Ordinal)) return;
+		if (!_subtree && relative.IndexOfAny([System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar]) >= 0) return;
+		Changes([new FileNotifyEvent(FileNotifyAction.Modified, relative.Replace('/', '\\'))]);
+	}
+
+	internal void MarkDeleted(bool permanent)
+	{
+		List<(Action<Result>, Result)> ready = new();
+		lock (_gate)
+		{
+			if (_closed || _deleted) return;
+			_deleted = permanent;
+			_events.Clear();
+			_bytes = 0;
+			_error = null;
+			foreach (var waiter in _waiters)
+				ready.Add((waiter.Callback, new Result((NtStatus)0xc0000056, ErrorResponse.BuildBody())));
+			_waiters.Clear();
+		}
+		Deliver(ready);
+	}
+
 	private void Changes(IReadOnlyList<FileNotifyEvent> changes)
 	{
 		List<(Action<Result>, Result)> ready;
 		lock (_gate)
 		{
-			if (_closed || _filter == 0) return;
+			if (_closed || _deleted || _filter == 0) return;
 
 			foreach (var change in changes)
 			{
@@ -121,7 +154,7 @@ public sealed class DirectoryNotificationState : IDisposable
 		List<(Action<Result>, Result)> ready;
 		lock (_gate)
 		{
-			if (_closed || _filter == 0) return;
+			if (_closed || _deleted || _filter == 0) return;
 
 			_events.Clear();
 			_bytes = 0;
@@ -134,6 +167,7 @@ public sealed class DirectoryNotificationState : IDisposable
 
 	private Result Take(uint size)
 	{
+		if (_deleted) return new Result((NtStatus)0xc0000056, ErrorResponse.BuildBody());
 		if (_error is { } error)
 		{
 			_error = null;
@@ -149,7 +183,7 @@ public sealed class DirectoryNotificationState : IDisposable
 	private List<(Action<Result>, Result)> Drain()
 	{
 		var ready = new List<(Action<Result>, Result)>();
-		if (_waiters.Count > 0 && (_events.Count > 0 || _error.HasValue))
+		while (_waiters.Count > 0 && (_events.Count > 0 || _error.HasValue || _deleted))
 		{
 			var first = _waiters[0];
 			_waiters.RemoveAt(0);

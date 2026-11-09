@@ -52,8 +52,17 @@ internal static partial class UpstreamSambaMoreTests
     static async Task UnsupportedInformation(bool directory, byte cls)
     {
         using var root = new P7cTests.Root(); await using var d = new P2Tests.Direct(root.Store()); var id = await Open(d, directory ? "dir" : "file", 3, directory: directory);
-        Status(await d.Send(Query(id, cls)), cls == 48 ? 0xc00000bbu : 0xc0000003u, "unimplemented optional information class rejected with its defined status");
+        // MS-SMB2 3.3.5.20.1 distinguishes recognized unsupported classes
+        // from undefined classes. This profile selects NOT_SUPPORTED for known
+        // classes; 59 remains undefined here. Original expectations are archived.
+        if (!directory) await Write(d, id, Payload);
+        Status(await d.Send(Query(id, cls)), cls is 16 or 17 or 21 or 28 or 48 ? 0xc00000bbu : 0xc0000003u, "recognized optional query uses NOT_SUPPORTED; undefined query uses INVALID_INFO_CLASS");
         Check.Equal((byte)(directory ? 1 : 0), Output(await d.Send(Query(id, 5)))[21], "rejected query preserves usable FileId");
+        if (!directory) await Data(d, id, Payload);
+        await Close(d, id); id = await Open(d, directory ? "dir" : "file", directory: directory);
+        Check.Equal((byte)(directory ? 1 : 0), Output(await d.Send(Query(id, 5)))[21], "reopen preserves type after unsupported query");
+        if (!directory) await Data(d, id, Payload);
+        await Close(d, id);
     }
     static async Task VolumeInformation(bool directory, byte cls)
     {

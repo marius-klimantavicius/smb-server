@@ -13,12 +13,13 @@ using Smb.Testing;
 // Public TCP acceptance for MS-SMB2 3.3.5.9.6/.7/.11/.12, 3.3.5.5.3 and 3.3.7.1.
 // FileIds, statuses, contexts and retained bytes are wire oracles. Keys use BCL
 // SP800-108/HMAC and SHA512 transcripts, independent of server KDF/transcript code.
-internal static class DurableRecoveryTcpTests
+internal static partial class DurableRecoveryTcpTests
 {
     const uint Missing = 0xc0000034, Denied = 0xc0000022;
     static readonly byte[] Payload = "pinned durable object bytes"u8.ToArray();
     public static IEnumerable<(string Name, Func<Task> Run)> Cases()
     {
+        foreach (var test in NamespaceRepairCases()) yield return test;
         foreach (var dialect in new ushort[] { 0x202, 0x210, 0x300, 0x302, 0x311 })
             foreach (var v1 in dialect < 0x300 ? new[] { true } : new[] { true, false })
             {
@@ -346,7 +347,7 @@ internal static class DurableRecoveryTcpTests
             label.CopyTo(input, 4); context.CopyTo(input, 5 + label.Length); input[^1] = 128;
             return HMACSHA256.HashData(ntlm.ExportedSessionKey, input)[..16];
         }
-        static void Signature(byte[] b, byte[] key, ushort dialect)
+        internal static void Signature(byte[] b, byte[] key, ushort dialect)
         {
             Check.That((RawSmb.U32(b, 16) & 8) != 0, "signed TCP response"); var copy = b.ToArray(); copy.AsSpan(48, 16).Clear();
             Check.That((dialect < 0x300 ? HMACSHA256.HashData(key, copy)[..16] : AesCmac.Compute(key, copy)).SequenceEqual(b.AsSpan(48, 16).ToArray()), "independently derived key verifies signature");

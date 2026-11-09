@@ -35,7 +35,8 @@ See [configuration examples](multichannel-durable-configuration.md).
 | Notifications | Per-open bounded FIFO, filter/subtree, loss/error rescan and actual OS watcher. Best effort, not a journal. |
 | Copy | Explicit profiles only; source/destination locks, operation lifetime and cache coordination, overlap/partial progress. |
 | Allocation / buffering | Local allocation unsupported; unbuffered I/O advisory. Flush/write-through tests do not prove power-loss durability. |
-| Metadata | Streams/EAs, Linux DOS flags, retained birth times and default descriptors are per-store process memory. Host base data/timestamps persist; ChangeTime is approximate. No full NTFS persistence guarantee. |
+| Metadata | Streams/EAs, Linux DOS flags, retained birth times and default descriptors are process memory. Named-stream families are shared by acquired identity across backend aliases. Promoted logical default streams also remain in memory; old native unnamed handles retain their original extent. Ordinary host base data/timestamps persist; ChangeTime is approximate. No full NTFS persistence guarantee. |
+| Stream/namespace rename | Named-source rename, collision/replacement and logical default promotion preserve acquired handles and stream identity. Native unnamed-source to named rename remains unsupported. SMB directory rename atomically rejects remaining acquired descendants; generic backend relocation has a separate contract. Third-party stores need `IFileNamespaceStore` for the same atomic descendant guarantee. |
 | Persistent / CA | No grants; FileDurableHandleStore is rejected by supported profiles. Public JSON APIs remain outside supported AOT persistence. |
 | Legacy stores | Conservative per-store identity; shared deletion and coherent caching require explicit backend opt-in. Overlapping namespaces need shared coordination. |
 | Authorized CREATE | LocalFileStore authorizes existing objects and missing-object parents before mutation under a guarded identity/descriptor contract. Descriptor-aware legacy stores must implement `IAuthorizedCreateStore` for safe mutations; allowed legacy mutations otherwise return NOT_SUPPORTED. Wrappers must forward the grant-aware overload for local readonly-grant semantics. |
@@ -48,8 +49,10 @@ wildcard semantics while retaining the explicit host case contract.
 
 The [recovery delivery](multichannel-durable-reconnect.md) records the completed
 feature gates, independent native clients and source/spec mappings. Its published
-Linux modes execute 3,515 cases with 100 retained failures; whole-project and
-native Windows acceptance remain incomplete.
+Linux modes executed 3,515 cases with 100 retained failures. The subsequent
+[failure repairs](remaining-failure-repairs.md) resolve those cases and pass all
+3,897 cases in integration and both published Linux modes. Detailed results are in platform
+validation; native Windows and full conformance acceptance remain incomplete.
 
 The test harness uses independent raw-wire expectations and real local TCP
 workloads. Passing selected cases does not establish whole-dialect conformance or

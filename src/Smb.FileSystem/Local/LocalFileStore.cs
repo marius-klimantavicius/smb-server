@@ -10,7 +10,7 @@ using Smb.Protocol.Security;
 
 namespace Smb.FileSystem.Local;
 
-public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStore, IExtendedAttributeStore, IBasicInfoStore, ISharedDeleteFileStore, IDirectoryCursorStore, IVolumeInfoProvider, ICacheCoherentFileStore, ICreateMetadataStore, IAuthorizedCreateStore
+public sealed partial class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStore, IExtendedAttributeStore, IBasicInfoStore, ISharedDeleteFileStore, IDirectoryCursorStore, IVolumeInfoProvider, ICacheCoherentFileStore, ICreateMetadataStore, IAuthorizedCreateStore, IFileNamespaceStore, IStreamRenameStore
 {
 	internal sealed class StreamData
 	{
@@ -31,9 +31,9 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 
 	private readonly ISecurityDescriptorStore _securityStore;
 
-	private readonly Lock _adsLock = new Lock();
+	private static readonly Lock _adsLock = new Lock();
 
-	private readonly Dictionary<string, StreamData> _streams = new Dictionary<string, StreamData>(StringComparer.Ordinal);
+	private readonly StreamTable _streams = new StreamTable();
 
 	private readonly Dictionary<string, List<ExtendedAttribute>> _eas = new Dictionary<string, List<ExtendedAttribute>>(StringComparer.Ordinal);
 
@@ -77,7 +77,7 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 		if (!TryResolve(path, out var full)) return new ValueTask<FileIdentity?>((FileIdentity?)null);
 
 		var identity = LocalIdentity.Resolve(full);
-		if (identity is { } baseIdentity && streamName.Length > 0)
+		if (identity is { } baseIdentity)
 			lock (_adsLock)
 				if (_streams.TryGetValue(StreamKey(full, streamName), out var stream))
 					return new ValueTask<FileIdentity?>(baseIdentity with { StreamId = stream.Identity });
@@ -144,7 +144,9 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 				if ((existing & 6u & ~attributes) != 0)
 					return new(FileStoreResult<FileCreateResult>.Fail(NtStatus.AccessDenied));
 			}
-			var result = CreateCore(path, access, disposition, directoryRequired, nonDirectoryRequired, out var action);
+			if (!directoryRequired && TryResolve(path, out var overlayPath) && HasDefaultStream(overlayPath))
+                return OpenNamedStreamCore(path, "", access, disposition, cancellationToken);
+            var result = CreateCore(path, access, disposition, directoryRequired, nonDirectoryRequired, out var action);
 			if (!result.IsSuccess) return new(FileStoreResult<FileCreateResult>.Fail(result.Status));
 
 			if (action is CreateOutcome.Created or CreateOutcome.Overwritten or CreateOutcome.Superseded)
@@ -152,7 +154,7 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 				var handle = (LocalFileHandle)result.Value;
 				var status = SetBasicInfoAsync(handle, new FileBasicInfoUpdate { Attributes = (attributes & SettableAttributes) | (handle.IsDirectory ? 0u : 0x20u) }).Result;
 				if (status != NtStatus.Success) { handle.Dispose(); return new(FileStoreResult<FileCreateResult>.Fail(status)); }
-				if (!handle.IsDirectory && action != CreateOutcome.Created) RemoveStreams(handle.Identity!.Value);
+				if (!handle.IsDirectory) RemoveStreams(handle.Identity!.Value);
 			}
 			return new(FileStoreResult<FileCreateResult>.Ok(new FileCreateResult(result.Value, action)));
 		}
@@ -183,6 +185,38 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 		return MapAttributes(native);
 	}
 
+	private void MarkArchive(FileIdentity identity, Microsoft.Win32.SafeHandles.SafeFileHandle native)
+	{
+		lock (LocalObjects.Gate)
+		{
+			using var metadata = OperatingSystem.IsWindows() ? WindowsLocalIdentity.OpenMetadata(native) : null;
+			var target = metadata ?? native;
+			lock (_adsLock)
+			{
+				var attributes = (uint)GetAttributes(identity, File.GetAttributes(target));
+				if (OperatingSystem.IsWindows())
+				{
+					if ((attributes & 0x20u) == 0) File.SetAttributes(target, (FileAttributes)((attributes | 0x20u) & SettableAttributes));
+				}
+				else _dosAttributes[identity with { StreamId = "" }] = (attributes | 0x20u) & SettableAttributes;
+			}
+		}
+	}
+
+	private void MarkArchive(IFileHandle handle)
+	{
+		var local = handle is NamedStreamHandle stream ? stream.BaseHandle : (LocalFileHandle)handle;
+		MarkArchive(local.Identity!.Value, local.NativeHandle);
+	}
+
+	private void MarkParentArchive(string childPath)
+	{
+		var parent = Path.GetDirectoryName(childPath);
+		if (parent == null) return;
+		using var native = LocalIdentity.OpenDirectory(parent);
+		if (LocalIdentity.Resolve(parent, native) is { } identity) MarkArchive(identity, native);
+	}
+
 	internal void RetireMetadata(FileIdentity identity)
 	{
 		_securityStore.Remove(SecurityKey(identity));
@@ -195,6 +229,7 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 		lock (_adsLock)
 		{
 			var prefix = identity.ObjectId + "\0";
+			_streams.Observe(prefix);
 			foreach (var key in new List<string>(_streams.Keys))
 				if (key.StartsWith(prefix, StringComparison.Ordinal)) _streams.Remove(key);
 		}
@@ -269,6 +304,7 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 			if (result.IsSuccess && createAction == CreateOutcome.Created)
 			{
 				ApplyInheritedSecurity((LocalFileHandle)result.Value);
+				MarkParentArchive(fullPath);
 			}
 
 			return result;
@@ -278,6 +314,7 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 		if (result2.IsSuccess && createAction == CreateOutcome.Created)
 		{
 			ApplyInheritedSecurity((LocalFileHandle)result2.Value);
+			MarkParentArchive(fullPath);
 		}
 
 		return result2;
@@ -500,7 +537,9 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 	{
 		if (handle is NamedStreamHandle namedStreamHandle)
 		{
-			return StreamWrite(namedStreamHandle.Data, offset, data.Span);
+			var streamResult = StreamWrite(namedStreamHandle.Data, offset, data.Span);
+			if (streamResult.IsSuccess && streamResult.Value > 0) MarkArchive(handle);
+			return streamResult;
 		}
 
 		if (_readOnly)
@@ -514,7 +553,9 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 			return FileStoreResult<int>.Fail(NtStatus.FileIsADirectory);
 		}
 
-		return await localFileHandle.WriteAtAsync(offset, data, cancellationToken).ConfigureAwait(false);
+		var result = await localFileHandle.WriteAtAsync(offset, data, cancellationToken).ConfigureAwait(false);
+		if (result.IsSuccess && result.Value > 0) MarkArchive(handle);
+		return result;
 	}
 
 	public async ValueTask<FileStoreResult<int>> WriteWithOptionsAsync(IFileHandle handle, long offset, ReadOnlyMemory<byte> data, FileIoOptions options, CancellationToken cancellationToken = default)
@@ -655,12 +696,11 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 			return NtStatus.AccessDenied;
 		}
 
-		if (handle is NamedStreamHandle namedStreamHandle)
-		{
-			return StreamSetLength(namedStreamHandle.Data, length);
-		}
-
-		return ((LocalFileHandle)handle).SetLength(length);
+		var status = handle is NamedStreamHandle namedStreamHandle
+			? StreamSetLength(namedStreamHandle.Data, length)
+			: ((LocalFileHandle)handle).SetLength(length);
+		if (status == NtStatus.Success) MarkArchive(handle);
+		return status;
 	}
 
 	protected override NtStatus Rename(IFileHandle handle, string newPath, bool replaceIfExists)
@@ -675,9 +715,10 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 			return NtStatus.AccessDenied;
 		}
 
-		if (handle is NamedStreamHandle)
+		if (handle is NamedStreamHandle named)
 		{
-			return NtStatus.NotSupported;
+            if (newPath.StartsWith(':')) return RenameStreamAsync(handle, newPath, replaceIfExists).Result;
+            return named.IsDefaultStream ? RenameCore(named.BaseHandle, newPath, replaceIfExists) : NtStatus.SharingViolation;
 		}
 
 		var localFileHandle = (LocalFileHandle)handle;
@@ -936,9 +977,10 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 		{
 			if (disposition is CreateDispositionIntent.Open or CreateDispositionIntent.Overwrite) return Fail(NtStatus.ObjectNameNotFound);
 			if (_readOnly) return Fail(NtStatus.AccessDenied);
-			var created = CreateCore(basePath, access, CreateDispositionIntent.OpenIf, false, true, out _);
+			var created = CreateCore(basePath, access, CreateDispositionIntent.OpenIf, false, true, out var baseAction);
 			if (!created.IsSuccess) return Fail(created.Status);
 			using var baseHandle = created.Value;
+			if (baseAction == CreateOutcome.Created) RemoveStreams(baseHandle.Identity!.Value);
 			var status = SetBasicInfoAsync(baseHandle, new FileBasicInfoUpdate { Attributes = 0x20u }).Result;
 			if (status != NtStatus.Success) return Fail(status);
 		}
@@ -1008,7 +1050,7 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 			}
 		}
 
-		lock (_adsLock) _streams[key].Opens++;
+		lock (_adsLock) { _streams.Pin(key, fullPath); _streams[key].Opens++; }
 		try { return new ValueTask<FileStoreResult<FileCreateResult>>(FileStoreResult<FileCreateResult>.Ok(new FileCreateResult(new NamedStreamHandle(this, fullPath, streamName), action))); }
 		catch
 		{
@@ -1029,10 +1071,11 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 		if (File.Exists(text))
 		{
 			var length = new FileInfo(text).Length;
-			list.Add(new StreamInfo(string.Empty, length, AlignUp(length, 4096L)));
+			if (!HasDefaultStream(text)) list.Add(new StreamInfo(string.Empty, length, AlignUp(length, 4096L)));
 		}
 
 		var value = handle.Identity!.Value.ObjectId + "\0";
+		lock (_adsLock) _streams.Observe(value);
 		lock (_adsLock)
 		{
 			foreach (var stream in _streams)
@@ -1062,9 +1105,11 @@ public sealed class LocalFileStore : SyncFileStore, IFileStore, INamedStreamStor
 
 	private NtStatus SetStreamDelete(NamedStreamHandle handle, bool delete)
 	{
-		lock (_adsLock)
-		{
-			if (handle.IsClosed) return NtStatus.FileClosed;
+        lock (LocalObjects.Gate)
+        lock (_adsLock)
+        {
+            if (handle.IsClosed) return NtStatus.FileClosed;
+            if (handle.IsDefaultStream) return handle.BaseHandle.SetDeleteOnClose(delete);
 
 			var data = handle.Data;
 

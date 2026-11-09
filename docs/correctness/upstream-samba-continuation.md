@@ -1,5 +1,11 @@
 # Samba continuation: public file and protocol tests
 
+The latest [failure-repair campaign](remaining-failure-repairs.md) passes all
+737 maintained continuation cases and all 3,897 full-harness cases in published
+Linux JIT/AOT. The report explicitly maps production repairs and corrected
+specification/profile oracles, preserving original source expectations rather
+than claiming every Windows/Samba backend convention has been implemented.
+
 The subsequent [recovery delivery](multichannel-durable-reconnect.md) repairs
 durable/cache/replay workflows and both bounded complex lease sequences, and
 corrects documented async fixture assumptions. Its settled continuation is

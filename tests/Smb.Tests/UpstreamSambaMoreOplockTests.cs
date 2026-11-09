@@ -174,7 +174,22 @@ internal static partial class UpstreamSambaMoreTests
         if (shape == "stat-owner-and-stat-peer")
         { Id(await Complete(f, Create(access: 0x80))); Check.Equal(0, f.Transport.Sends.Length, "two stat-only opens preserve batch"); }
         var secondRequest = Create(disposition: shape == "overwrite" ? 4u : shape == "supersede" ? 0u : 1u); secondRequest[67] = 9;
-        var secondResponse = await Complete(f, secondRequest); var secondId = Id(secondResponse); f.Oplocks[secondId] = secondResponse[66];
+        byte[] secondResponse;
+        if (shape is "overwrite" or "supersede")
+        {
+            // MS-FSA 2.1.5.18/19: destructive CREATE invalidates the old cache;
+            // ACK to NONE cannot silently regrant its stale data afterwards.
+            await Write(d, owner, Payload);
+            var pending = await d.Send(secondRequest); Status(pending, 0x103, "destructive CREATE waits for old batch ACK");
+            var notification = f.Transport.Sends.Last(s => RawSmb.U16(s.Message, 12) == 18).Message;
+            Check.Equal((byte)0, notification[66], "destructive CREATE breaks old batch to NONE");
+            Check.That(File.ReadAllBytes(f.Root.Path + "/file").SequenceEqual(Payload), "truncation withheld before ACK");
+            Status(await d.Send(P6Tests.Ack(owner, OplockLevel.None)), Ok, "old cache retired by ACK");
+            f.Oplocks[owner] = 0;
+            secondResponse = await AsyncFinal(f.Transport, pending); await Data(d, owner, []);
+        }
+        else secondResponse = await Complete(f, secondRequest);
+        var secondId = Id(secondResponse); f.Oplocks[secondId] = secondResponse[66];
         Check.Equal((byte)1, secondResponse[66], "two ordinary opens share level-II grant");
         if (shape.StartsWith("stat-owner"))
         {
@@ -185,7 +200,9 @@ internal static partial class UpstreamSambaMoreTests
         }
         var before = f.Transport.Sends.Length; Status(await Complete(f, RawSmb.Write(secondId, Payload, 0, 0, 1, 42)), Ok, "WRITE invalidates both level-II grants");
         var breaks = f.Transport.Sends.Skip(before).Where(s => RawSmb.U16(s.Message, 12) == 18).Select(s => s.Message).ToArray();
-        Check.Equal(2, breaks.Length, "both level-II owners notified exactly once"); Check.That(breaks.All(b => b[66] == 0), "both targets NONE");
+        Check.Equal(shape is "overwrite" or "supersede" ? 1 : 2, breaks.Length, "every currently held level-II grant notified exactly once");
+        if (shape is "overwrite" or "supersede")
+            Check.Equal(secondId, (RawSmb.U64(breaks[0], 72), RawSmb.U64(breaks[0], 80)), "only the new read-cache promise remains after destructive CREATE"); Check.That(breaks.All(b => b[66] == 0), "both targets NONE");
         // Current MS-SMB2 3.3.5.22.1 checks Breaking before level validation.
         // Samba's historical INVALID_OPLOCK_PROTOCOL oracle predates this rule.
         if (shape == "level-II-ack") Status(await d.Send(P6Tests.Ack(owner, OplockLevel.None)), 0xc0000184, "level-II-to-NONE leaves no outstanding break to acknowledge");

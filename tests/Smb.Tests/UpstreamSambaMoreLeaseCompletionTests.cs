@@ -200,7 +200,11 @@ internal static partial class UpstreamSambaMoreTests
     static async Task CrossVersionEpoch()
     {
         await using var f = new CacheFixture(); var d = f.D; var first = Id(await d.Send(Lease(Create(disposition: 3), 1)));
-        var v2 = await d.Send(Lease(Create(), 5, 1, true, 0x4711)); var second = Id(v2); LeaseState(v2, 5, 1); Check.Equal(32, Context(v2, "RqLs")!.Length, "existing v1 lease retains its wire version despite v2 same-key request");
+        var v2 = await d.Send(Lease(Create(), 5, 1, true, 0x4711)); var second = Id(v2); LeaseState(v2, 5, 1); Check.Equal(52, Context(v2, "RqLs")!.Length, "MS-SMB2 3.3.5.9.11 constructs the response requested by the v2 CREATE; common lease version stays v1");
+        Check.Equal((ushort)0, RawSmb.U16(Context(v2, "RqLs")!, 48), "v2 response cannot initialize the common v1 lease epoch from the incoming request");
+        var contender = await Complete(f, Lease(Create(), 3, 2, true), notification =>
+        { Check.Equal((ushort)0, RawSmb.U16(notification, 66), "common v1 lease still sends NewEpoch zero after v2 CREATE"); return Task.CompletedTask; });
+        await Close(d, Id(contender));
         await Close(d, first); var upgraded = await d.Send(Lease(Create(), 7)); first = Id(upgraded); LeaseState(upgraded, 7, 1); await Close(d, first);
         await Close(d, Id(await Complete(f, Create()))); await Close(d, second);
         var fresh = await d.Send(Lease(Create(), 7, 1, true, 0x4711)); Id(fresh); Check.Equal(52, Context(fresh, "RqLs")!.Length, "after last v1 member closes key can create a genuine v2 lease"); Check.Equal((ushort)0x4712, RawSmb.U16(Context(fresh, "RqLs")!, 48), "new v2 lease increments its supplied epoch");

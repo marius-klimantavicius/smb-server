@@ -14,6 +14,7 @@ public sealed class SmbOpen
 	public ChannelSequenceState ChannelSequences { get; init; } = new ChannelSequenceState();
 	internal readonly Lock NotificationGate = new Lock();
 	internal Notification.DirectoryNotificationState? Notifications;
+	internal bool NotificationDirectoryMarkedDeleted;
 	public string IdentityKey => ShareModeKey ?? LocalOpen?.Identity?.Key ?? "legacy-conservative";
 
 	internal readonly SemaphoreSlim RecoveryGate = new SemaphoreSlim(1, 1);

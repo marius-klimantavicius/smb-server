@@ -58,12 +58,12 @@ public sealed class CompoundExecutionContext
 
 		if (SegmentStart == 0) return terminalFailure = NtStatus.InvalidParameter;
 
+        if (header.Command > SmbCommand.SessionSetup && SessionId == 0) return terminalFailure = NtStatus.InvalidParameter;
+        if (header.Command >= SmbCommand.TreeDisconnect && header.Command != SmbCommand.Echo && header.Command != SmbCommand.Cancel && TreeId == 0)
+            return terminalFailure = NtStatus.InvalidParameter;
 		header.SessionId = SessionId;
 		header.TreeId = TreeId;
 		if (terminalFailure.HasValue) return terminalFailure;
-		if (header.Command > SmbCommand.SessionSetup && SessionId == 0) return terminalFailure = NtStatus.InvalidParameter;
-		if (header.Command >= SmbCommand.TreeDisconnect && header.Command != SmbCommand.Echo && header.Command != SmbCommand.Cancel && TreeId == 0)
-			return terminalFailure = NtStatus.InvalidParameter;
 		if (PrerequisiteFailure.HasValue) return PrerequisiteFailure;
 
 		var fileOffset = RequestFileIdOffset(header.Command, wire.Span);
@@ -87,7 +87,7 @@ public sealed class CompoundExecutionContext
 	{
 		SessionId = response.SessionId;
 		TreeId = response.TreeId;
-		if (request.Command == SmbCommand.SessionSetup && response.Status != NtStatus.Success) SessionId = 0;
+		if (request.Command == SmbCommand.SessionSetup && response.Status != NtStatus.Success || response.Status == NtStatus.UserSessionDeleted) SessionId = 0;
 		if (request.Command == SmbCommand.TreeConnect && response.Status != NtStatus.Success) TreeId = 0;
 		if ((uint)response.Status >= 0x80000000) PrerequisiteFailure = response.Status;
 		else PrerequisiteFailure = null;

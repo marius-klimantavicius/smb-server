@@ -140,8 +140,8 @@ internal static partial class UpstreamSambaMoreTests
         Check.Equal(3u, RawSmb.U32(notice, 92), "first break RWH to RH");
         async Task SameKey(uint expected)
         {
-            var b = await d.Send(Lease(Create(), 7, v2: v2)); var member = Id(b); LeaseState(b, expected, 1);
-            if (v2) Check.Equal(RawSmb.U16(notice, 66), RawSmb.U16(Context(b, "RqLs")!, 48), "all same-key breaking responses use the common queued-break epoch");
+            var b = await Complete(f, Lease(Create(), 7, v2: v2)); var member = Id(b); LeaseState(b, expected, 1);
+            if (v2) Check.Equal(RawSmb.U16(f.Transport.Sends.Last(s => RawSmb.U16(s.Message, 12) == 18).Message, 66), RawSmb.U16(Context(b, "RqLs")!, 48), "all same-key breaking responses use the common queued-break epoch");
             Check.Equal(2u, RawSmb.U32(Context(b, "RqLs")!, 20), "same-key open exposes current unacknowledged grant with BREAK_IN_PROGRESS"); await Close(d, member);
         }
         await SameKey(7); var overwrite = await d.Send(Create(disposition: 4)); Status(overwrite, 0x103, "overwrite queues behind existing break");
@@ -159,8 +159,8 @@ internal static partial class UpstreamSambaMoreTests
         if (v2)
         {
             Check.Equal((ushort)(RawSmb.U16(Context(initial, "RqLs")!, 48) + 1), RawSmb.U16(notice, 66), "first queued-break epoch");
-            Check.Equal(RawSmb.U16(notice, 66), RawSmb.U16(notices[1].Message, 66), "second queued downgrade shares source break epoch");
-            Check.Equal(RawSmb.U16(notice, 66), RawSmb.U16(notices[2].Message, 66), "third queued downgrade shares source break epoch");
+            Check.Equal((ushort)(RawSmb.U16(notice, 66) + 1), RawSmb.U16(notices[1].Message, 66), "MS-SMB2 3.3.4.7 advances epoch for each notification; historical unchanged epoch is product note 249");
+            Check.Equal((ushort)(RawSmb.U16(notice, 66) + 2), RawSmb.U16(notices[2].Message, 66), "READ invalidation advances epoch");
         }
     }
     static async Task LeaseComplex(bool v2)

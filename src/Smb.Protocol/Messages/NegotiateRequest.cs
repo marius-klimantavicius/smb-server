@@ -33,7 +33,7 @@ public sealed class NegotiateRequest
 		}
 
 		int num2 = spanReader.ReadUInt16();
-		if (num2 > 64 || num2 == 0)
+		if (num2 == 0 || num2 > (buffer.Length - 36) / 2)
 		{
 			throw new SmbWireFormatException($"NEGOTIATE DialectCount {num2} invalid.");
 		}

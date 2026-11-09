@@ -1,5 +1,9 @@
 Multichannel/durable recovery: exact failure-name comparison
 
+Historical recovery-delivery inventory. The subsequent repair campaign resolves
+all 100 retained registrations; see remaining-failure-results.txt and
+remaining-failure-repairs.md for current outcomes and explicit oracle corrections.
+
 Baseline: clean 1def1af, 3144 total / 2917 pass / 227 fail.
 Final published Linux JIT and Native AOT: each 3515 total / 3415 pass / 100 fail.
 Both modes have identical failing names; all 371 new tests pass.

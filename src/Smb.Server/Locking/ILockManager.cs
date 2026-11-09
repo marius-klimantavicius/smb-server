@@ -11,5 +11,9 @@ public interface ILockManager
 
 	bool IsRangeAccessible(SmbOpen owner, ulong offset, ulong length, bool forWrite);
 
+	// Optional nonmutating preflight. True permits an immediate rejection before
+	// cache breaks; false still requires the authoritative atomic ApplyAsync.
+	bool HasConflict(SmbOpen owner, IReadOnlyList<LockElement> elements) => false;
+
 	void ReleaseOwner(SmbOpen owner);
 }

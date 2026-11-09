@@ -887,6 +887,8 @@ public sealed class Smb2Dispatcher
 
 	private async ValueTask<ResponseSegment?> DispatchOneUncapturedAsync(SmbConnection connection, Smb2Header header, ReadOnlyMemory<byte> segment, bool frameEncrypted, bool preValidated = false, bool standalone = false, ReadOnlyMemory<byte>? resolved = null, NtStatus? dependencyError = null, ChannelAdmission? sequenceAdmission = null)
 	{
+        if (dependencyError.HasValue)
+            return await DispatchOneCoreAsync(connection, header, segment, frameEncrypted, preValidated, standalone, resolved, dependencyError, sequenceAdmission: sequenceAdmission).ConfigureAwait(false);
 		var parsing = resolved ?? segment;
 		var cacheCommand = header.Command is SmbCommand.Create or SmbCommand.Read or SmbCommand.Write
 			|| header.Command is SmbCommand.SetInfo or SmbCommand.QueryInfo && parsing.Length > 66 && parsing.Span[66] == (byte)InfoType.File
@@ -1061,6 +1063,7 @@ public sealed class Smb2Dispatcher
 
 	private static void ValidateRequestStructure(SmbCommand command, ReadOnlySpan<byte> packet)
 	{
+		if (command > SmbCommand.OplockBreak) throw new SmbWireFormatException("Unknown SMB2 command.");
 		switch (command)
 		{
 			case SmbCommand.Read: ReadMessage.ParseRequest(packet, 64); break;
@@ -2200,6 +2203,7 @@ public sealed class Smb2Dispatcher
 			if (!header.Flags.HasFlag(Smb2HeaderFlags.ReplayOperation)) return BuildError(header, (NtStatus)0xc000022a);
 
 			var leaseContext = CreateContextList.Find(request.Contexts, 1383156851u);
+			if (existing.OplockLevel != OplockLevel.Lease && leaseContext != null) return BuildError(header, NtStatus.AccessDenied);
 			if (!string.Equals(existing.DurableOwnerKey, OwnerKey(session.Identity), StringComparison.Ordinal) ||
 			    existing.OplockLevel == OplockLevel.Lease && (leaseContext == null || LeaseRequest.FromContext(leaseContext).Key != existing.LeaseKey))
 				return BuildError(header, NtStatus.AccessDenied);
@@ -2403,6 +2407,7 @@ public sealed class Smb2Dispatcher
 				}
 
 				open.DeleteOnClose = true;
+				PublishDirectoryDeletion(open);
 			}
 
 
@@ -2414,10 +2419,12 @@ public sealed class Smb2Dispatcher
 			if (policy.Leasing && cacheLease != null && Caching.FileCacheCoordinator.Supports(store) && !handle.IsDirectory)
 			{
 				var leaseRequest = cacheLease;
-				if (HasOtherCacheOpen(open, sameLease: true)) leaseRequest = new LeaseRequest { Key = cacheLease.Key, RequestedState = cacheLease.RequestedState & LeaseState.ReadHandle, IsV2 = cacheLease.IsV2, Epoch = cacheLease.Epoch, ParentKey = cacheLease.ParentKey, Flags = cacheLease.Flags };
+				var contended = HasOtherCacheOpen(open, sameLease: true);
 				open.LeaseKey = leaseRequest.Key;
 				open.ParentLeaseKey = leaseRequest.ParentKey;
-				var leaseGrant = _server.Options.CacheCoordinator.RequestLease(open, leaseRequest);
+				var leaseGrant = _server.Options.CacheCoordinator.RequestLease(open, leaseRequest, contended);
+				leaseRequest = new LeaseRequest { Key = cacheLease.Key, RequestedState = cacheLease.RequestedState, IsV2 = cacheLease.IsV2, Epoch = leaseGrant.Epoch, ParentKey = cacheLease.ParentKey, Flags = cacheLease.Flags };
+				open.DurableLeaseV2 = leaseGrant.IsV2;
 				open.LeaseState = leaseGrant.GrantedState;
 				open.LeaseEpoch = leaseGrant.Epoch;
 				armed = ArmLeaseBreaks(leaseGrant.Breaks, track: true);
@@ -2472,7 +2479,7 @@ public sealed class Smb2Dispatcher
 				open.DurableShare = tree.Share;
 				open.DurableClientGuid = new Guid(connection.ClientGuid);
 				open.DurableIsV2 = createContext4 != null;
-				open.DurableLeaseV2 = cacheLease?.IsV2 == true;
+				// The common lease retains the version of its first member.
 				if (createContext4 != null)
 				{
 					var v2Request = DurableHandleMessages.ParseV2Request(createContext4.Data);
@@ -2650,9 +2657,14 @@ public sealed class Smb2Dispatcher
 				coordination.Namespace = admission.Scope;
 				if (store is IFileIdentityStore identities)
 					open.AdmissionIdentity = await identities.ResolveIdentityAsync(path, stream, token).ConfigureAwait(false);
+				if (_server.Options.CacheCoordinator.IsDeletePending(admission.Key))
+				{
+					coordination.Status = (NtStatus)0xc0000056;
+					return coordination;
+				}
 				if (!_server.Options.ShareModeManager.TryOpen(admission.Key, open, access, MapShare(open.ShareAccess)))
 				{
-					if (!_server.Options.FeaturePolicy.DurableHandles)
+					if (!_server.Options.FeaturePolicy.Oplocks && !_server.Options.FeaturePolicy.Leasing)
 					{
 						coordination.Status = NtStatus.SharingViolation;
 						return coordination;
@@ -3638,12 +3650,14 @@ public sealed class Smb2Dispatcher
 			return HandleQueryQuota(session, header, open, req);
 		}
 
-		using var cacheScope = req.InfoType == InfoType.File ? await _server.Options.CacheCoordinator.AcquireAsync([new FileIoRange(open, 0, ulong.MaxValue, false)], cancellationToken).ConfigureAwait(false) : null;
+		using var cacheScope = req.InfoType == InfoType.File && (open.GrantedAccess & (FileReadData | FileWriteData | FileAppendData | 0x20u)) != 0 ? await _server.Options.CacheCoordinator.AcquireAsync([new FileIoRange(open, 0, ulong.MaxValue, false)], cancellationToken).ConfigureAwait(false) : null;
 		if (req.InfoType == InfoType.File)
 		{
 			switch ((FileInformationClass)req.FileInfoClass)
 			{
-				case (FileInformationClass)48:
+				case (FileInformationClass)8 or (FileInformationClass)16 or (FileInformationClass)17 or (FileInformationClass)21 or
+				     (FileInformationClass)28 or (FileInformationClass)29 or (FileInformationClass)30 or (FileInformationClass)39 or
+				     (FileInformationClass)46 or (FileInformationClass)54 or (FileInformationClass)48:
 					return BuildError(header, NtStatus.NotSupported);
 				case FileInformationClass.FileStreamInformation:
 					return await HandleQueryStreamsAsync(session, header, open, req).ConfigureAwait(continueOnCapturedContext: false);
@@ -3652,7 +3666,7 @@ public sealed class Smb2Dispatcher
 			}
 		}
 
-		var e = ToStat(await open.LocalOpen.GetInfoAsync().ConfigureAwait(continueOnCapturedContext: false));
+		var e = ToStat(await open.LocalOpen.GetInfoAsync().ConfigureAwait(continueOnCapturedContext: false), open.LocalOpen.Path.IndexOfAny(['/', '\\']) >= 0 ? "\\" + open.LocalOpen.Path.Replace('/', '\\').TrimStart('\\') : null);
 		if (req.InfoType == InfoType.File && (FileInformationClass)req.FileInfoClass is FileInformationClass.FileEaInformation or FileInformationClass.FileAllInformation &&
 			open.TreeConnect!.Share.FileStore is IExtendedAttributeStore eaStore)
 		{
@@ -3764,9 +3778,13 @@ public sealed class Smb2Dispatcher
 		if ((FileInformationClass)req.FileInfoClass == FileInformationClass.FileEndOfFileInformation && open.LocalOpen.IsDirectory)
 			return BuildError(header, NtStatus.InvalidParameter);
 
-		var namespaceMutation = (FileInformationClass)req.FileInfoClass is FileInformationClass.FileRenameInformation or FileInformationClass.FileDispositionInformation or FileInformationClass.FileBasicInformation or FileInformationClass.FileFullEaInformation;
-		using var cacheScope = namespaceMutation
-			? await _server.Options.CacheCoordinator.AcquireNamespaceAsync(open, open.LocalOpen.Identity, cancellationToken).ConfigureAwait(false)
+		// Basic attributes/times and per-open position do not consume stream data.
+		// A size query through a data open still flushes dirty peer cache above.
+		var metadataOnly = (FileInformationClass)req.FileInfoClass is FileInformationClass.FileBasicInformation or FileInformationClass.FilePositionInformation;
+		var namespaceMutation = (FileInformationClass)req.FileInfoClass is FileInformationClass.FileRenameInformation or FileInformationClass.FileDispositionInformation or FileInformationClass.FileFullEaInformation;
+		using var cacheScope = metadataOnly ? null : namespaceMutation
+			? await _server.Options.CacheCoordinator.AcquireNamespaceAsync(open, open.LocalOpen.Identity, cancellationToken,
+				preserveRead: (FileInformationClass)req.FileInfoClass is FileInformationClass.FileRenameInformation or FileInformationClass.FileDispositionInformation).ConfigureAwait(false)
 			: await _server.Options.CacheCoordinator.AcquireAsync([new FileIoRange(open, 0, ulong.MaxValue, true)], cancellationToken).ConfigureAwait(false);
 		cancellationToken.ThrowIfCancellationRequested();
 		var infoClass = (FileInformationClass)req.FileInfoClass;
@@ -3816,6 +3834,7 @@ public sealed class Smb2Dispatcher
 		if (infoClass == FileInformationClass.FileDispositionInformation)
 		{
 			open.DeleteOnClose = req.Buffer.Length != 0 && req.Buffer[0] != 0;
+			if (open.DeleteOnClose) PublishDirectoryDeletion(open);
 		}
 		else if (renameOldPhysicalPath != null)
 		{
@@ -3826,11 +3845,47 @@ public sealed class Smb2Dispatcher
 		return MaybeSigned(session, RespHeader(header, session), SetInfoMessage.BuildResponseBody());
 	}
 
-	private async ValueTask<NtStatus> DoCoordinatedRenameAsync(IFileStore store, SmbOpen open, byte[] buffer, CancellationToken token)
-	{
+    private async ValueTask<NtStatus> DoCoordinatedRenameAsync(IFileStore store, SmbOpen open, byte[] buffer, CancellationToken token)
+    {
+        var (_, target) = SetInfoMessage.ParseRename(buffer);
+        if (target.StartsWith(':') || store is not IFileIdentityStore)
+            return await DoRenameDestinationAsync(store, open, buffer, token).ConfigureAwait(false);
+        var normalized = target.Replace('\\', '/'); var slash = normalized.LastIndexOf('/');
+        var parent = await store.CreateAsync(slash < 0 ? "" : normalized[..slash], FileAccessIntent.None, CreateDispositionIntent.Open, true, false, token).ConfigureAwait(false);
+        if (!parent.IsSuccess) return parent.Status;
+        await using var parentHandle = parent.Value.Handle;
+        if (parentHandle.Identity is not { } parentId) return NtStatus.NotSupported;
+        var owner = new object(); var key = parentId.Key;
+        // MS-FSA 2.1.5.15.12, product note 185: implicit destination-directory
+        // open needs ADD_FILE/ADD_SUBDIRECTORY and shares READ|WRITE, excluding DELETE.
+        if (!_server.Options.ShareModeManager.TryOpen(key, owner, FileAccessIntent.Write, FileShareMode.Read | FileShareMode.Write)) return NtStatus.SharingViolation;
+        try
+        {
+            token.ThrowIfCancellationRequested();
+            return await DoRenameDestinationAsync(store, open, buffer, token).ConfigureAwait(false);
+        }
+        finally { _server.Options.ShareModeManager.Close(key, owner); }
+    }
+
+    private async ValueTask<NtStatus> DoRenameDestinationAsync(IFileStore store, SmbOpen open, byte[] buffer, CancellationToken token)
+    {
 		if (store is not IFileIdentityStore identities) return await DoRenameAsync(store, open.LocalOpen!, buffer).ConfigureAwait(false);
 
 		var (replace, target) = SetInfoMessage.ParseRename(buffer);
+        if (target.StartsWith(':') && store is IStreamRenameStore streams)
+            return await streams.RenameStreamAsync(open.LocalOpen!, target, replace, token).ConfigureAwait(false);
+        if (open.LocalOpen!.IsDirectory && store is IFileNamespaceStore names)
+        {
+            var children = await names.GetOpenDescendantsAsync(open.LocalOpen, token).ConfigureAwait(false);
+            foreach (var child in children)
+            {
+                var cached = _server.SessionGlobalList.Values.SelectMany(session => session.Opens.Values)
+                    .Any(candidate => candidate.LocalOpen?.Identity?.ObjectId == child.ObjectId && candidate.OplockLevel == OplockLevel.Lease && (candidate.LeaseState & LeaseState.Handle) != 0);
+                if (!cached) continue;
+                var proxy = new SmbOpen { VolatileFileId = open.VolatileFileId, ShareModeKey = child.Key, Session = open.Session, TreeConnect = open.TreeConnect };
+                using var childScope = await _server.Options.CacheCoordinator.AcquireNamespaceAsync(proxy, child, token).ConfigureAwait(false);
+            }
+        }
 		var targetKey = await ResolveShareKeyAsync(store, target, "").ConfigureAwait(false);
 		using var nameScope = await NamespaceOperations.AcquireAsync(targetKey, token).ConfigureAwait(false);
 		if (targetKey != await ResolveShareKeyAsync(store, target, "").ConfigureAwait(false)) return NtStatus.SharingViolation;
@@ -3842,15 +3897,20 @@ public sealed class Smb2Dispatcher
 		if (identity is { } targetIdentity && open.LocalOpen!.Identity == targetIdentity)
 		{
 			token.ThrowIfCancellationRequested();
-			return await store.RenameAsync(open.LocalOpen!, target, replace, token).ConfigureAwait(false);
+			return await RenameBackendAsync(store, open.LocalOpen!, target, replace, token).ConfigureAwait(false);
 		}
 		var targetOpen = new SmbOpen { VolatileFileId = open.VolatileFileId, ShareModeKey = targetKey, Session = open.Session, TreeConnect = open.TreeConnect };
 		using var destination = await _server.Options.CacheCoordinator.AcquireNamespaceAsync(targetOpen, identity, token).ConfigureAwait(false);
 		token.ThrowIfCancellationRequested();
-		return await store.RenameAsync(open.LocalOpen!, target, replace, token).ConfigureAwait(false);
+		return await RenameBackendAsync(store, open.LocalOpen!, target, replace, token).ConfigureAwait(false);
 	}
 
-	private static ValueTask<NtStatus> SetAllocationAsync(IFileStore store, IFileHandle handle, byte[] buffer)
+	private static ValueTask<NtStatus> RenameBackendAsync(IFileStore store, IFileHandle source, string target, bool replace, CancellationToken token)
+        => source.IsDirectory && store is IFileNamespaceStore names
+            ? names.RenameDirectoryAsync(source, target, replace, token)
+            : store.RenameAsync(source, target, replace, token);
+
+    private static ValueTask<NtStatus> SetAllocationAsync(IFileStore store, IFileHandle handle, byte[] buffer)
 	{
 		if (buffer.Length != 8) return new ValueTask<NtStatus>(NtStatus.InfoLengthMismatch);
 
@@ -3938,6 +3998,11 @@ public sealed class Smb2Dispatcher
 			return BuildError(header, ntStatus);
 		}
 
+		// A successful SET of a selected security component is observable even
+		// when its supplied value is unchanged. A zero-component request is not
+		// a metadata update and must not manufacture a notification.
+		if ((additionalInformation & (SecurityInformation.Owner | SecurityInformation.Group | SecurityInformation.Dacl | SecurityInformation.Sacl)) != 0)
+			PublishSecurityChange(open);
 		Audit(SmbAuditEventType.PermissionChanged, SmbLogLevel.Information, connection, DescribeIdentity(session.Identity), open.TreeConnect!.Share.Name, open.PathName);
 		return MaybeSigned(session, RespHeader(header, session), SetInfoMessage.BuildResponseBody());
 	}
@@ -4819,11 +4884,13 @@ public sealed class Smb2Dispatcher
 		return FsccStructures.BuildFileSystemInformation(infoClass, "SHARE", 305419896u);
 	}
 
-	private static FsccFileStat ToStat(FileEntryInfo info)
+	private static FsccFileStat ToStat(FileEntryInfo info) => ToStat(info, null);
+
+	private static FsccFileStat ToStat(FileEntryInfo info, string? name)
 	{
 		return new FsccFileStat
 		{
-			Name = info.Name,
+			Name = name ?? info.Name,
 			DeletePending = info.DeletePending,
 			FileAttributes = (uint)info.Attributes,
 			EndOfFile = info.EndOfFile,
@@ -4958,6 +5025,10 @@ public sealed class Smb2Dispatcher
 		for (var i = 0; i < request.Locks.Count; i++)
 		{
 			var lockEntry = request.Locks[i];
+			// MS-SMB2 3.3.5.14.2: select the recommended rejection policy
+			// for undefined combinations before changing any byte-range ownership.
+			if (lockEntry.Flags is not (1u or 2u or 4u or 0x11u or 0x12u))
+				return BuildError(header, NtStatus.InvalidParameter);
 			if (!isUnlock && lockEntry.IsUnlock)
 			{
 				return BuildError(header, NtStatus.InvalidParameter);
@@ -5013,6 +5084,7 @@ public sealed class Smb2Dispatcher
 
 	private async ValueTask<LockOutcome> ApplyCoordinatedLockAsync(SmbOpen open, LockElement[] elements, bool failImmediately, CancellationToken token)
 	{
+		if (!elements[0].Unlock && failImmediately && _server.Options.LockManager.HasConflict(open, elements)) return LockOutcome.Conflict;
 		using var cacheScope = !elements[0].Unlock ? await _server.Options.CacheCoordinator.AcquireAsync([new FileIoRange(open, 0, ulong.MaxValue, true)], token).ConfigureAwait(false) : null;
 		return await _server.Options.LockManager.ApplyAsync(open, elements, failImmediately, token).ConfigureAwait(false);
 	}
@@ -5066,6 +5138,42 @@ public sealed class Smb2Dispatcher
 		}
 	}
 
+	private IEnumerable<SmbOpen> RelatedNotificationOpens(SmbOpen source)
+	{
+		var store = source.TreeConnect?.Share.FileStore;
+		foreach (var session in _server.SessionGlobalList.Values)
+		foreach (var candidate in session.Opens.Values)
+			if (candidate.LocalOpen?.IsDirectory == true && ReferenceEquals(store, candidate.TreeConnect?.Share.FileStore))
+				yield return candidate;
+	}
+
+	private void PublishDirectoryDeletion(SmbOpen source)
+	{
+		if (source.LocalOpen?.IsDirectory != true) return;
+		lock (source.NotificationGate) source.NotificationDirectoryMarkedDeleted = true;
+		foreach (var candidate in RelatedNotificationOpens(source))
+		{
+			// Identity matches the acquired directory object, including other sessions.
+			if (source.LocalOpen.Identity is not { } identity || candidate.LocalOpen!.Identity != identity) continue;
+			lock (candidate.NotificationGate)
+			{
+				candidate.Notifications?.MarkDeleted(ReferenceEquals(source, candidate));
+			}
+		}
+	}
+
+	private void PublishSecurityChange(SmbOpen source)
+	{
+		// LocalFileStore stores descriptors in process memory on every host; its
+		// native watcher cannot emit security events for these successful updates.
+		if (source.TreeConnect?.Share.FileStore is not Smb.FileSystem.Local.LocalFileStore ||
+		    source.LocalOpen?.PhysicalPath is not { } changedPath) return;
+		foreach (var candidate in RelatedNotificationOpens(source))
+			lock (candidate.NotificationGate)
+				if (candidate.LocalOpen!.PhysicalPath is { } root)
+					candidate.Notifications?.Publish(root, changedPath, ChangeNotifyFilter.Security);
+	}
+
 	private ResponseSegment HandleChangeNotify(SmbConnection connection, Smb2Header header, ReadOnlySpan<byte> segment, ReadOnlySpan<byte> resolved, bool frameEncrypted)
 	{
 		if (!TryGetValidSession(connection, header.SessionId, out var session))
@@ -5099,20 +5207,26 @@ public sealed class Smb2Dispatcher
 		}
 
 		DirectoryNotificationState state;
+		PendingAsyncRequest pending;
+		// PublishDirectoryDeletion takes the same per-open gate. Its terminal event
+		// cannot fall between the disposition snapshot and waiter installation.
 		lock (open.NotificationGate)
-			state = open.Notifications ??= new DirectoryNotificationState(_server.Options.DirectoryWatcher, physicalPath, req.WatchTree, req.CompletionFilter, req.OutputBufferLength);
-		if (state.TryTake(req.OutputBufferLength, out var immediate))
 		{
-			var responseHeader = RespHeader(header, session);
-			responseHeader.Status = immediate.Status;
-			return MaybeSigned(session, responseHeader, immediate.Body);
+			if (open.NotificationDirectoryMarkedDeleted || open.LocalOpen.DeletePending) return BuildError(header, (NtStatus)0xc0000056);
+			state = open.Notifications ??= new DirectoryNotificationState(_server.Options.DirectoryWatcher, physicalPath, req.WatchTree, req.CompletionFilter, req.OutputBufferLength);
+			if (state.TryTake(req.OutputBufferLength, out var immediate))
+			{
+				var responseHeader = RespHeader(header, session);
+				responseHeader.Status = immediate.Status;
+				return MaybeSigned(session, responseHeader, immediate.Body);
+			}
+
+			var registered = RegisterPending(connection, header, open, (NtStatus)0x10b);
+			if (registered == null) return BuildError(header, NtStatus.InsufficientResources);
+			pending = registered;
+			pending.Attach(pending.Token.Register(() => Complete(pending.CancellationStatus, ErrorResponse.BuildBody())));
+			pending.Attach(state.Wait(req.OutputBufferLength, result => Complete(result.Status, result.Body)));
 		}
-
-		var pending = RegisterPending(connection, header, open, (NtStatus)0x10b);
-		if (pending == null) return BuildError(header, NtStatus.InsufficientResources);
-
-		pending.Attach(pending.Token.Register(() => Complete(pending.CancellationStatus, ErrorResponse.BuildBody())));
-		pending.Attach(state.Wait(req.OutputBufferLength, result => Complete(result.Status, result.Body)));
 		if (!state.Initialize())
 		{
 			pending.Abandon();

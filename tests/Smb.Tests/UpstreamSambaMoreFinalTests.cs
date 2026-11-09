@@ -37,7 +37,10 @@ internal static partial class UpstreamSambaMoreTests
         {
             await using var f = new CacheFixture(); var d = f.D;
             if (leased) LeaseState(await d.Send(Lease(Create(disposition: 3), 7)), 7, 1); else Check.Equal((byte)9, (await OpenOplock(f, 9))[66], "batch source grant");
-            Id(await Complete(f, Create(access: mask))); var stat = mask is 0x80 or 0x100 or 0x100000 || leased && mask == 0x20000;
+            // Selected object-store metadata policy includes EA reads, consistent
+            // with the preserved exact 0x100088 stat-under-batch compound. The
+            // native Windows IRP table's narrower READ_EA row is not universal.
+            Id(await Complete(f, Create(access: mask))); var stat = mask is 8 or 0x80 or 0x100 or 0x100000 || leased && mask == 0x20000;
             Check.Equal(stat ? 0 : 1, f.Transport.Sends.Count(x => RawSmb.U16(x.Message, 12) == 18), $"source stat-only partition mask {mask:x}, lease={leased}");
             if (leased && stat) LeaseState(await d.Send(Lease(Create(access: 2), 7)), 7, 1);
         }
@@ -131,7 +134,7 @@ internal static partial class UpstreamSambaMoreTests
         Status(result, Ok, "source modified/repeated CREATE replay"); Check.Equal(owner, Id(result), "replay is the existing open identity");
         Check.Equal(RawSmb.U32(initial, 68), RawSmb.U32(result, 68), "replay preserves original CREATE action");
         Check.Equal(count, f.Transport.Sends.Length, "replay does not cause a new cache break");
-        if (shape == "batch-none") { Check.Equal((byte)0, result[66], "source adapts response to requested no-oplock without changing retained batch"); Check.That(Context(result, "DH2Q") == null, "no durable response when replay requested no caching"); }
+        if (shape == "batch-none") { Check.Equal((byte)9, result[66], "MS-SMB2 3.3.5.9 response uses retained Open.OplockLevel"); Check.That(Context(result, "DH2Q") != null, "replayed durable open retains its durable response"); }
         else if (!leased) Check.Equal((byte)9, result[66], "replay preserves batch grant");
         else if (shape != "lease-to-batch") LeaseState(result, 7, 1); // source returns the upgraded common lease state
         if (!leased && shape != "batch-same") Status(await Complete(f, ReplayCreate("batch", Guid.NewGuid(), 1, 0)), Sharing, "replay share/oplock changes did not relax original underlying sharing");
@@ -207,7 +210,7 @@ internal static partial class UpstreamSambaMoreTests
     {
         await using var f = new CacheFixture(true); var client = Guid.NewGuid(); var first = new NegotiatedPeer(f); await first.Login(client);
         Check.Equal(0u, (uint)first.Connection.ServerCapabilities & 0x10u, "persistent handles not advertised by actual SMB300 negotiation");
-        var request = Lease(ReplayCreate("none", Guid.NewGuid(), 1), 7, 1, true, 1);
+        var recoveryGuid = Guid.NewGuid(); var request = Lease(ReplayCreate("none", recoveryGuid, 1), 7, 1, true, 1);
         if (mode != "twice-after-reconnect") { var at = (int)RawSmb.U32(request, 112); RawSmb.Put32(request, at + RawSmb.U16(request, at + 10) + 4, 2); }
         var response = await first.Exchange(request); var id = Id(response); var durable = Context(response, "DH2Q"); Check.That(durable != null, "ordinary durable grant available"); Check.Equal(0u, RawSmb.U32(durable!, 4) & 2u, "optional persistent request cannot manufacture persistent support");
         if (mode is "disconnected" or "twice-after-reconnect") await f.D.Dispatcher.OnConnectionClosedAsync(first.Connection);
@@ -215,14 +218,24 @@ internal static partial class UpstreamSambaMoreTests
         if (mode == "previous-session") Status(await first.Exchange(Query(id, 14)), 0xc0000203, "previous-session replacement invalidates old query handle");
         RawSmb.Put32(request, 16, RawSmb.U32(request, 16) | 0x20000000); var replayed = await second.Exchange(request);
         if (mode == "active-other-session") { Status(replayed, 0xc000022a, "source replay in independent active session is DUPLICATE_OBJECTID"); Status(await first.Exchange(RawSmb.Write(id, Payload, 0, 0, 1, 42)), Ok, "rejected replay leaves old authenticated handle usable"); return; }
-        var recovered = Id(replayed); Check.Equal(2u, RawSmb.U32(replayed, 68), "source disconnect/previous-session replay preserves initial CREATED action");
+        // MS-SMB2 3.3.5.9: ordinary replay cannot move an open to a new session.
+        // The persistent/CA-only branch of the original source is not this profile.
+        Status(replayed, 0xc000022a, "non-CA cross-session replay is DUPLICATE_OBJECTID");
+        var reconnect = Reconnect(id, recoveryGuid, false);
+        reconnect = Lease(reconnect, 0, 1, true, RawSmb.U16(Context(response, "RqLs")!, 48));
+        var connected = await second.Exchange(reconnect); var reconnected = Id(connected);
+        Check.Equal(id.P, reconnected.P, "explicit DH2C retains original object"); Check.Equal(1u, RawSmb.U32(connected, 68), "reconnect reports EXISTED");
+        replayed = await second.Exchange(request); var recovered = Id(replayed);
+        Check.Equal(reconnected, recovered, "same-session replay after explicit reconnect returns reattached open");
+        Check.Equal(2u, RawSmb.U32(replayed, 68), "same-session replay retains original CREATED action");
         if (mode == "twice-after-reconnect")
         {
             var repeated = await second.Exchange(request.ToArray()); Check.Equal(recovered, Id(repeated), "second replay returns same recovered identity"); Check.Equal(2u, RawSmb.U32(repeated, 68), "second replay retains CREATED action");
         }
         Status(await second.Exchange(RawSmb.Write(recovered, Payload, 0, 0, 1, 42)), Ok, "authenticated replay-recovered write");
         var read = await second.Exchange(RawSmb.Read(recovered, (uint)Payload.Length, 0, 0, 1, 42)); Status(read, Ok, "authenticated replay-recovered read"); Check.That(RawSmb.Buffer(read, read[66], RawSmb.U32(read, 68)).SequenceEqual(Payload), "replay recovery bytes exact");
-        if (mode == "twice-after-reconnect") { var fresh = await second.Exchange(request); Check.That(Id(fresh) != recovered, "ordinary WRITE retires cached CREATE response so later replay opens independently"); Check.Equal(1u, RawSmb.U32(fresh, 68), "later independent open action EXISTED"); }
+        if (mode == "twice-after-reconnect") { var fresh = await second.Exchange(request); Check.That(Id(fresh) != recovered, "ordinary WRITE retires cached CREATE response so later replay opens independently"); Check.Equal(1u, RawSmb.U32(fresh, 68), "later independent open action EXISTED"); Status(await second.Exchange(RawSmb.Close(Id(fresh), 0, 1, 42)), Ok, "close fresh post-write replay acquisition"); }
+        Status(await second.Exchange(RawSmb.Close(recovered, 0, 1, 42)), Ok, "close explicitly reconnected open");
     }
     sealed class NegotiatedPeer(CacheFixture fixture)
     {

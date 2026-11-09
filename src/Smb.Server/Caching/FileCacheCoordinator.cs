@@ -111,8 +111,7 @@ public sealed class FileCacheCoordinator(SmbServerOptions options) : IOplockMana
 
 	public static bool Supports(IFileStore? store) => store is ICacheCoherentFileStore { HasExclusiveServerAccess: true };
 
-	private bool Eligible(SmbOpen open) => Supports(open.TreeConnect?.Share.FileStore) && open.LocalOpen is { IsDirectory: false, Identity: not null }
-		&& options.LockManager.IsRangeAccessible(open, 0, ulong.MaxValue, true);
+	private bool Eligible(SmbOpen open) => Supports(open.TreeConnect?.Share.FileStore) && open.LocalOpen is { IsDirectory: false, Identity: not null };
 
 	private static bool SameLease(Grant g, SmbOpen open) => g.Lease && !open.LeaseKey.IsZero && g.Key == open.LeaseKey && Client(g.Owner) == Client(open);
 
@@ -126,7 +125,7 @@ public sealed class FileCacheCoordinator(SmbServerOptions options) : IOplockMana
 	{
 		long version;
 		lock (_gate) version = _operationVersion;
-		if (!options.FeaturePolicy.Oplocks || !Eligible(open) || requested is not (OplockLevel.LevelII or OplockLevel.Exclusive or OplockLevel.Batch)) return OplockGrant.None;
+		if (!options.FeaturePolicy.Oplocks || !Eligible(open) || !options.LockManager.IsRangeAccessible(open, 0, ulong.MaxValue, true) || requested is not (OplockLevel.LevelII or OplockLevel.Exclusive or OplockLevel.Batch)) return OplockGrant.None;
 
 		lock (_gate)
 		{
@@ -135,7 +134,7 @@ public sealed class FileCacheCoordinator(SmbServerOptions options) : IOplockMana
 			if (version != _operationVersion) return OplockGrant.None;
 
 			var list = Get(open.IdentityKey);
-			if (OtherPhysical(open) || list.Any(g => g.Opens.Contains(open) || g.Breaking != null || g.Lease ||
+			if (OtherPhysical(open) || list.Any(g => g.Opens.Contains(open) || g.Breaking != null || g.Lease && g.State is not (LeaseState.None or LeaseState.Read) ||
 			    g.Classic != OplockLevel.None && (g.Classic != OplockLevel.LevelII || requested != OplockLevel.LevelII))) return OplockGrant.None;
 
 			list.Add(new Grant(open) { Classic = requested });
@@ -144,22 +143,29 @@ public sealed class FileCacheCoordinator(SmbServerOptions options) : IOplockMana
 		}
 	}
 
-	public LeaseGrant RequestLease(SmbOpen open, LeaseRequest request)
+	public LeaseGrant RequestLease(SmbOpen open, LeaseRequest request) => RequestLease(open, request, false);
+
+	public LeaseGrant RequestLease(SmbOpen open, LeaseRequest request, bool contended)
 	{
 		long version;
 		lock (_gate) version = _operationVersion;
-		if (!options.FeaturePolicy.Leasing || !Eligible(open) || request.Key.IsZero || request.RequestedState is not (LeaseState.None or LeaseState.Read or LeaseState.ReadHandle or LeaseState.ReadWrite or LeaseState.ReadWriteHandle)) return LeaseGrant.None;
+		if (!options.FeaturePolicy.Leasing || !Eligible(open) || request.Key.IsZero || request.RequestedState is not (LeaseState.None or LeaseState.Read or LeaseState.ReadHandle or LeaseState.ReadWrite or LeaseState.ReadWriteHandle)) return LeaseGrant.None with { Epoch = request.IsV2 ? request.Epoch : (ushort)0, IsV2 = request.IsV2 };
 
+		var lockAccessible = options.LockManager.IsRangeAccessible(open, 0, ulong.MaxValue, true);
 		lock (_gate)
 		{
-			if (version != _operationVersion) return LeaseGrant.None;
+			var stable = version == _operationVersion;
 
 			var list = Get(open.IdentityKey);
 			open.LeaseKey = request.Key;
 			var existing = list.FirstOrDefault(g => SameLease(g, open));
 			if (existing != null)
 			{
-				if (existing.Breaking == null && !OtherPhysical(open) && request.RequestedState != existing.State && (request.RequestedState & existing.State) == existing.State && !list.Any(g => g != existing && (g.State != LeaseState.None || g.Classic != OplockLevel.None)))
+				if (stable && existing.Breaking == null && !OtherPhysical(open) && request.RequestedState != existing.State && (request.RequestedState & existing.State) == existing.State
+				    && ((request.RequestedState & LeaseState.Write) == 0 || !contended && lockAccessible)
+				    && !list.Any(g => g != existing && (g.Breaking != null || (g.State & LeaseState.Write) != 0 ||
+				        (request.RequestedState & LeaseState.Write) != 0 && (g.State != LeaseState.None || g.Classic != OplockLevel.None) ||
+				        (request.RequestedState & LeaseState.Handle) != 0 && g.Classic != OplockLevel.None)))
 				{
 					existing.State = request.RequestedState;
 					if (existing.V2) existing.Epoch = unchecked((ushort)(existing.Epoch + 1));
@@ -167,28 +173,42 @@ public sealed class FileCacheCoordinator(SmbServerOptions options) : IOplockMana
 
 				existing.Opens.Add(open);
 				Apply(existing);
-				return new LeaseGrant(existing.State, existing.Epoch, Array.Empty<LeaseBreak>());
+				return new LeaseGrant(existing.State, existing.Epoch, Array.Empty<LeaseBreak>()) { IsV2 = existing.V2 };
 			}
 
-			var state = request.RequestedState;
-			if (OtherPhysical(open) || list.Any(g => g.Breaking != null || !g.Lease && g.Classic != OplockLevel.None ||
+			var state = !stable ? LeaseState.None : contended ? request.RequestedState & LeaseState.ReadHandle : request.RequestedState;
+			if (OtherPhysical(open) || list.Any(g => g.Breaking != null || !g.Lease && g.Classic is not (OplockLevel.None or OplockLevel.LevelII) ||
 			    (g.State & LeaseState.Write) != 0)) state = LeaseState.None;
-			else if (list.Any(g => g.State != LeaseState.None || g.Classic != OplockLevel.None))
-				state &= LeaseState.ReadHandle;
-			var grant = new Grant(open) { Lease = true, Key = request.Key, State = state, V2 = request.IsV2, Epoch = request.IsV2 ? unchecked((ushort)(request.Epoch + 1)) : (ushort)0 };
+			else if (list.Any(g => g.Classic == OplockLevel.LevelII)) state &= LeaseState.Read;
+			else if (list.Any(g => g.State != LeaseState.None)) state &= LeaseState.ReadHandle;
+			// Shared cache promises can coexist with already coordinated leased
+			// locks: every subsequent physical READ/WRITE still checks range access,
+			// and lock acquisition invalidates foreign caches before entering.
+			if (!lockAccessible && ((state & LeaseState.Write) != 0 || !list.Any(g => g.Lease))) state = LeaseState.None;
+			var grant = new Grant(open) { Lease = true, Key = request.Key, State = state, V2 = request.IsV2, Epoch = request.IsV2 ? unchecked((ushort)(request.Epoch + (state != LeaseState.None ? 1 : 0))) : (ushort)0 };
 			list.Add(grant);
 			Apply(grant);
-			return new LeaseGrant(state, grant.Epoch, Array.Empty<LeaseBreak>());
+			return new LeaseGrant(state, grant.Epoch, Array.Empty<LeaseBreak>()) { IsV2 = grant.V2 };
 		}
 	}
 
 	// Acquires all COPY ranges atomically with respect to grants; no nested object locks.
 	public ValueTask<IDisposable> AcquireAsync(IReadOnlyList<FileIoRange> ranges, CancellationToken cancellationToken = default) => AcquireCoreAsync(ranges.Select(r => (r.Open, r.ForWrite)).ToArray(), cancellationToken);
 	public ValueTask<IDisposable> AcquireCreateAsync(SmbOpen provisional, bool destructive, CancellationToken token, bool sharingConflict = false) => AcquireCoreAsync([(provisional, destructive)], token, creating: true, sharingConflict: sharingConflict);
-	public ValueTask<IDisposable> AcquireNamespaceAsync(SmbOpen requester, FileIdentity? identity, CancellationToken token = default) => AcquireCoreAsync([(requester, true)], token, namespaceIdentity: identity);
+	public ValueTask<IDisposable> AcquireNamespaceAsync(SmbOpen requester, FileIdentity? identity, CancellationToken token = default, bool preserveRead = false) => AcquireCoreAsync([(requester, true)], token, namespaceIdentity: identity, preserveRead: preserveRead);
 
-	private async ValueTask<IDisposable> AcquireCoreAsync((SmbOpen Open, bool Write)[] operations, CancellationToken token, bool creating = false, FileIdentity? namespaceIdentity = null, bool sharingConflict = false)
+	private static bool IsMetadataOnlyCreateAccess(uint access, bool leased)
 	{
+		// This object store's metadata-open policy includes READ_EA: MS-SMB2
+		// 2.2.13.1.1 grants metadata reads, not stream I/O, for that right.
+		// Native Windows' narrower IRP_MJ_CREATE stat mask is a different policy.
+		const uint readEa = 0x8, readAttributes = 0x80, writeAttributes = 0x100, synchronize = 0x100000, readControl = 0x20000;
+		return (access & ~(readEa | readAttributes | writeAttributes | synchronize | (leased ? readControl : 0))) == 0;
+	}
+
+	private async ValueTask<IDisposable> AcquireCoreAsync((SmbOpen Open, bool Write)[] operations, CancellationToken token, bool creating = false, FileIdentity? namespaceIdentity = null, bool sharingConflict = false, bool preserveRead = false)
+	{
+		var queuedEscalations = new HashSet<Grant>();
 		while (true)
 		{
 			token.ThrowIfCancellationRequested();
@@ -207,20 +227,27 @@ public sealed class FileCacheCoordinator(SmbServerOptions options) : IOplockMana
 
 				foreach (var (open, write) in allOperations)
 				{
-					// Attribute-only opens do not access stream data or cached handles.
-					// Destructive CREATEs still invalidate even with only attribute access.
-					if (creating && !write && (open.GrantedAccess & ~0x00100180u) == 0) continue;
 					if (!_files.TryGetValue(open.IdentityKey, out var list)) continue;
 
 					foreach (var g in list)
 					{
+						// Only nonmutating, share-compatible CREATEs can preserve caches.
+						// WRITE_EA, data rights, destructive dispositions and actual EA SETs
+						// continue through ordinary invalidation / physical admission.
+						if (creating && !write && !sharingConflict && IsMetadataOnlyCreateAccess(open.GrantedAccess, g.Lease)) continue;
+						if (sharingConflict && !g.Lease && g.Classic != OplockLevel.Batch) continue;
 						// A classic level-II grant is invalidated by every write/lock,
 						// including one issued through its own FileId.
 						if (g.Opens.Contains(open) && (!write || g.Classic != OplockLevel.LevelII) || SameLease(g, open)) continue;
 
 						var partial = creating && !write;
-						var targetState = partial ? g.State & ~(sharingConflict ? LeaseState.Handle : LeaseState.Write) : LeaseState.None;
-						var targetClassic = partial && !sharingConflict ? OplockLevel.LevelII : OplockLevel.None;
+						var targetState = preserveRead ? g.State & ~LeaseState.Handle : partial ? g.State & ~(sharingConflict ? LeaseState.Handle : LeaseState.Write) : LeaseState.None;
+						// A destructive CREATE queued behind the WRITE downgrade first
+						// retires HANDLE. Only after that ACK does it invalidate READ.
+						// This preserves one outstanding ACK obligation at each stage.
+						if (g.Lease && creating && write && g.Breaking != null && targetState != g.TargetState) queuedEscalations.Add(g);
+						if (g.Lease && g.Breaking == null && g.State == LeaseState.ReadHandle && queuedEscalations.Remove(g)) targetState = LeaseState.Read;
+						var targetClassic = partial ? OplockLevel.LevelII : OplockLevel.None;
 						var conflict = g.Lease ? targetState != g.State && (write || (g.State & (creating ? LeaseState.Write | LeaseState.Handle : LeaseState.Write)) != 0)
 							: write || g.Classic is OplockLevel.Exclusive or OplockLevel.Batch;
 						if (!conflict || g.Classic == OplockLevel.None && g.State == LeaseState.None && g.Breaking == null) continue;
@@ -371,12 +398,21 @@ public sealed class FileCacheCoordinator(SmbServerOptions options) : IOplockMana
 		lock (_gate)
 		{
 			g.State = state;
-			g.Classic = classic;
+			g.Classic = g.Lease ? OplockLevel.None : classic;
 			g.Breaking = null;
 			g.Completing = false;
 			Apply(g);
 		}
 		completion.TrySetResult();
+	}
+
+	public bool IsDeletePending(string identityKey)
+	{
+		SmbOpen[] opens;
+		lock (_gate) opens = _files.GetValueOrDefault(identityKey)?.SelectMany(g => g.Opens).ToArray() ?? [];
+		// Unreachable durable owners must first go through the ordinary
+		// HANDLE-break purge, which can complete deletion and recreate the name.
+		return opens.Any(open => open.Session != null && open.LocalOpen?.DeletePending == true);
 	}
 
 	public bool IsBreaking(SmbOpen open)

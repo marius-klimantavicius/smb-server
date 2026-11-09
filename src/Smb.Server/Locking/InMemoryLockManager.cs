@@ -146,6 +146,17 @@ public sealed class InMemoryLockManager : ILockManager
 		}
 	}
 
+	public bool HasConflict(SmbOpen owner, IReadOnlyList<LockElement> elements)
+	{
+		lock (_gate)
+		{
+			if (!_files.TryGetValue(FileKey(owner), out var state)) return false;
+			foreach (var element in elements)
+				if (!element.Unlock && Conflicts(state, owner, element.Offset, element.Length, element.Exclusive)) return true;
+			return false;
+		}
+	}
+
 	public bool IsRangeAccessible(SmbOpen owner, ulong offset, ulong length, bool forWrite)
 	{
 		if (length == 0L)

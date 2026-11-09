@@ -36,8 +36,8 @@ public sealed class InMemoryShareModeManager : IShareModeManager
 					foreach (var entry in entries)
 						if (!ReferenceEquals(entry.Owner, owner) && entry.Access != FileAccessIntent.None && entry.Owner is SmbOpen existing &&
 							(existing.LocalOpen?.Identity ?? existing.AdmissionIdentity) is { } other && other.ObjectId == identity.ObjectId && other.StreamId != identity.StreamId &&
-							(identity.StreamId.Length == 0 && access.HasFlag(FileAccessIntent.Delete) && !entry.Share.HasFlag(FileShareMode.Delete) ||
-							 other.StreamId.Length == 0 && entry.Access.HasFlag(FileAccessIntent.Delete) && !share.HasFlag(FileShareMode.Delete)))
+							((candidate.LocalOpen?.IsDefaultStream ?? identity.StreamId.Length == 0) && access.HasFlag(FileAccessIntent.Delete) && !entry.Share.HasFlag(FileShareMode.Delete) ||
+							 (existing.LocalOpen?.IsDefaultStream ?? other.StreamId.Length == 0) && entry.Access.HasFlag(FileAccessIntent.Delete) && !share.HasFlag(FileShareMode.Delete)))
 							return false;
 
 			if (!_files.TryGetValue(fileKey, out var value))

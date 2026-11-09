@@ -41,7 +41,7 @@ internal static partial class UpstreamSambaMoreTests
     }
     static async Task IdentityEnumeration(bool directory)
     {
-        using var root = new P7cTests.Root(); await using var d = new P2Tests.Direct(root.Store()); var parent = await Open(d, "", directory: true);
+        using var root = new P7cTests.Root(); await using var d = new P2Tests.Direct(root.Store()); var parent = await Open(d, "", access: 0x81, directory: true);
         var first = await Open(d, "object", 3, directory: directory); var peer = await Open(d, "object", directory: directory);
         var index = RawSmb.U64(Output(await d.Send(Query(first, 6))), 0); Check.That(index != 0, "nonzero file index");
         Check.Equal(index, RawSmb.U64(Output(await d.Send(Query(peer, 6))), 0), "independent opens same object index");

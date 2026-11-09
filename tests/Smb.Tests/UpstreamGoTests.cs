@@ -223,7 +223,12 @@ internal static partial class UpstreamGoTests
     {
         await using var f = await UpstreamLocalFixture.StartAsync(); await using var c = await f.ConnectAsync(); await c.CloseAsync(await Open(c, "d1", true));
         var child = await Open(c, "d1\\inner.txt"); await Write(c, child, "inner"u8.ToArray()); var dir = await Open(c, "d1", true, 1);
-        await Rename(c, dir, "d2"); await AssertFile(c, child, "inner"u8.ToArray()); await c.CloseAsync(dir); await c.CloseAsync(child);
+        // MS-FSA 2.1.5.15.12 rejects open descendants. Retain the original
+        // successful rename/list/read workflow after an explicit close and retry.
+        var target = Encoding.Unicode.GetBytes("d2"); var rejected = new byte[24]; RawSmb.Put32(rejected, 16, (uint)target.Length); target.CopyTo(rejected, 20);
+        await c.ExchangeAsync(Set(c, dir, 10, rejected), 0xc0000022);
+        await AssertFile(c, child, "inner"u8.ToArray()); await c.CloseAsync(child);
+        await Rename(c, dir, "d2"); await c.CloseAsync(dir);
         Check.That((await List(c, "d2")).SequenceEqual(new[] { "inner.txt" }), "renamed subtree enumeration");
         var renamed = await Open(c, "d2\\inner.txt", disposition: 1); await AssertFile(c, renamed, "inner"u8.ToArray()); await c.CloseAsync(renamed);
     }
@@ -271,7 +276,7 @@ internal static partial class UpstreamGoTests
         var churn = Task.Run(async () => { for (var i = 0; i < 300; i++) { var id = await Open(writer, $"f_{i}"); await Write(writer, id, [120]); await Rename(writer, id, $"g_{i}"); await writer.CloseAsync(id); await Remove(writer, $"g_{i}"); } });
         for (var round = 0; round < 20; round++)
         {
-            var id = await Open(reader, "", true, 1); var q = RawSmb.Enumerate(id, reader.NextMessageId(), reader.Session, reader.Tree); await reader.SendAsync(q); var b = await reader.ReceiveAsync();
+            var id = await Open(reader, "", true, 1, access: 0x81); var q = RawSmb.Enumerate(id, reader.NextMessageId(), reader.Session, reader.Tree); await reader.SendAsync(q); var b = await reader.ReceiveAsync();
             Check.That(RawSmb.U32(b, 8) is 0 or 0xc000000f, $"churning directory returns data or initial no-match; actual NTSTATUS=0x{RawSmb.U32(b, 8):x8}"); await reader.CloseAsync(id);
         }
         await churn; Check.Equal(0, Directory.GetFileSystemEntries(f.RootPath).Length, "churn leaves no objects");

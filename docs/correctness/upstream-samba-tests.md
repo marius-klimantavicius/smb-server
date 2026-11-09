@@ -1,5 +1,11 @@
 # Samba second-campaign inventory and adaptations
 
+Current [failure repairs](remaining-failure-repairs.md) make all maintained
+registrations pass in the 3,897-case published Linux gates. In particular, the
+basic inherited-origin and legal-Unicode name profiles have explicit strengthened
+oracles; the original conditional inheritance marker and legacy OS2-name rejection
+conventions are preserved historically, not claimed implemented.
+
 Subsequent [multichannel/durable implementation](multichannel-durable-reconnect.md)
 extends these historical adaptations. Current SMB311 behavior, terminal-binding
 GSS retirement, valid async fixture corrections and remaining source differences

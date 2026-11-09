@@ -4,7 +4,7 @@ Maintained C# source reconstruction of KaimoSystemSolutions **SMB-Server 2.1.1**
 with correctness repairs through P7c/P8 and an expanded upstream protocol/auth campaign.
 This is a reviewable checkout, not a production-ready or certified SMB release.
 The coordinator still owns acceptance: historical TDD-order exceptions are pending,
-upstream compatibility failures remain, native Windows is untested, and QUIC
+native Windows is untested, and QUIC
 attribution is not fully resolved. See [acceptance](docs/correctness/acceptance.md).
 
 Use the .NET SDK selected by `global.json` (observed 10.0.114). All six runtime
@@ -68,6 +68,15 @@ failing names. See [platform validation](docs/correctness/platform-validation.md
 for published-mode results and [Linux/Windows recovery examples](docs/correctness/multichannel-durable-configuration.md)
 for explicit opt-in configuration.
 
+The subsequent [remaining-failure repairs](docs/correctness/remaining-failure-repairs.md)
+resolve all 100 registered failures and add 382 regressions. The settled
+integration harness and published Linux JIT/Native AOT each pass **3,897/3,897**,
+including all prior cases. All 26 Linux platform stages pass. Production
+repairs and documented specification/profile oracle corrections are distinguished
+in the report; original source expectations and results remain archived. Current
+published Linux results are recorded in platform validation. This is not native
+Windows or whole-dialect certification.
+
 Caching/durable grants require a stable-identity coherent backend and an explicit
 exclusive-server-access assertion. `new LocalFileStore(root, false)` permits
 ordinary operations but withholds caching. Only use its four-argument constructor
@@ -76,7 +85,8 @@ through one server state. This is a deployment assertion, not an OS lock.
 
 Directory leases, persistent handles, CA shares and local allocation are unsupported.
 `FileDurableHandleStore` is rejected by profile validation; there is no cold recovery.
-Streams/EAs are process-memory only; unbuffered I/O is advisory; local metadata is
+Streams/EAs, including promoted logical default streams, are process-memory only;
+native unnamed-source to named-stream rename remains unsupported. Unbuffered I/O is advisory; local metadata is
 not an NTFS implementation. See [capabilities](docs/correctness/capabilities.md).
 
 For a disposable loopback share, provide an existing credential file:

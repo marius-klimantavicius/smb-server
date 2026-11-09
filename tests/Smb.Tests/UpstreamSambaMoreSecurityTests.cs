@@ -235,8 +235,11 @@ internal static partial class UpstreamSambaMoreTests
     }
     static async Task InheritanceControls()
     {
-        // One workflow with sixteen parent and sixteen explicit-child control
-        // partitions. These are not 256 independently registered tests.
+        // Samba acls.c test_inheritance_flags supplies the control partitions.
+        // Its conditional origin marker is a backend convention, not this basic
+        // profile: MS-DTYP 2.4.4.1 records inherited origin independently of
+        // descriptor auto-controls (also covered by grantwire's 16 partitions).
+        // All 256 explicit-child replacements must still execute and normalize.
         for (var p = 0; p < 16; p++)
         {
             using var root = new P7cTests.Root(); await using var d = new P2Tests.Direct(root.Store()); var parent = await Open(d, "parent", 3, access: 0x1f01ff, directory: true);
@@ -247,12 +250,15 @@ internal static partial class UpstreamSambaMoreTests
             Check.Equal(Normalized(p), (ushort)(RawSmb.U16(read, 2) & 0x9504), "source normalizes parent AUTO_INHERIT_REQ/AUTO_INHERITED/PROTECTED flags");
             var child = await Open(d, "parent\\child", 2, access: 0x1f01ff); read = Output(await d.Send(SecurityQuery(child)));
             Check.Equal((ushort)(0x8004 | ((p & 3) == 3 ? 0x400 : 0)), (ushort)(RawSmb.U16(read, 2) & 0x9504), "child descriptor control derives from parent auto-inherit combination");
-            Check.Equal((p & 3) == 3 ? (byte)16 : (byte)0, read[(int)RawSmb.U32(read, 16) + 9], "source inherited ACE flag follows auto-inherit control, file clears OI/CI");
+            Check.Equal((byte)16, read[(int)RawSmb.U32(read, 16) + 9], "basic profile records inherited origin; noncontainer child clears OI/CI");
             for (var c = 0; c < 16; c++)
             {
                 sd = SingleAce(Sid(1,0), 0x1f01ff, flags: (byte)((c & 8) != 0 ? 16 : 0)); RawSmb.Put16(sd, 2, Control(c)); Status(await d.Send(SecuritySet(child, sd)), Ok, "explicit child control SET independent of parent"); read = Output(await d.Send(SecurityQuery(child)));
                 Check.Equal(Normalized(c), (ushort)(RawSmb.U16(read, 2) & 0x9504), "explicit child controls normalize independently"); Check.Equal((c & 8) != 0 ? (byte)16 : (byte)0, read[(int)RawSmb.U32(read, 16) + 9], "explicit child ACE inherited marker retained");
+                var acl = (int)RawSmb.U32(read, 16);
+                Check.That(read.AsSpan(acl, 28).SequenceEqual(sd.AsSpan(20)), "complete explicit child ACL retains revision, count, type, mask and SID");
             }
+            await Close(d, child); await Close(d, parent);
         }
     }
     static async Task StaticInheritance()

@@ -1,5 +1,11 @@
 # Multichannel and in-memory durable reconnect
 
+Subsequent [remaining-failure repairs](remaining-failure-repairs.md) resolve all
+100 retained cases described by this historical delivery. Current integration
+and published Linux JIT/AOT pass 3,897/3,897. Production changes and corrected
+primary/profile oracles are distinguished in that later report; original source
+conventions and results below remain historical evidence.
+
 This feature delivery follows clean baseline `1def1af` and the second upstream
 campaign. The baseline was reproduced before implementation: 3,144 tests,
 2,917 passing and the identical 227 failing names from the preceding Linux
