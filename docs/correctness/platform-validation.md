@@ -1,10 +1,12 @@
 # Windows and Linux platform correction — 2026-11-08
 
-The local backend now has Windows and Linux implementations. The latest
-failure-repair delivery passes 3,897/3,897 in both published Linux modes, with
-all 26 platform stages passing. Its results follow the historical campaigns below.
-Earlier all-green deliveries are historical. Native Windows JIT/AOT execution
-is unexecuted; the user will test it later. Both-platform acceptance remains open.
+The local backend now has Windows and Linux implementations. The supplied SQLite
+engine integration passes 3,991/3,991 in both published Linux modes, with all 30
+platform stages passing. Its settled capture follows the historical campaigns
+below, including the previous 3,984-case SQLite delivery and valid 3,897-case
+failure-repair baseline. Native Windows JIT/AOT
+execution is unexecuted; the user will test it later. Both-platform acceptance
+remains open.
 
 ## Implementation
 
@@ -310,3 +312,111 @@ Native AOT host passes 27/27 processes: eighteen signed/default and nine require
 encryption probes across SMB300/302/311, including actual channel binding and
 durable reconnect. Both test hosts stop normally. These processes are separate
 from the 3,897-case harness and do not certify the complete native client suite.
+
+## SQLite integration — settled Linux capture
+
+This subsection records the previous native-SQLite delivery. The supplied-engine
+capture below supersedes its current dependency, packaging and test-count claims.
+
+The [optional SQLite provider](../sqlite-provider.md) adds `sqlitetest` and
+native SQLite packaging inspections per published mode to the portable driver.
+All original stages/assertions remain. The default three-round driver adds four
+stages (30 on Linux, 29 on Windows); earlier 26-stage results above are historical.
+
+On 2026-11-09, the coordinator completed the final native Linux x64 capture
+(kernel 6.8, glibc 2.39, SDK 10.0.114, Python 3.12.3) after executable-source freeze,
+using a new external output directory:
+
+```sh
+python3 scripts/validate-platform.py --out "$SMB_VALIDATION_OUTPUT" --keep-going
+```
+
+Published self-contained JIT and published Native AOT each pass **3,984/3,984**.
+Each retains all **3,897** baseline names and adds **87 SQLite cases**
+(54 backend + 33 integration), with zero missing, failed or duplicate names.
+The full harness includes the separate-process clean/crash recovery cases.
+All **30 stages pass**, aggregate **pass**, exit **0**. Both hosts pass selftest,
+12-round actual LocalFileStore TCP and actual SQLite TCP across two provider/server
+lifetimes. Each mode passes 3 x 8 stress and 3 x 1 expiry-race cases.
+
+Restore/rebuild, all four publications, native dependency inspection and both
+SQLite packaging gates pass. All four host/harness outputs load their bundled
+native SQLite **3.53.3**. The win-x64 native asset is restored and inspected,
+not executed. The portable-tool suite separately passes **12/12**.
+
+All **60** stage before/after source manifests equal the initial manifest;
+the capture is source-stable. All **448 published artifact SHA-256 hashes** verify.
+Core production source remained unchanged throughout integration. These
+documentation updates follow the frozen executable-source capture; the updated
+documents are not claimed as frozen capture inputs. Raw evidence remains external.
+
+The Release rebuild has **0 warnings, 0 errors**. Publications retain only the
+existing IL2026/IL3050 diagnostics at unsupported persistent JSON sites, with no
+new SQLite warnings or suppressions. Native Windows JIT/AOT remains **unexecuted**;
+restored assets on Linux are packaging evidence only. Process-kill recovery does
+not test power loss or supply persistent SMB recovery/continuous availability.
+The provider's documented ADS, EA, CHANGE_NOTIFY and other limits remain.
+
+
+## Supplied SQLite engine — settled Linux capture
+
+On 2026-11-09, a clean capture after executable-source freeze used SDK 10.0.114,
+native Linux x64 (kernel 6.8, glibc 2.39), and the portable command:
+
+```sh
+python3 scripts/validate-platform.py --out "$SMB_VALIDATION_OUTPUT" --keep-going
+```
+
+Published self-contained JIT and NativeAOT each pass **3,991/3,991**. Both retain
+all **3,897 baseline names** and all **3,984 prior names**, with exactly seven
+additions, zero missing/failed/duplicate names, and **94 SQLite cases**. The
+additions exercise statement tails, empty BLOB versus NULL, binding copy lifetime
+and Int64, binding errors, statement disposal after binding failure, transaction
+errors/rollback/reuse, and an independent prior-provider schema-1 fixture.
+
+All **30 stages pass**, aggregate **pass**, exit **0**: SDK, restore, rebuild,
+four publications; each mode's full harness, selftest, LocalFileStore TCP,
+SQLite TCP, engine/packaging gate, three stress and three expiry-race runs;
+and Linux native dependency inspection. Both LocalFileStore hosts complete
+12 rounds; both SQLite hosts complete actual signed SMB311 TCP across two
+store/server lifetimes. Full harnesses retain signed SQLite TCP dialect matrices,
+separate-process owner/alias rejection and controlled process-kill recovery.
+Each mode passes 3 x 8 stress cases and 3 x 1 expiry-race cases.
+
+All four fresh outputs execute supplied **Managed.Database.Sqlite 3.54.0** through
+**Ews.Common.Sqlite**, verifying SQL version/source ID against compiled constants.
+All ten restored assets graphs and published directories exclude Microsoft.Data.Sqlite,
+SQLitePCLRaw and native SQLite assets. Native host dependencies are libc/libm and
+the platform loader; no native SQLite. OS P/Invoke remains for VFS services.
+The portable tool suite separately passes **12/12**.
+
+All **60** stage before/after source manifests equal the initial manifest;
+source is stable. All **440** published artifact SHA-256 hashes verify. The
+Release rebuild has **0 warnings, 0 errors**; publication retains the existing
+IL2026/IL3050 warnings in unsupported persistent JSON APIs. No new SQLite warning
+or suppression was introduced. Raw commands, logs, archives, manifests, name
+audits and artifact hashes remain external. These summary documentation changes
+follow the executable-source capture and do not alter captured executable inputs.
+
+Four focused repairs first failed behaviorally against a compiling framework,
+then passed unchanged tests: ignored SQL tails, empty BLOB bound as NULL, ignored
+bind result codes, and leaked statements on a throwing bind callback. Compilation
+setup (logging reference and binder delegate signatures) is recorded separately.
+The transpiled generated engine, VFS source and supplied LICENSE.txt are unchanged.
+The initial staged index is byte-identical; nothing was staged or committed.
+
+The embedded pre-migration fixture was generated by the previous published
+Microsoft.Data.Sqlite 10.0.14/SQLitePCLRaw 2.1.13 provider with SQLite 3.53.3.
+Its original IDs, bytes, security, timestamps and schema pass through the new
+provider, followed by new sparse cross-chunk writes and reopen/integrity checks.
+A separate new-engine commit into an old database remains readable by the old
+published provider with an identical snapshot. Fixture hashes/provenance are
+retained beside the portable fixture; routine tests need no old runtime.
+
+Both host and harness also cross-publish successfully as self-contained
+**win-x64 JIT**; ten restored graphs and 420 cross-published file hashes are
+captured, with no old provider or native SQLite assets. This is compilation and
+packaging evidence only. **Native Windows JIT/AOT remains unexecuted**; Windows
+AOT was not cross-published. Process-kill recovery does not emulate power loss.
+Persistent SMB recovery/continuous availability and the provider's documented
+ADS, EA, CHANGE_NOTIFY and broader platform/provenance limits remain unchanged.

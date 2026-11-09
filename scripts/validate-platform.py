@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Native-host Windows/Linux source build, published JIT/AOT harness and real TCP localtest.
+"""Native-host Windows/Linux source build, published JIT/AOT harness and real TCP localtest/sqlitetest.
 Never cross-publishes, restores a source snapshot, stages changes or suppresses warnings.
 """
 import argparse,hashlib,json,os,platform,re,subprocess,sys,tarfile,time
@@ -84,6 +84,38 @@ def main():
         run(mode+'-full',tests,requires=('publish-'+mode+'-tests',))
         run(mode+'-selftest',host_cmd+['selftest'],requires=('publish-'+mode+'-host',))
         run(mode+'-localtest',host_cmd+['localtest'],requires=('publish-'+mode+'-host',))
+        run(mode+'-sqlitetest',host_cmd+['sqlitetest'],requires=('publish-'+mode+'-host',))
+        # Execute the compiled supplied engine in every fresh output and reject
+        # old providers/native SQLite in both the restore graph and deployment.
+        inspection = """
+import json,re,subprocess,sys
+from pathlib import Path
+build=Path(sys.argv[3])
+assets_files=list(build.rglob('project.assets.json'))
+assert assets_files, 'no restored assets found'
+for path in assets_files:
+    assets=json.loads(path.read_text())
+    forbidden=[key for key in assets['libraries'] if key.lower().startswith(('microsoft.data.sqlite','sqlitepclraw'))]
+    assert not forbidden, (str(path),forbidden)
+    assert not any('e_sqlite3' in str(target).lower() or 'libsqlite3' in str(target).lower() for target in assets['targets'].values()), str(path)
+print('restored-assets-clean',len(assets_files))
+source=Path(sys.argv[5]).read_text()
+version=re.search(r'const string SQLITE_VERSION = "([^"]+)"',source).group(1)
+for directory,name in zip(sys.argv[1:3],('Smb.Tests','Smb.TestHost')):
+    directory=Path(directory)
+    for path in directory.rglob('*'):
+        if not path.is_file(): continue
+        lower=path.name.lower()
+        assert not any(token in lower for token in ('microsoft.data.sqlite','sqlitepclraw','e_sqlite3','libsqlite3')), str(path)
+        assert not ('sqlite' in lower and lower.endswith(('.so','.dylib','.dll')) and lower!='smb.filesystem.sqlite.dll'), str(path)
+        if lower.endswith('.deps.json'):
+            deps=json.loads(path.read_text())
+            assert not any(key.lower().startswith(('microsoft.data.sqlite','sqlitepclraw')) for key in deps['libraries']), str(path)
+    proof=subprocess.check_output([str(directory/(name+sys.argv[4])),'--sqlite-engine-proof'],text=True)
+    assert 'implementation=Managed.Database.Sqlite framework=Ews.Common.Sqlite version='+version+' ' in proof, proof
+    print('published-engine',directory,proof.strip())
+"""
+        run(mode+'-sqlite-packaging',[sys.executable,'-c',inspection,str(out/(mode+'-tests')),str(out/(mode+'-host')),str(build),suffix,str(ROOT/'src/Smb.FileSystem.Sqlite/Library/Sqlite.cs')],requires=('publish-'+mode+'-tests','publish-'+mode+'-host','restore'))
         for i in range(args.stress_rounds):
             run(mode+'-stress-'+str(i),tests+['--filter','stress.'],requires=('publish-'+mode+'-tests',))
             run(mode+'-expiry-race-'+str(i),tests+['--filter','p7c.reconnect.expiry-preparation'],requires=('publish-'+mode+'-tests',))

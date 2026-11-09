@@ -17,3 +17,12 @@ inspection found exact current/generated/historical matches for 47 of 80 files;
 Do not infer that the package Apache license replaces these component licenses.
 No QUIC source or behavior was changed by P8. This checkout is not an unqualified
 redistribution/provenance or security certification.
+
+Optional SQLite provider sources and dependencies:
+- Supplied Managed.Database.Sqlite 3.54.0: dotcc-transpiled SQLite, public-domain engine.
+- Embedded dotcc runtime/scaffolding: Sebastian Godelet / DotCC, MIT.
+- Supplied Ews.Common.Sqlite framework: Krueger Systems, Inc., MIT; retained LICENSE.txt.
+- Supplied HostVfs OS services: managed SQLite VFS with Linux/Windows OS calls.
+- Microsoft.Extensions.Logging.Abstractions 10.0.0: Microsoft / .NET Foundation, MIT.
+No Microsoft.Data.Sqlite, SQLitePCLRaw or native SQLite runtime is deployed.
+See docs/notices/sqlite-dependencies.txt and docs/sqlite-provider.md.

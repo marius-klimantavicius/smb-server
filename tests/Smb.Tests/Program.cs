@@ -3,6 +3,10 @@ using Smb.FileSystem;
 using Smb.Protocol.Enums;
 using Smb.Server.Notification;
 
+if (args is ["--sqlite-engine-proof"]) { SqliteEngineProof.Print(Console.Out); return 0; }
+
+if (args is ["--sqlite-child", var sqliteMode, var sqliteDatabase]) return await SqliteProcessTests.Child(sqliteMode, sqliteDatabase);
+
 if (args is ["--p7b-311-probe"]) { await P7bTests.Probe311(); return 0; }
 
 if (args.Length == 3 && args[0] == "--p5-metadata-child") { await P5Tests.MetadataChild(args[1], args[2]); return 0; }
@@ -72,6 +76,9 @@ tests = tests.Concat(MultichannelWireTests.Cases()).ToArray();
 tests = tests.Concat(CacheSequenceRecoveryTests.Cases()).ToArray();
 tests = tests.Concat(NotifyBoundaryRepairTests.Cases()).ToArray();
 tests = tests.Concat(DurableRecoveryTcpTests.InheritanceNameCases()).ToArray();
+tests = tests.Concat(SqliteProviderTests.Cases()).Concat(SqliteEngineTests.Cases()).ToArray();
+tests = tests.Append(("sqlite.host-workflow", () => SqliteWorkload.RunAsync())).ToArray();
+tests = tests.Concat(SqliteProcessTests.Cases()).Concat(DurableRecoveryTcpTests.SqliteCases()).ToArray();
 if (args is ["--list"]) { foreach (var test in tests) Console.WriteLine(test.Name); return 0; }
 var filter = args switch { [] => "", ["--filter", var value] => value, _ => throw new ArgumentException("Usage: [--list | --filter <case-insensitive-substring>]") };
 var selected = tests.Where(t => t.Name.Contains(filter, StringComparison.OrdinalIgnoreCase)).ToArray();

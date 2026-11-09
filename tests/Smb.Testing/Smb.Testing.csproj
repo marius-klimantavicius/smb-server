@@ -6,4 +6,5 @@
     <IsAotCompatible>true</IsAotCompatible>
   </PropertyGroup>
   <ItemGroup><ProjectReference Include="../../src/Smb.Host/Smb.Host.csproj" /></ItemGroup>
+  <ItemGroup><ProjectReference Include="../../src/Smb.FileSystem.Sqlite/Smb.FileSystem.Sqlite.csproj" /></ItemGroup>
 </Project>

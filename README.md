@@ -7,9 +7,11 @@ The coordinator still owns acceptance: historical TDD-order exceptions are pendi
 native Windows is untested, and QUIC
 attribution is not fully resolved. See [acceptance](docs/correctness/acceptance.md).
 
-Use the .NET SDK selected by `global.json` (observed 10.0.114). All six runtime
-projects use source project references; no original package DLLs or new runtime
-packages are used. The executable harness uses no third-party test framework.
+Use the .NET SDK selected by `global.json` (observed 10.0.114). The core runtime
+projects use source project references with no original package DLLs. The optional
+[SQLite provider](docs/sqlite-provider.md) uses the supplied transpiled C# SQLite
+engine and Ews.Common.Sqlite framework. It needs no native SQLite deployment.
+The executable harness uses no third-party test framework.
 
 ```sh
 dotnet restore SmbServer.slnx

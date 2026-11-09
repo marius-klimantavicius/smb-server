@@ -1,7 +1,7 @@
 # Test entry points
 
 `dotnet run --project tests/Smb.Tests -c Release -- [--list | --filter substring]`
-runs the dependency-free executable harness. Tests register explicitly as
+runs the executable harness without a third-party test framework. Tests register explicitly as
 `(string Name, Func<Task> Run)` in `Smb.Tests/Program.cs`; no reflection discovery
 or test adapter is needed. Empty selection exits 2, assertion failure exits 1,
 all selected tests passing exits 0. Each test has a 60-second outer bound; I/O,
@@ -36,6 +36,27 @@ repairs and specification/profile-backed fixture corrections are documented
 separately; no tests are skipped or converted to expected failures. Final native
 Linux JIT/AOT, host/TCP and stress results are in platform validation. Native
 Windows execution and full Windows ACL/stream fidelity remain outside that claim.
+
+The optional [SQLite provider](../docs/sqlite-provider.md) retains its **87 cases**
+(54 backend + 33 integration) and adds **7** supplied-engine/framework and
+prior-provider compatibility cases. The complete expected registration count is
+**3,991**, retaining all **3,897** baseline names; `--filter sqlite.` selects **94**.
+The portable old schema-1 fixture is embedded; ordinary testing needs no native
+SQLite, old package/runtime or external evidence.
+
+Subprocess tests self-launch the current executable (including published JIT and
+NativeAOT), wait for controlled pipe handshakes before killing a child, and verify
+restart integrity/data/identity/security. No SMB process state is persisted.
+`Smb.TestHost sqlitetest` performs real SQLite TCP IO and reopen; `serve-sqlite`
+requires explicit database, numeric address, port and credential-file arguments.
+The 30-stage Linux portable driver includes host selftests, 12-round LocalFileStore
+TCP, two-lifetime SQLite TCP, compiled supplied-engine identity/asset-exclusion
+checks and repeated stress/expiry checks. Use `--sqlite-engine-proof` on either
+host or harness to execute the compiled engine identity check.
+Final results and source/artifact verification are in
+[platform validation](../docs/correctness/platform-validation.md).
+Older 3,984-case/native-SQLite captures are historical. Native Windows JIT/AOT
+remains unexecuted; cross-builds are separate compilation evidence.
 
 `--filter upstream.` selects all upstream-related cases, including the first
 campaign's 86 (`upstream.create.` 29, `upstream.protocol.` 27, `upstream.state.` 30).
