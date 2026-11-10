@@ -1,5 +1,10 @@
 # Multichannel and in-memory durable reconnect
 
+Optional [durable restart journaling](../durable-recovery.md) is now available
+through an abstract provider with a SQLite implementation and fresh authentication.
+The delivery and counts below are historical; current published results are in
+[platform validation](platform-validation.md#optional-durable-restart-journal--settled-linux-capture).
+
 Subsequent [remaining-failure repairs](remaining-failure-repairs.md) resolve all
 100 retained cases described by this historical delivery. Current integration
 and published Linux JIT/AOT pass 3,897/3,897. Production changes and corrected

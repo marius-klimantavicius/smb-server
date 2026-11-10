@@ -22,6 +22,28 @@ public sealed class LockSequenceState
 		for (var i = 0; i < _slots.Length; i++) _slots[i] = new Slot();
 	}
 
+    public byte[] Capture()
+    {
+        var result = new byte[64];
+        for (var i = 0; i < result.Length; i++)
+        {
+            var slot = _slots[i];
+            // Snapshot is taken after the operation's sequence slot has been committed.
+            if (Volatile.Read(ref slot.Valid)) result[i] = checked((byte)(Volatile.Read(ref slot.Number) + 1));
+        }
+        return result;
+    }
+    public void Restore(byte[] state)
+    {
+        if (state.Length != 64) throw new ArgumentException("Expected 64 replay slots.", nameof(state));
+        for (var i = 0; i < state.Length; i++)
+        {
+            if (state[i] > 16) throw new ArgumentException("Invalid replay slot.", nameof(state));
+            _slots[i].Number = state[i] == 0 ? 0 : (uint)(state[i] - 1);
+            _slots[i].Valid = state[i] != 0;
+        }
+    }
+
 	public async Task<LockOutcome> ApplyAsync(uint sequence, Func<Task<LockOutcome>> apply, CancellationToken token)
 	{
 		var index = sequence >> 4;

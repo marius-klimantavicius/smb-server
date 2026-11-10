@@ -11,7 +11,8 @@ namespace Smb.Server;
 /// Selectable correctness profiles. Restricted is the default; CopyOnly adds coordinated
 /// server-side copy after its P5 gate. Caching/CachingWithCopy add coordinated file
 /// caching only on a backend with an explicit coherence contract. Multichannel profiles
-/// opt in to tested SMB300/302/311 connection sets. Directory leases and persistent recovery remain unavailable.
+/// opt in to tested SMB300/302/311 connection sets. Directory leases and SMB persistent handles/CA remain unavailable. Optional restart
+/// journals recover eligible durable opens after fresh authentication.
 /// </summary>
 public sealed class SmbFeaturePolicy
 {
@@ -53,6 +54,9 @@ public sealed class SmbFeaturePolicy
 
 	public void Validate(SmbServerOptions options)
 	{
+        if (options.RecoveryStore != null && (!DurableHandles || options.DurableHandleStore is not IRetainedDurableHandleStore ||
+            options.LockManager is not Locking.IRecoveryLockManager))
+            throw new InvalidOperationException("Restart recovery requires a durable profile, a retained-open registry and a recovery-aware lock manager.");
         if (DurableHandles && (options.DurableHandleTimeout <= TimeSpan.Zero || options.DurableHandleTimeout.TotalMilliseconds > uint.MaxValue - 1 ||
             options.MaxDurableHandleTimeout <= TimeSpan.Zero || options.MaxDurableHandleTimeout.TotalMilliseconds > uint.MaxValue - 1))
             throw new InvalidOperationException("Durability requires positive, finite retention timeouts.");

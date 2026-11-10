@@ -126,11 +126,12 @@ public sealed partial class SqliteFileStore
         var dirty = Convert.ToInt64(Scalar("SELECT COUNT(*) FROM objects WHERE pending=1 OR (parent IS NULL AND id<>$root)", ("$root", _rootId)));
         if (dirty == 0) return;
         if (_readOnly) throw new InvalidDataException("SQLite filesystem requires writable startup recovery.");
-        Exec("DELETE FROM objects WHERE directory=0 AND (pending=1 OR (parent IS NULL AND id<>$root))", ("$root", _rootId));
+        var unretained = HasRecoveryTable ? " AND NOT EXISTS(SELECT 1 FROM smb_recovery_retention WHERE object_id=objects.id)" : "";
+        Exec("DELETE FROM objects WHERE directory=0 AND (pending=1 OR (parent IS NULL AND id<>$root))" + unretained, ("$root", _rootId));
         // Only empty directories may be reclaimed, even if the database was interrupted.
-        Exec("DELETE FROM objects WHERE id<>$root AND (pending=1 OR parent IS NULL) AND NOT EXISTS(SELECT 1 FROM objects AS child WHERE child.parent=objects.id)", ("$root", _rootId));
-        Exec("UPDATE objects SET pending=0 WHERE pending=1");
-        if (Convert.ToInt64(Scalar("SELECT COUNT(*) FROM objects WHERE parent IS NULL AND id<>$root", ("$root", _rootId))) != 0)
+        Exec("DELETE FROM objects WHERE directory=1 AND id<>$root AND (pending=1 OR parent IS NULL) AND NOT EXISTS(SELECT 1 FROM objects AS child WHERE child.parent=objects.id)", ("$root", _rootId));
+        Exec("UPDATE objects SET pending=0 WHERE pending=1" + unretained);
+        if (Convert.ToInt64(Scalar("SELECT COUNT(*) FROM objects WHERE parent IS NULL AND id<>$root" + unretained, ("$root", _rootId))) != 0)
             throw new InvalidDataException("Unlinked directory has children; refusing recursive recovery.");
     }
 

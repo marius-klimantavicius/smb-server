@@ -285,6 +285,16 @@ public sealed class SmbServerBuilder
 		return this;
 	}
 
+    /// <summary>Enables optional restart recovery for eligible durable handles. Requires
+    /// a durable feature profile and recoverable exclusive backends. Caller owns the store.</summary>
+    public SmbServerBuilder UseServerRecoveryStore(Smb.Server.Recovery.IServerRecoveryStore store)
+    {
+        ArgumentNullException.ThrowIfNull(store);
+        _options.RecoveryStore = store;
+        _options.ServerGuid = store.ServerGuid.ToByteArray();
+        return this;
+    }
+
 	/// <summary>Supplies storage without enabling durable grants or reconnect. Persistent
 	/// stores are rejected by the restricted policy at Build.</summary>
 	public SmbServerBuilder UseDurableHandleStore(IDurableHandleStore store)

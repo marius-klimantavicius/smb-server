@@ -115,6 +115,10 @@ public sealed class SmbServerOptions
 
 	public IDurableHandleStore DurableHandleStore { get; set; } = new InMemoryDurableHandleStore();
 
+	/// <summary>Optional caller-owned restart journal; authenticated session keys are never stored.</summary>
+	public Recovery.IServerRecoveryStore? RecoveryStore { get; set; }
+    internal Recovery.ServerRecoveryCoordinator? RecoveryCoordinator { get; set; }
+
 	public TimeSpan DurableHandleTimeout { get; set; } = TimeSpan.FromSeconds(60L);
 
 	public TimeSpan MaxDurableHandleTimeout { get; set; } = TimeSpan.FromMinutes(16L);

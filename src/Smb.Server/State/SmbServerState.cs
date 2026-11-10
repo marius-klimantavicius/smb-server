@@ -22,6 +22,8 @@ public sealed class SmbServerState
 
 	public CreateReplayRegistry CreateReplays { get; } = new CreateReplayRegistry();
 
+    public Recovery.ServerRecoveryCoordinator? Recovery { get; }
+
 	public SmbServerOptions Options { get; }
 
 	public ShareCollection Shares { get; }
@@ -80,6 +82,12 @@ public sealed class SmbServerState
 	{
 		Options = options;
 		Shares = options.Shares;
+        if (options.RecoveryStore != null)
+        {
+            options.ServerGuid = options.RecoveryStore.ServerGuid.ToByteArray();
+            Recovery = new Recovery.ServerRecoveryCoordinator(this, options.RecoveryStore);
+            options.RecoveryCoordinator = Recovery;
+        }
 		if (options.DurableHandleStore is IPersistentHandleStore persistentHandleStore)
 		{
 			_persistentIdCounter = (long)(persistentHandleStore.HighestPersistentId & 0x7FFFFFFFFFFFFFFFL);
@@ -128,6 +136,7 @@ public sealed class SmbServerState
 
 	public ulong AllocateSessionId()
 	{
+        if (Options.RecoveryStore != null) return Options.RecoveryStore.AllocateId(Smb.Server.Recovery.RecoveryIdKind.Session);
 		ulong num;
 		do
 		{
@@ -144,6 +153,7 @@ public sealed class SmbServerState
 
 	public ulong AllocatePersistentId()
 	{
+        if (Options.RecoveryStore != null) return 0x8000000000000000UL | Options.RecoveryStore.AllocateId(Smb.Server.Recovery.RecoveryIdKind.PersistentHandle);
 		return (ulong)(long.MinValue | Interlocked.Increment(ref _persistentIdCounter));
 	}
 }

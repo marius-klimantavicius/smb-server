@@ -5,7 +5,7 @@ using System.Threading;
 namespace Smb.Server.Durable;
 
 /// <summary>One owner per retained FileId and client/CreateGuid. Does not confer durable or replay eligibility.</summary>
-public sealed class InMemoryDurableHandleStore : IDurableHandleStore
+public sealed class InMemoryDurableHandleStore : IRetainedDurableHandleStore
 {
 	private readonly Lock _gate = new Lock();
 	private readonly Dictionary<(ulong, ulong), DurableHandle> _handles = new Dictionary<(ulong, ulong), DurableHandle>();

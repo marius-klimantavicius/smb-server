@@ -6,7 +6,7 @@ using Smb.Server.State;
 
 namespace Smb.Server.Locking;
 
-public sealed class InMemoryLockManager : ILockManager
+public sealed class InMemoryLockManager : ILockManager, IRecoveryLockManager
 {
 	private readonly record struct ActiveLock(SmbOpen Owner, ulong Offset, ulong Length, bool Exclusive);
 
@@ -145,6 +145,12 @@ public sealed class InMemoryLockManager : ILockManager
 			waiter.Tcs.TrySetResult(outcome);
 		}
 	}
+
+    public Recovery.RecoveryLock[] CaptureLocks(SmbOpen owner)
+    {
+        lock (_gate) return _files.TryGetValue(FileKey(owner), out var state)
+            ? System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Select(System.Linq.Enumerable.Where(state.Active, item => item.Owner == owner), item => new Recovery.RecoveryLock(item.Offset, item.Length, item.Exclusive))) : [];
+    }
 
 	public bool HasConflict(SmbOpen owner, IReadOnlyList<LockElement> elements)
 	{

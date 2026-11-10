@@ -121,6 +121,23 @@ public sealed class FileCacheCoordinator(SmbServerOptions options) : IOplockMana
 		return list;
 	}
 
+    internal void Restore(SmbOpen open)
+    {
+        lock (_gate)
+        {
+            var list = Get(open.IdentityKey);
+            var common = list.FirstOrDefault(g => SameLease(g, open));
+            if (common != null)
+            {
+                if (common.State != open.LeaseState || common.Epoch != open.LeaseEpoch || common.V2 != open.DurableLeaseV2)
+                    throw new System.IO.InvalidDataException("Inconsistent recovered lease group.");
+                common.Opens.Add(open);
+            }
+            else list.Add(new Grant(open) { Classic = open.OplockLevel == OplockLevel.Lease ? OplockLevel.None : open.OplockLevel,
+                Lease = open.OplockLevel == OplockLevel.Lease, Key = open.LeaseKey, State = open.LeaseState, V2 = open.DurableLeaseV2, Epoch = open.LeaseEpoch });
+        }
+    }
+
 	public OplockGrant RequestOplock(SmbOpen open, OplockLevel requested)
 	{
 		long version;
@@ -288,6 +305,23 @@ public sealed class FileCacheCoordinator(SmbServerOptions options) : IOplockMana
 
 	private async Task NotifyAsync(Grant g, TaskCompletionSource completion, bool ack)
 	{
+        // Invalidate restart promises before notifications or physical mutation. A
+        // journal failure leaves the original grant intact and fails all current waiters.
+        try
+        {
+            SmbOpen[] recovering;
+            lock (_gate) recovering = g.Opens.ToArray();
+            foreach (var open in recovering) options.RecoveryCoordinator?.Forget(open);
+        }
+        catch (Exception error)
+        {
+            lock (_gate)
+            {
+                if (g.Breaking == completion) { g.Breaking = null; g.Completing = false; }
+            }
+            completion.TrySetException(error);
+            throw;
+        }
 		try
 		{
 			SmbOpen[] disconnected;

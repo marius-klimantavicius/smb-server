@@ -18,6 +18,10 @@ public sealed class SmbOpen
 	public string IdentityKey => ShareModeKey ?? LocalOpen?.Identity?.Key ?? "legacy-conservative";
 
 	internal readonly SemaphoreSlim RecoveryGate = new SemaphoreSlim(1, 1);
+	internal Guid? RecoveryToken;
+    internal DateTimeOffset? RecoveryDeadline;
+    internal ulong RecoverySessionId;
+    internal readonly object RecoverySnapshotGate = new();
 	public OpenLifetime Lifetime { get; } = new OpenLifetime(false);
 	internal FileIdentity? AdmissionIdentity;
 	internal long CurrentByteOffset;

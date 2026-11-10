@@ -12,6 +12,8 @@ projects use source project references with no original package DLLs. The option
 [SQLite provider](docs/sqlite-provider.md) uses the supplied transpiled C# SQLite
 engine and Ews.Common.Sqlite framework. It needs no native SQLite deployment.
 The executable harness uses no third-party test framework.
+Optional [durable restart recovery](docs/durable-recovery.md) adds an abstract
+recovery journal with a SQLite implementation. Clients authenticate again after restart.
 
 ```sh
 dotnet restore SmbServer.slnx

@@ -8,4 +8,5 @@
   <ItemGroup><ProjectReference Include="../Smb.Testing/Smb.Testing.csproj" /></ItemGroup>
   <ItemGroup><ProjectReference Include="../../src/Smb.FileSystem.Sqlite/Smb.FileSystem.Sqlite.csproj" /></ItemGroup>
   <ItemGroup><EmbeddedResource Include="Fixtures/sqlite-schema1.db.gz" /></ItemGroup>
+  <ItemGroup><ProjectReference Include="../../src/Smb.Persistence.Sqlite/Smb.Persistence.Sqlite.csproj" /></ItemGroup>
 </Project>

@@ -104,6 +104,16 @@ public sealed class CreateReplayRegistry
 		}
 	}
 
+    internal void Restore(SmbOpen open)
+    {
+        lock (_gate)
+        {
+            var key = (open.DurableClientGuid, open.DurableCreateGuid);
+            if (_entries.ContainsKey(key)) throw new System.IO.InvalidDataException("Duplicate recovered client/CreateGuid.");
+            _entries.Add(key, new Entry { Open = open });
+        }
+    }
+
 	public void Retire(SmbOpen open)
 	{
 		lock (_gate)

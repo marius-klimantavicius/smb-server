@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><GenerateAssemblyInfo>true</GenerateAssemblyInfo><IsAotCompatible>true</IsAotCompatible></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Smb.Server/Smb.Server.csproj" />
+    <ProjectReference Include="../Smb.FileSystem.Sqlite/Smb.FileSystem.Sqlite.csproj" />
+  </ItemGroup>
+</Project>

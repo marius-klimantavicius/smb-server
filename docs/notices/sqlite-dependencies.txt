@@ -1,0 +1,26 @@
+Optional Smb.FileSystem.Sqlite source and dependency attribution
+
+Managed.Database.Sqlite (Library/Sqlite.cs, Sqlite.00000.cs through .00016.cs)
+is the user-supplied SQLite C-to-C# translation emitted by dotcc, with its
+embedded managed C runtime. Compiled SQLite version: 3.54.0 (3054000).
+SQLite source ID:
+2026-10-09 15:46:58 be8d059e9a49089ab2dce5ed26dd87aaf598fdc5fbe0b107c0dd758464bcd5e3
+SQLite engine code is public domain. The dotcc runtime/scaffolding attribution
+is Sebastian Godelet / DotCC, MIT; see dotcc-MIT.txt. No regeneration
+or complete generator-lineage audit is claimed by this integration.
+
+Ews.Common.Sqlite is the user-supplied framework. Its retained source headers
+attribute Krueger Systems, Inc., copyright 2009-2024, MIT. The supplied license
+is preserved verbatim at ../../src/Smb.FileSystem.Sqlite/LICENSE.txt.
+Library/HostVfs*.cs supplies managed file, locking, synchronization and OS
+services on Linux/Windows. OS P/Invoke does not load a native SQLite engine.
+
+Microsoft.Extensions.Logging.Abstractions 10.0.0 (and its dependency closure):
+Microsoft / .NET Foundation, MIT. The Microsoft MIT text remains in sqlite-MIT.txt.
+This supports the supplied framework's existing logging API.
+
+Microsoft.Data.Sqlite and SQLitePCLRaw are no longer active dependencies.
+No native SQLite library is required or shipped. Older notices and validation
+captures referring to those packages describe the previous provider delivery.
+These components do not change the repository's Apache-2.0 license or resolve
+its separate historical QUIC provenance limits.

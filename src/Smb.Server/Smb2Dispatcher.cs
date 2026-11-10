@@ -992,6 +992,7 @@ public sealed class Smb2Dispatcher
 				}
 			}
 
+            _server.Recovery?.Flush();
 			return result;
 		}
 		catch (SmbWireFormatException ex)
@@ -1446,6 +1447,7 @@ public sealed class Smb2Dispatcher
 				return await FailSessionSetupAsync(NtStatus.AccessDenied).ConfigureAwait(false);
 			}
 
+            _server.Recovery?.SaveSession(value);
 			value.State = SessionState.Valid;
 			value.LastActivityTicks = _server.Options.TimeProvider.GetUtcNow().Ticks;
 			_server.Options.Metrics.OnAuthenticationSucceeded();
@@ -2194,7 +2196,7 @@ public sealed class Smb2Dispatcher
 
 		var durableV2 = CreateContextList.Find(request.Contexts, 1145582161u);
 		var replayKey = durableV2 != null && connection.Dialect.IsSmb3OrLater() && policy.SupportsDurable(connection.Dialect) &&
-			_server.Options.DurableHandleStore is InMemoryDurableHandleStore && Caching.FileCacheCoordinator.Supports(store)
+			_server.Options.DurableHandleStore is IRetainedDurableHandleStore && Caching.FileCacheCoordinator.Supports(store)
 				? DurableHandleMessages.ParseV2Request(durableV2.Data)
 				: (DurableHandleMessages.V2Request?)null;
 		using var replay = replayKey.HasValue ? await _server.CreateReplays.EnterAsync(new Guid(connection.ClientGuid), replayKey.Value.CreateGuid, cancellationToken).ConfigureAwait(false) : null;
@@ -2468,7 +2470,7 @@ public sealed class Smb2Dispatcher
 				open.CreateSessionId = session.SessionId;
 				open.OriginalCreateAction = (CreateAction)outcome;
 			}
-			if (policy.SupportsDurable(connection.Dialect) && _server.Options.DurableHandleStore is InMemoryDurableHandleStore &&
+			if (policy.SupportsDurable(connection.Dialect) && _server.Options.DurableHandleStore is IRetainedDurableHandleStore &&
 			    Caching.FileCacheCoordinator.Supports(store) && !handle.IsDirectory && handle.Identity != null && (createContext4 != null || createContext5 != null) && DurabilityAllowed(grantedOplock, open.LeaseState))
 			{
 				open.PersistentFileId = _server.AllocatePersistentId();
@@ -4433,6 +4435,7 @@ public sealed class Smb2Dispatcher
 			}
 			session.Channels.Clear();
 			SafeCleanup(() => _server.Options.Metrics.OnSessionClosed());
+            if (_server.Recovery != null) SafeCleanup(() => _server.Recovery.RetireSession(session));
 			session.Lifetime.CompleteClose();
 		}
 	}
@@ -4482,7 +4485,8 @@ public sealed class Smb2Dispatcher
 
 	private async ValueTask<NtStatus> CloseOpenCoreAsync(SmbOpen open, CloseReason reason)
 	{
-		if (reason is CloseReason.ConnectionLoss or CloseReason.SendFailure && open.IsDurable &&
+        var recoveringShutdown = reason == CloseReason.Shutdown && _server.Recovery != null && open.RecoveryToken != null;
+        if ((reason is CloseReason.ConnectionLoss or CloseReason.SendFailure || recoveringShutdown && open.Session != null) && open.IsDurable &&
 		    DurabilityAllowed(open.OplockLevel, open.LeaseState) && !_server.Options.CacheCoordinator.IsBreaking(open))
 		{
 			if (open.Lifetime.BeginDisconnect(out var physical))
@@ -4509,6 +4513,8 @@ public sealed class Smb2Dispatcher
 					open.TreeConnect = null;
 					try
 					{
+                        open.RecoveryDeadline = record.Deadline;
+                        _server.Recovery?.Persist(open);
 						_server.Options.DurableHandleStore.Add(record);
 						return NtStatus.Success;
 					}
@@ -4520,8 +4526,19 @@ public sealed class Smb2Dispatcher
 			}
 		}
 
-		var provisionalRollback = reason == CloseReason.FailedCreate && open.Lifetime.State == OpenState.Provisional;
-		if (!open.Lifetime.BeginClose(out var drained))
+        var provisionalRollback = reason == CloseReason.FailedCreate && open.Lifetime.State == OpenState.Provisional;
+        Task drained;
+        bool beganClose;
+        // Snapshot writers must observe either the live record or Closing. Holding the
+        // same gate through both steps prevents a completing operation re-journaling CLOSE.
+        lock (open.RecoverySnapshotGate)
+        {
+            var preserveRecovery = recoveringShutdown && open.Lifetime.State == OpenState.Disconnected;
+            if (!preserveRecovery) _server.Recovery?.Forget(open);
+            _server.Recovery?.DetachPhysical(open);
+            beganClose = open.Lifetime.BeginClose(out drained);
+        }
+		if (!beganClose)
 		{
 			await drained.ConfigureAwait(false);
 			return NtStatus.FileClosed;
@@ -4532,7 +4549,7 @@ public sealed class Smb2Dispatcher
 		{
 			open.IsReplayEligible = false;
 			_server.CreateReplays.Retire(open);
-			if (_server.Options.DurableHandleStore is InMemoryDurableHandleStore retained) retained.Retire(open);
+			if (_server.Options.DurableHandleStore is IRetainedDurableHandleStore retained) retained.Retire(open);
 			foreach (var conn in _server.Connections.Values)
 			foreach (var ordinary in conn.OrdinaryRequests.Values)
 				if (!provisionalRollback && ordinary.Owner == open)
@@ -4681,7 +4698,7 @@ public sealed class Smb2Dispatcher
 	private async ValueTask<ResponseSegment> HandleDurableReconnectAsync(Smb2Header header, SmbSession session, SmbTreeConnect tree, CreateRequest request, CreateContext context, bool v2)
 	{
 		if (!_server.Options.FeaturePolicy.SupportsDurable(session.Connection.Dialect) || v2 && !session.Connection.Dialect.IsSmb3OrLater() ||
-		    _server.Options.DurableHandleStore is not InMemoryDurableHandleStore store)
+		    _server.Options.DurableHandleStore is not IRetainedDurableHandleStore store)
 			return BuildError(header, NtStatus.ObjectNameNotFound);
 
 		var reconnect = v2 ? DurableHandleMessages.ParseV2Reconnect(context.Data) : default;
@@ -4759,6 +4776,7 @@ public sealed class Smb2Dispatcher
 
 				Interlocked.Increment(ref tree.OpenCount);
 				open.Counted = true;
+                open.RecoveryDeadline = null;
 				committed = true;
 				return response;
 			}
@@ -5053,9 +5071,11 @@ public sealed class Smb2Dispatcher
 
 			try
 			{
-				return sequenceEnabled
-					? await open.LockSequences.ApplyAsync(request.LockSequence, () => ApplyCoordinatedLockAsync(open, array, failImmediately, pending.Token).AsTask(), pending.Token).ConfigureAwait(false)
-					: await ApplyCoordinatedLockAsync(open, array, failImmediately, pending.Token).ConfigureAwait(false);
+                var outcome = sequenceEnabled
+                    ? await open.LockSequences.ApplyAsync(request.LockSequence, () => ApplyCoordinatedLockAsync(open, array, failImmediately, pending.Token).AsTask(), pending.Token).ConfigureAwait(false)
+                    : await ApplyCoordinatedLockAsync(open, array, failImmediately, pending.Token).ConfigureAwait(false);
+                _server.Recovery?.Persist(open);
+                return outcome;
 			}
 			catch (OperationCanceledException) { return LockOutcome.Cancelled; }
 		}
@@ -5349,6 +5369,9 @@ public sealed class Smb2Dispatcher
 
 			foreach (var value2 in value.Opens.Values)
 			{
+                // A journaled durable open is detached for authenticated restart recovery.
+                // Keep its caching promise; ordinary nonrecoverable shutdown still breaks it.
+                if (_server.Recovery != null && value2.RecoveryToken != null) continue;
 				switch (value2.OplockLevel)
 				{
 					case OplockLevel.LevelII:

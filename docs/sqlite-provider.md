@@ -86,8 +86,11 @@ SMB opens, byte locks, leases, oplocks, durable records and replay state are
 process memory. Explicit `Caching` or `Durable` profiles can use the coherent
 provider contracts. In-memory durable reconnect retains bytes, object identity
 and locks after transport loss within that server lifetime. Shutdown/restart
-retains filesystem data but has **no persistent SMB handle recovery**, persistent
-handles, continuous availability or failover claim. Restricted remains default.
+retains filesystem data by default, with no SMB persistent
+handles, continuous availability or failover claim. Optional
+[restart recovery](durable-recovery.md) can retain eligible durable handles through
+an abstract journal, with fresh authentication and stable-identity backend reopening.
+Restricted remains default.
 
 ## Supported surface
 

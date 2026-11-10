@@ -1,10 +1,10 @@
 # Windows and Linux platform correction — 2026-11-08
 
-The local backend now has Windows and Linux implementations. The supplied SQLite
-engine integration passes 3,991/3,991 in both published Linux modes, with all 30
+The local backend now has Windows and Linux implementations. Optional durable
+restart recovery passes 4,013/4,013 in both published Linux modes, with all 30
 platform stages passing. Its settled capture follows the historical campaigns
-below, including the previous 3,984-case SQLite delivery and valid 3,897-case
-failure-repair baseline. Native Windows JIT/AOT
+below, including the 3,991-case supplied SQLite engine integration, previous
+3,984-case SQLite delivery and valid 3,897-case failure-repair baseline. Native Windows JIT/AOT
 execution is unexecuted; the user will test it later. Both-platform acceptance
 remains open.
 
@@ -420,3 +420,61 @@ packaging evidence only. **Native Windows JIT/AOT remains unexecuted**; Windows
 AOT was not cross-published. Process-kill recovery does not emulate power loss.
 Persistent SMB recovery/continuous availability and the provider's documented
 ADS, EA, CHANGE_NOTIFY and broader platform/provenance limits remain unchanged.
+
+
+## Optional durable restart journal — settled Linux capture
+
+The optional recovery delivery adds `IServerRecoveryStore` and the separate
+`Smb.Persistence.Sqlite` implementation, plus stable-identity backend retention.
+Clients authenticate again; no authenticated sessions or keys are resurrected.
+[Configuration, contracts and limits](../durable-recovery.md) describe this
+single-server recovery surface. SMB persistent-handle flags and continuous
+availability remain disabled.
+
+The final clean Linux x64 capture on 2026-11-09 runs the same portable command:
+
+```sh
+python3 scripts/validate-platform.py --out "$SMB_VALIDATION_OUTPUT" --keep-going
+```
+
+Published self-contained JIT and published NativeAOT each pass **4,013/4,013**.
+Both retain all **3,991 prior names**, including every original 3,897 baseline
+name, and add **22** recovery cases with zero missing, duplicate or failed names.
+The focused `recovery.` selection passes **26/26** (22 new and four existing).
+New cases cover journal round trips/ownership/IDs, retained pending objects,
+signed TCP restart across SMB202/210/300/302/311, batch and lease recovery,
+pre-reconnect lock/share reservations, fresh sessions and owner rejection,
+expiry, pending deletion, changed-backend rejection, duplicate CreateGuid,
+failed-close retry, destructive-mutation prevention after journal invalidation
+failure, graceful active shutdown, and actual serving-process kill/restart.
+
+All **30 stages pass**, aggregate **pass**, exit **0**. Both modes pass full
+harness, host selftest, 12-round LocalFileStore TCP, two-lifetime SQLite TCP,
+compiled-engine/packaging checks, 3 x 8 stress cases and 3 x 1 expiry-race cases.
+Restore, rebuild, all four publications and Linux native dependency inspection
+pass. All **60** stage source manifests match the initial source; all **443**
+published artifact SHA-256 hashes verify. The Release rebuild has **0 warnings,
+0 errors**. Publication retains only the existing legacy persistent-JSON
+IL2026/IL3050 warnings; the new source-generated recovery serializer adds none.
+The portable-tool suite separately passes **12/12**.
+
+An earlier complete capture passed both 4,013-case harnesses but rejected the
+new managed recovery assembly in the old JIT packaging allowlist. That
+intermediate capture remains external with its failure intact. The runner now
+allows precisely the repository filesystem and recovery managed SQLite
+assemblies and verifies their PE/CLR metadata, while retaining every old-package
+and native-SQLite exclusion. The complete clean final rerun above passes all
+30 stages; it supersedes the intermediate result.
+
+Both fresh modes prove execution of supplied SQLite **3.54.0**. All eleven
+restored assets graphs and published directories exclude Microsoft.Data.Sqlite,
+SQLitePCLRaw and native SQLite libraries. Engine/VFS/generated library sources
+and both licenses remain unchanged from this delivery's starting checkout.
+
+Both host and harness also cross-publish successfully as self-contained
+**win-x64 JIT**. Eleven restored graphs and **422** cross-published artifact
+hashes are captured, with old-provider/native-SQLite assets absent. Native
+Windows JIT/AOT and power-loss testing remain **unexecuted**. These documentation
+updates follow the executable-source capture. Raw commands, behavioral RED/GREEN,
+fixture corrections, intermediate failures, source archives and final audits
+remain external. No commit or staging operation was performed.

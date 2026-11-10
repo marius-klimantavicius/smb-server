@@ -107,7 +107,18 @@ for directory,name in zip(sys.argv[1:3],('Smb.Tests','Smb.TestHost')):
         if not path.is_file(): continue
         lower=path.name.lower()
         assert not any(token in lower for token in ('microsoft.data.sqlite','sqlitepclraw','e_sqlite3','libsqlite3')), str(path)
-        assert not ('sqlite' in lower and lower.endswith(('.so','.dylib','.dll')) and lower!='smb.filesystem.sqlite.dll'), str(path)
+        if 'sqlite' in lower and lower.endswith(('.so','.dylib','.dll')):
+            # These are repository-built managed assemblies, not SQLite native assets.
+            assert lower in ('smb.filesystem.sqlite.dll','smb.persistence.sqlite.dll'), str(path)
+            data=path.read_bytes()
+            assert data[:2]==b'MZ', 'managed PE header absent: '+str(path)
+            pe=int.from_bytes(data[60:64],'little')
+            assert data[pe:pe+4]==b'PE' + bytes(2), 'PE signature absent: '+str(path)
+            optional=pe+24
+            magic=int.from_bytes(data[optional:optional+2],'little')
+            assert magic in (0x10b,0x20b), 'PE optional header absent: '+str(path)
+            cli=optional+(112 if magic==0x20b else 96)+14*8
+            assert int.from_bytes(data[cli:cli+4],'little') and int.from_bytes(data[cli+4:cli+8],'little')>=72, 'CLR metadata absent: '+str(path)
         if lower.endswith('.deps.json'):
             deps=json.loads(path.read_text())
             assert not any(key.lower().startswith(('microsoft.data.sqlite','sqlitepclraw')) for key in deps['libraries']), str(path)

@@ -5,6 +5,8 @@ using Smb.Server.Notification;
 
 if (args is ["--sqlite-engine-proof"]) { SqliteEngineProof.Print(Console.Out); return 0; }
 
+if (args is ["--recovery-server", var recoveryDirectory]) return await DurableRecoveryTcpTests.RecoveryChild(recoveryDirectory);
+
 if (args is ["--sqlite-child", var sqliteMode, var sqliteDatabase]) return await SqliteProcessTests.Child(sqliteMode, sqliteDatabase);
 
 if (args is ["--p7b-311-probe"]) { await P7bTests.Probe311(); return 0; }
@@ -76,6 +78,7 @@ tests = tests.Concat(MultichannelWireTests.Cases()).ToArray();
 tests = tests.Concat(CacheSequenceRecoveryTests.Cases()).ToArray();
 tests = tests.Concat(NotifyBoundaryRepairTests.Cases()).ToArray();
 tests = tests.Concat(DurableRecoveryTcpTests.InheritanceNameCases()).ToArray();
+tests = tests.Concat(RecoveryPersistenceTests.Cases()).Concat(DurableRecoveryTcpTests.PersistenceCases()).ToArray();
 tests = tests.Concat(SqliteProviderTests.Cases()).Concat(SqliteEngineTests.Cases()).ToArray();
 tests = tests.Append(("sqlite.host-workflow", () => SqliteWorkload.RunAsync())).ToArray();
 tests = tests.Concat(SqliteProcessTests.Cases()).Concat(DurableRecoveryTcpTests.SqliteCases()).ToArray();

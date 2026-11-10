@@ -133,6 +133,8 @@ public sealed class SmbServer : IAsyncDisposable
 			throw new InvalidOperationException("Server is already running.");
 		}
 
+        if (_state.Recovery != null) await _state.Recovery.InitializeAsync(ct).ConfigureAwait(false);
+
 		_hardCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 		_drainCts = new CancellationTokenSource();
 		_listener = new TcpListener(_endpoint);
