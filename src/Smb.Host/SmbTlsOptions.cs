@@ -20,82 +20,82 @@ namespace Smb.Host;
 /// </summary>
 public sealed class SmbTlsOptions
 {
-	/// <summary>
-	/// The server certificate presented in the TLS handshake. Required. Must contain a private key
-	/// (use a PFX / <see cref="T:System.Security.Cryptography.X509Certificates.X509Certificate2" /> with the key attached).
-	/// </summary>
-	public required X509Certificate2 ServerCertificate { get; set; }
+    /// <summary>
+    /// The server certificate presented in the TLS handshake. Required. Must contain a private key
+    /// (use a PFX / <see cref="T:System.Security.Cryptography.X509Certificates.X509Certificate2" /> with the key attached).
+    /// </summary>
+    public required X509Certificate2 ServerCertificate { get; set; }
 
-	/// <summary>
-	/// Require the client to present a certificate (mutual TLS) for an additional layer of
-	/// authentication beyond SMB's SPNEGO/GSS. Default <c>false</c>. When <c>true</c>, a client
-	/// without a certificate — or one rejected by <see cref="P:Smb.Host.SmbTlsOptions.ClientCertificateValidation" /> — fails
-	/// the handshake and the connection is dropped.
-	/// </summary>
-	public bool RequireClientCertificate { get; set; }
+    /// <summary>
+    /// Require the client to present a certificate (mutual TLS) for an additional layer of
+    /// authentication beyond SMB's SPNEGO/GSS. Default <c>false</c>. When <c>true</c>, a client
+    /// without a certificate — or one rejected by <see cref="P:Smb.Host.SmbTlsOptions.ClientCertificateValidation" /> — fails
+    /// the handshake and the connection is dropped.
+    /// </summary>
+    public bool RequireClientCertificate { get; set; }
 
-	/// <summary>
-	/// Optional validation callback for the client certificate (mutual TLS). When null the platform
-	/// default chain validation applies. Provide a callback to pin a CA, check a thumbprint, or accept
-	/// a self-signed client certificate. Only consulted when the client presents a certificate.
-	/// </summary>
-	public RemoteCertificateValidationCallback? ClientCertificateValidation { get; set; }
+    /// <summary>
+    /// Optional validation callback for the client certificate (mutual TLS). When null the platform
+    /// default chain validation applies. Provide a callback to pin a CA, check a thumbprint, or accept
+    /// a self-signed client certificate. Only consulted when the client presents a certificate.
+    /// </summary>
+    public RemoteCertificateValidationCallback? ClientCertificateValidation { get; set; }
 
-	/// <summary>
-	/// [M10.1] Optional seam that maps a validated mutual-TLS client certificate to an SMB identity.
-	/// When set, the host runs it once per connection after the handshake and records the result on
-	/// <c>SmbConnection.TransportAssertedIdentity</c> (the certificate itself is always recorded on
-	/// <c>SmbConnection.ClientCertificate</c>). The mapped identity is surfaced to authorization/audit;
-	/// it does not replace SPNEGO. See <see cref="T:Smb.Host.ITlsClientIdentityMapper" />.
-	/// </summary>
-	public ITlsClientIdentityMapper? ClientIdentityMapper { get; set; }
+    /// <summary>
+    /// [M10.1] Optional seam that maps a validated mutual-TLS client certificate to an SMB identity.
+    /// When set, the host runs it once per connection after the handshake and records the result on
+    /// <c>SmbConnection.TransportAssertedIdentity</c> (the certificate itself is always recorded on
+    /// <c>SmbConnection.ClientCertificate</c>). The mapped identity is surfaced to authorization/audit;
+    /// it does not replace SPNEGO. See <see cref="T:Smb.Host.ITlsClientIdentityMapper" />.
+    /// </summary>
+    public ITlsClientIdentityMapper? ClientIdentityMapper { get; set; }
 
-	/// <summary>
-	/// TLS protocol versions offered to clients. Default TLS 1.2 + TLS 1.3 (older versions are
-	/// deliberately excluded). Narrow this to <see cref="F:System.Security.Authentication.SslProtocols.Tls13" /> only for a hardened
-	/// deployment.
-	/// </summary>
-	public SslProtocols EnabledProtocols { get; set; } = SslProtocols.Tls12 | SslProtocols.Tls13;
+    /// <summary>
+    /// TLS protocol versions offered to clients. Default TLS 1.2 + TLS 1.3 (older versions are
+    /// deliberately excluded). Narrow this to <see cref="F:System.Security.Authentication.SslProtocols.Tls13" /> only for a hardened
+    /// deployment.
+    /// </summary>
+    public SslProtocols EnabledProtocols { get; set; } = SslProtocols.Tls12 | SslProtocols.Tls13;
 
-	/// <summary>
-	/// Maximum time allowed for the TLS handshake on a new connection before it is aborted (slow-loris
-	/// / half-open protection at the transport layer). Default 15 s.
-	/// </summary>
-	public TimeSpan HandshakeTimeout { get; set; } = TimeSpan.FromSeconds(15L);
+    /// <summary>
+    /// Maximum time allowed for the TLS handshake on a new connection before it is aborted (slow-loris
+    /// / half-open protection at the transport layer). Default 15 s.
+    /// </summary>
+    public TimeSpan HandshakeTimeout { get; set; } = TimeSpan.FromSeconds(15L);
 
-	/// <summary>
-	/// Escape hatch for full control over the handshake: invoked with the
-	/// <see cref="T:System.Net.Security.SslServerAuthenticationOptions" /> built from the properties above, immediately
-	/// before <c>AuthenticateAsServerAsync</c>. Use it to set ALPN, a certificate-selection callback,
-	/// cipher-suite policy, etc. Anything set here overrides the derived values.
-	/// </summary>
-	public Action<SslServerAuthenticationOptions>? ConfigureAuthentication { get; set; }
+    /// <summary>
+    /// Escape hatch for full control over the handshake: invoked with the
+    /// <see cref="T:System.Net.Security.SslServerAuthenticationOptions" /> built from the properties above, immediately
+    /// before <c>AuthenticateAsServerAsync</c>. Use it to set ALPN, a certificate-selection callback,
+    /// cipher-suite policy, etc. Anything set here overrides the derived values.
+    /// </summary>
+    public Action<SslServerAuthenticationOptions>? ConfigureAuthentication { get; set; }
 
-	/// <summary>Builds the <see cref="T:System.Net.Security.SslServerAuthenticationOptions" /> for a handshake from this config.</summary>
-	internal SslServerAuthenticationOptions BuildAuthenticationOptions()
-	{
-		var sslServerAuthenticationOptions = new SslServerAuthenticationOptions
-		{
-			ServerCertificate = ServerCertificate,
-			ClientCertificateRequired = RequireClientCertificate,
-			EnabledSslProtocols = EnabledProtocols,
-			RemoteCertificateValidationCallback = ClientCertificateValidation,
-		};
-		ConfigureAuthentication?.Invoke(sslServerAuthenticationOptions);
-		return sslServerAuthenticationOptions;
-	}
+    /// <summary>Builds the <see cref="T:System.Net.Security.SslServerAuthenticationOptions" /> for a handshake from this config.</summary>
+    internal SslServerAuthenticationOptions BuildAuthenticationOptions()
+    {
+        var sslServerAuthenticationOptions = new SslServerAuthenticationOptions
+        {
+            ServerCertificate = ServerCertificate,
+            ClientCertificateRequired = RequireClientCertificate,
+            EnabledSslProtocols = EnabledProtocols,
+            RemoteCertificateValidationCallback = ClientCertificateValidation,
+        };
+        ConfigureAuthentication?.Invoke(sslServerAuthenticationOptions);
+        return sslServerAuthenticationOptions;
+    }
 
-	/// <summary>Validates the TLS configuration and throws on misconfiguration.</summary>
-	internal void Validate()
-	{
-		if (ServerCertificate == null)
-		{
-			throw new InvalidOperationException("SmbTlsOptions.ServerCertificate is required.");
-		}
+    /// <summary>Validates the TLS configuration and throws on misconfiguration.</summary>
+    internal void Validate()
+    {
+        if (ServerCertificate == null)
+        {
+            throw new InvalidOperationException("SmbTlsOptions.ServerCertificate is required.");
+        }
 
-		if (!ServerCertificate.HasPrivateKey)
-		{
-			throw new InvalidOperationException("SmbTlsOptions.ServerCertificate must contain a private key.");
-		}
-	}
+        if (!ServerCertificate.HasPrivateKey)
+        {
+            throw new InvalidOperationException("SmbTlsOptions.ServerCertificate must contain a private key.");
+        }
+    }
 }

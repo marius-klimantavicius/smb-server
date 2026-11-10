@@ -31291,22 +31291,22 @@ public static unsafe partial class Libc
 
     private static readonly Lazy<nint> backendNumericLocale = new Lazy<IntPtr>(() =>
     {
-	    if (!OperatingSystem.IsLinux())
-		    return 0;
+        if (!OperatingSystem.IsLinux())
+            return 0;
 
-	    try
-	    {
-		    fixed (byte* name = "C\0"u8)
-			    return PosixNativeNewlocale(2, name, 0);
-	    }
-	    catch (EntryPointNotFoundException)
-	    {
-		    return 0;
-	    }
-	    catch (DllNotFoundException)
-	    {
-		    return 0;
-	    }
+        try
+        {
+            fixed (byte* name = "C\0"u8)
+                return PosixNativeNewlocale(2, name, 0);
+        }
+        catch (EntryPointNotFoundException)
+        {
+            return 0;
+        }
+        catch (DllNotFoundException)
+        {
+            return 0;
+        }
     });
 
     /// <summary>Correctly rounded binary32 parsing in the runtime's C numeric

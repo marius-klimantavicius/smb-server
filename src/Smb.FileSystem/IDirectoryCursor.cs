@@ -9,10 +9,10 @@ namespace Smb.FileSystem;
 /// backend-defined; this is not a snapshot or change journal.</summary>
 public interface IDirectoryCursor : IDisposable
 {
-	ValueTask<FileStoreResult<BoundedDirectoryListing>> ReadAsync(int maxEntries, CancellationToken cancellationToken = default);
+    ValueTask<FileStoreResult<BoundedDirectoryListing>> ReadAsync(int maxEntries, CancellationToken cancellationToken = default);
 }
 
 public interface IDirectoryCursorStore
 {
-	ValueTask<FileStoreResult<IDirectoryCursor>> OpenDirectoryCursorAsync(IFileHandle handle, string pattern, CancellationToken cancellationToken = default);
+    ValueTask<FileStoreResult<IDirectoryCursor>> OpenDirectoryCursorAsync(IFileHandle handle, string pattern, CancellationToken cancellationToken = default);
 }

@@ -8,22 +8,22 @@ namespace Smb.Server.Leases;
 
 public sealed class NullLeaseManager : ILeaseManager
 {
-	public LeaseGrant RequestLease(SmbOpen open, LeaseRequest request)
-	{
-		return LeaseGrant.None;
-	}
+    public LeaseGrant RequestLease(SmbOpen open, LeaseRequest request)
+    {
+        return LeaseGrant.None;
+    }
 
-	public LeaseState Acknowledge(LeaseKey key, LeaseState newState)
-	{
-		return LeaseState.None;
-	}
+    public LeaseState Acknowledge(LeaseKey key, LeaseState newState)
+    {
+        return LeaseState.None;
+    }
 
-	public void ReleaseOwner(SmbOpen open)
-	{
-	}
+    public void ReleaseOwner(SmbOpen open)
+    {
+    }
 
-	public IReadOnlyList<LeaseBreak> BreakDirectoryLease(string directoryFileKey)
-	{
-		return Array.Empty<LeaseBreak>();
-	}
+    public IReadOnlyList<LeaseBreak> BreakDirectoryLease(string directoryFileKey)
+    {
+        return Array.Empty<LeaseBreak>();
+    }
 }

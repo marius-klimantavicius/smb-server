@@ -7,20 +7,20 @@ namespace Smb.Protocol.Messages;
 
 public sealed class NetnameContext : NegotiateContext
 {
-	public override NegotiateContextType Type => NegotiateContextType.NetnameNegotiateContextId;
+    public override NegotiateContextType Type => NegotiateContextType.NetnameNegotiateContextId;
 
-	public string NetName { get; init; } = string.Empty;
+    public string NetName { get; init; } = string.Empty;
 
-	protected override void WriteData(GrowableWriter w)
-	{
-		w.WriteUtf16(NetName);
-	}
+    protected override void WriteData(GrowableWriter w)
+    {
+        w.WriteUtf16(NetName);
+    }
 
-	public static NetnameContext ParseData(ReadOnlySpan<byte> data)
-	{
-		return new NetnameContext
-		{
-			NetName = Encoding.Unicode.GetString(data),
-		};
-	}
+    public static NetnameContext ParseData(ReadOnlySpan<byte> data)
+    {
+        return new NetnameContext
+        {
+            NetName = Encoding.Unicode.GetString(data),
+        };
+    }
 }

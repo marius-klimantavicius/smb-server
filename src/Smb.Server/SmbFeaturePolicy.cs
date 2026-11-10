@@ -16,7 +16,7 @@ namespace Smb.Server;
 /// </summary>
 public sealed class SmbFeaturePolicy
 {
-	public static SmbFeaturePolicy Restricted { get; } = new SmbFeaturePolicy(false);
+    public static SmbFeaturePolicy Restricted { get; } = new SmbFeaturePolicy(false);
     public static SmbFeaturePolicy CopyOnly { get; } = new SmbFeaturePolicy(true);
     public static SmbFeaturePolicy Caching { get; } = new SmbFeaturePolicy(false, true);
     public static SmbFeaturePolicy CachingWithCopy { get; } = new SmbFeaturePolicy(true, true);
@@ -32,28 +32,28 @@ public sealed class SmbFeaturePolicy
     private readonly bool _multichannel;
     private readonly bool _caching;
     private readonly bool _copy;
-	private SmbFeaturePolicy(bool copy, bool caching = false, bool multichannel = false, bool durable = false) { _durable = durable; _copy = copy; _caching = caching; _multichannel = multichannel; }
+    private SmbFeaturePolicy(bool copy, bool caching = false, bool multichannel = false, bool durable = false) { _durable = durable; _copy = copy; _caching = caching; _multichannel = multichannel; }
 
-	public bool Oplocks => _caching;
-	public bool Leasing => _caching;
-	public bool Multichannel => _multichannel;
+    public bool Oplocks => _caching;
+    public bool Leasing => _caching;
+    public bool Multichannel => _multichannel;
     public bool SupportsMultichannel(SmbDialect dialect) => Multichannel && dialect is SmbDialect.Smb300 or SmbDialect.Smb302 or SmbDialect.Smb311;
-	public bool DurableHandles => _durable;
+    public bool DurableHandles => _durable;
     public bool SupportsDurable(SmbDialect dialect) => _durable && dialect is SmbDialect.Smb202 or SmbDialect.Smb210 or SmbDialect.Smb300 or SmbDialect.Smb302 or SmbDialect.Smb311;
-	public bool PersistentHandles => false;
-	public bool ContinuousAvailability => false;
-	public bool CopyChunk => _copy;
+    public bool PersistentHandles => false;
+    public bool ContinuousAvailability => false;
+    public bool CopyChunk => _copy;
 
-	public bool AllowsShare(IShare share) => !share.ContinuousAvailability || ContinuousAvailability;
+    public bool AllowsShare(IShare share) => !share.ContinuousAvailability || ContinuousAvailability;
 
-	public void ValidateShare(IShare share)
-	{
-		if (!AllowsShare(share))
-			throw new InvalidOperationException("Continuous availability is unavailable until backend recovery gates pass.");
-	}
+    public void ValidateShare(IShare share)
+    {
+        if (!AllowsShare(share))
+            throw new InvalidOperationException("Continuous availability is unavailable until backend recovery gates pass.");
+    }
 
-	public void Validate(SmbServerOptions options)
-	{
+    public void Validate(SmbServerOptions options)
+    {
         if (options.RecoveryStore != null && (!DurableHandles || options.DurableHandleStore is not IRetainedDurableHandleStore ||
             options.LockManager is not Locking.IRecoveryLockManager))
             throw new InvalidOperationException("Restart recovery requires a durable profile, a retained-open registry and a recovery-aware lock manager.");
@@ -62,39 +62,39 @@ public sealed class SmbFeaturePolicy
             throw new InvalidOperationException("Durability requires positive, finite retention timeouts.");
         if (Oplocks && (options.OplockBreakTimeout <= TimeSpan.Zero || options.OplockBreakTimeout.TotalMilliseconds > uint.MaxValue - 1))
             throw new InvalidOperationException("Caching requires a positive, finite break acknowledgment timeout.");
-		if (options.EnableMultichannel && !Multichannel)
-			throw new InvalidOperationException("Multichannel requires an explicit feature profile that permits multichannel.");
-		if (options.DurableHandleStore is IPersistentHandleStore && !PersistentHandles)
-			throw new InvalidOperationException("Persistent handle storage cannot enable recovery before its lifecycle gate passes.");
-		foreach (var share in options.Shares.All)
-			ValidateShare(share);
-	}
+        if (options.EnableMultichannel && !Multichannel)
+            throw new InvalidOperationException("Multichannel requires an explicit feature profile that permits multichannel.");
+        if (options.DurableHandleStore is IPersistentHandleStore && !PersistentHandles)
+            throw new InvalidOperationException("Persistent handle storage cannot enable recovery before its lifecycle gate passes.");
+        foreach (var share in options.Shares.All)
+            ValidateShare(share);
+    }
 
-	/// <summary>Validate conflicting recovery contexts even when no durability is granted.</summary>
-	public NtStatus ValidateCreateContexts(IReadOnlyList<CreateContext> contexts, SmbDialect dialect)
-	{
-		var v1Request = CreateContextList.Find(contexts, 1145597521u) != null; // DHnQ
-		var v1Reconnect = CreateContextList.Find(contexts, 1145597507u) != null; // DHnC
-		var v2Request = CreateContextList.Find(contexts, 1145582161u) != null; // DH2Q
-		var v2Reconnect = CreateContextList.Find(contexts, 1145582147u) != null; // DH2C
-		// Process the first recovery claim in chain order. V2 recovery rejects any
-		// additional durable request/reconnect with NAME_NOT_FOUND (3.3.5.9.12).
-		if (SupportsDurable(dialect) && v2Reconnect && (v1Request || v1Reconnect || v2Request))
-			foreach (var context in contexts)
-			{
-				if (context.Tag == 1145582147u) return NtStatus.ObjectNameNotFound;
-				if (context.Tag == 1145597507u) break;
-			}
-		// MS-SMB2 3.3.5.9.10 MUST; 3.3.5.9.6/.7 SHOULD for conflicting versions.
-		if ((v2Request || v2Reconnect) && (v1Request || v1Reconnect) || v2Request && v2Reconnect)
-			return NtStatus.InvalidParameter;
-		return NtStatus.Success;
-	}
+    /// <summary>Validate conflicting recovery contexts even when no durability is granted.</summary>
+    public NtStatus ValidateCreateContexts(IReadOnlyList<CreateContext> contexts, SmbDialect dialect)
+    {
+        var v1Request = CreateContextList.Find(contexts, 1145597521u) != null; // DHnQ
+        var v1Reconnect = CreateContextList.Find(contexts, 1145597507u) != null; // DHnC
+        var v2Request = CreateContextList.Find(contexts, 1145582161u) != null; // DH2Q
+        var v2Reconnect = CreateContextList.Find(contexts, 1145582147u) != null; // DH2C
+        // Process the first recovery claim in chain order. V2 recovery rejects any
+        // additional durable request/reconnect with NAME_NOT_FOUND (3.3.5.9.12).
+        if (SupportsDurable(dialect) && v2Reconnect && (v1Request || v1Reconnect || v2Request))
+            foreach (var context in contexts)
+            {
+                if (context.Tag == 1145582147u) return NtStatus.ObjectNameNotFound;
+                if (context.Tag == 1145597507u) break;
+            }
+        // MS-SMB2 3.3.5.9.10 MUST; 3.3.5.9.6/.7 SHOULD for conflicting versions.
+        if ((v2Request || v2Reconnect) && (v1Request || v1Reconnect) || v2Request && v2Reconnect)
+            return NtStatus.InvalidParameter;
+        return NtStatus.Success;
+    }
 
-	public bool AllowsIoctl(uint code) => code switch
-	{
-		0x001401fc => Multichannel,
-		0x00140078 or 0x001440f2 or 0x001480f2 => CopyChunk,
-		_ => true,
-	};
+    public bool AllowsIoctl(uint code) => code switch
+    {
+        0x001401fc => Multichannel,
+        0x00140078 or 0x001440f2 or 0x001480f2 => CopyChunk,
+        _ => true,
+    };
 }

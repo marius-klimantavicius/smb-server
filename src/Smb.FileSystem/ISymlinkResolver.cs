@@ -5,5 +5,5 @@ namespace Smb.FileSystem;
 
 public interface ISymlinkResolver
 {
-	ValueTask<SymlinkTarget?> ResolveSymlinkAsync(string path, CancellationToken cancellationToken = default(CancellationToken));
+    ValueTask<SymlinkTarget?> ResolveSymlinkAsync(string path, CancellationToken cancellationToken = default(CancellationToken));
 }

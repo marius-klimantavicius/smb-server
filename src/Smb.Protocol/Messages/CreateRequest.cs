@@ -8,78 +8,78 @@ namespace Smb.Protocol.Messages;
 
 public sealed class CreateRequest
 {
-	public const ushort ExpectedStructureSize = 57;
+    public const ushort ExpectedStructureSize = 57;
 
-	public OplockLevel RequestedOplockLevel { get; init; }
+    public OplockLevel RequestedOplockLevel { get; init; }
 
-	public uint DesiredAccess { get; init; }
+    public uint DesiredAccess { get; init; }
 
-	public uint FileAttributes { get; init; }
+    public uint FileAttributes { get; init; }
 
-	public uint ShareAccess { get; init; }
+    public uint ShareAccess { get; init; }
 
-	public CreateDisposition Disposition { get; init; }
+    public CreateDisposition Disposition { get; init; }
 
-	public CreateOptions Options { get; init; }
+    public CreateOptions Options { get; init; }
 
-	public string Name { get; init; } = string.Empty;
+    public string Name { get; init; } = string.Empty;
 
-	public IReadOnlyList<CreateContext> Contexts { get; init; } = Array.Empty<CreateContext>();
+    public IReadOnlyList<CreateContext> Contexts { get; init; } = Array.Empty<CreateContext>();
 
-	public static CreateRequest Parse(ReadOnlySpan<byte> message, int bodyOffset)
-	{
-		if (bodyOffset < 0 || bodyOffset > message.Length || message.Length - bodyOffset < 57) throw new SmbWireFormatException("Incomplete CREATE fixed structure/Buffer.");
+    public static CreateRequest Parse(ReadOnlySpan<byte> message, int bodyOffset)
+    {
+        if (bodyOffset < 0 || bodyOffset > message.Length || message.Length - bodyOffset < 57) throw new SmbWireFormatException("Incomplete CREATE fixed structure/Buffer.");
 
-		var spanReader = new SpanReader(message.Slice(bodyOffset));
-		var num = spanReader.ReadUInt16();
-		if (num != ExpectedStructureSize)
-		{
-			throw new SmbWireFormatException($"CREATE Request StructureSize {num} ≠ {ExpectedStructureSize}.");
-		}
+        var spanReader = new SpanReader(message.Slice(bodyOffset));
+        var num = spanReader.ReadUInt16();
+        if (num != ExpectedStructureSize)
+        {
+            throw new SmbWireFormatException($"CREATE Request StructureSize {num} ≠ {ExpectedStructureSize}.");
+        }
 
-		spanReader.Skip(1);
-		var requestedOplockLevel = (OplockLevel)spanReader.ReadByte();
-		spanReader.Skip(4);
-		spanReader.Skip(8);
-		spanReader.Skip(8);
-		var desiredAccess = spanReader.ReadUInt32();
-		var fileAttributes = spanReader.ReadUInt32();
-		var shareAccess = spanReader.ReadUInt32();
-		var disposition = (CreateDisposition)spanReader.ReadUInt32();
-		var options = (CreateOptions)spanReader.ReadUInt32();
-		var num2 = spanReader.ReadUInt16();
-		var num3 = spanReader.ReadUInt16();
-		var contextsOffset = (int)spanReader.ReadUInt32();
-		var contextsLength = (int)spanReader.ReadUInt32();
-		if (contextsLength == 0 && contextsOffset != 0) throw new SmbWireFormatException("CREATE without contexts requires zero context offset.");
-		if ((num3 & 1) != 0 || (num3 > 0 && (num2 & 7) != 0)) throw new SmbWireFormatException("CREATE name must have even UTF-16 length and 8-byte alignment.");
+        spanReader.Skip(1);
+        var requestedOplockLevel = (OplockLevel)spanReader.ReadByte();
+        spanReader.Skip(4);
+        spanReader.Skip(8);
+        spanReader.Skip(8);
+        var desiredAccess = spanReader.ReadUInt32();
+        var fileAttributes = spanReader.ReadUInt32();
+        var shareAccess = spanReader.ReadUInt32();
+        var disposition = (CreateDisposition)spanReader.ReadUInt32();
+        var options = (CreateOptions)spanReader.ReadUInt32();
+        var num2 = spanReader.ReadUInt16();
+        var num3 = spanReader.ReadUInt16();
+        var contextsOffset = (int)spanReader.ReadUInt32();
+        var contextsLength = (int)spanReader.ReadUInt32();
+        if (contextsLength == 0 && contextsOffset != 0) throw new SmbWireFormatException("CREATE without contexts requires zero context offset.");
+        if ((num3 & 1) != 0 || (num3 > 0 && (num2 & 7) != 0)) throw new SmbWireFormatException("CREATE name must have even UTF-16 length and 8-byte alignment.");
 
-		RequestBounds.Buffer(message, num2, num3, bodyOffset + 56, "CREATE name");
-		RequestBounds.Buffer(message, (uint)contextsOffset, (uint)contextsLength, bodyOffset + 56, "CREATE contexts");
-		if (contextsLength != 0 && (contextsOffset & 7) != 0) throw new SmbWireFormatException("CREATE contexts must be 8-byte aligned.");
+        RequestBounds.Buffer(message, num2, num3, bodyOffset + 56, "CREATE name");
+        RequestBounds.Buffer(message, (uint)contextsOffset, (uint)contextsLength, bodyOffset + 56, "CREATE contexts");
+        if (contextsLength != 0 && (contextsOffset & 7) != 0) throw new SmbWireFormatException("CREATE contexts must be 8-byte aligned.");
 
-		var text = string.Empty;
-		if (num3 > 0)
-		{
-			if (num2 + num3 > message.Length)
-			{
-				throw new SmbWireFormatException("CREATE name extends past the message.");
-			}
+        var text = string.Empty;
+        if (num3 > 0)
+        {
+            if (num2 + num3 > message.Length)
+            {
+                throw new SmbWireFormatException("CREATE name extends past the message.");
+            }
 
-			text = RequestBounds.ReadUnicode(message.Slice(num2, num3), "CREATE name");
-		}
+            text = RequestBounds.ReadUnicode(message.Slice(num2, num3), "CREATE name");
+        }
 
-		var contexts = CreateContextList.Parse(message, contextsOffset, contextsLength);
-		return new CreateRequest
-		{
-			RequestedOplockLevel = requestedOplockLevel,
-			DesiredAccess = desiredAccess,
-			FileAttributes = fileAttributes,
-			ShareAccess = shareAccess,
-			Disposition = disposition,
-			Options = options,
-			Name = text,
-			Contexts = contexts,
-		};
-	}
+        var contexts = CreateContextList.Parse(message, contextsOffset, contextsLength);
+        return new CreateRequest
+        {
+            RequestedOplockLevel = requestedOplockLevel,
+            DesiredAccess = desiredAccess,
+            FileAttributes = fileAttributes,
+            ShareAccess = shareAccess,
+            Disposition = disposition,
+            Options = options,
+            Name = text,
+            Contexts = contexts,
+        };
+    }
 }

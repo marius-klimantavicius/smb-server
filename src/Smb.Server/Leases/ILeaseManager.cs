@@ -7,11 +7,11 @@ namespace Smb.Server.Leases;
 
 public interface ILeaseManager
 {
-	LeaseGrant RequestLease(SmbOpen open, LeaseRequest request);
+    LeaseGrant RequestLease(SmbOpen open, LeaseRequest request);
 
-	LeaseState Acknowledge(LeaseKey key, LeaseState newState);
+    LeaseState Acknowledge(LeaseKey key, LeaseState newState);
 
-	void ReleaseOwner(SmbOpen open);
+    void ReleaseOwner(SmbOpen open);
 
-	IReadOnlyList<LeaseBreak> BreakDirectoryLease(string directoryFileKey);
+    IReadOnlyList<LeaseBreak> BreakDirectoryLease(string directoryFileKey);
 }

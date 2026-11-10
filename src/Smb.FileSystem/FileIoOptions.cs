@@ -10,5 +10,5 @@ public readonly record struct FileIoOptions(bool WriteThrough = false, bool Unbu
 /// validate their limits/rounding, free surplus on final close and report allocation errors.</summary>
 public interface IAllocationFileStore
 {
-	System.Threading.Tasks.ValueTask<Smb.Protocol.Enums.NtStatus> SetAllocationSizeAsync(IFileHandle handle, long allocationSize, System.Threading.CancellationToken cancellationToken = default);
+    System.Threading.Tasks.ValueTask<Smb.Protocol.Enums.NtStatus> SetAllocationSizeAsync(IFileHandle handle, long allocationSize, System.Threading.CancellationToken cancellationToken = default);
 }

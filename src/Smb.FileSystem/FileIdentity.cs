@@ -6,7 +6,7 @@ namespace Smb.FileSystem;
 /// <summary>Backend object and stream identity, independent of names and SMB FileIds.</summary>
 public readonly record struct FileIdentity(string ObjectId, string StreamId = "")
 {
-	public string Key => ObjectId.Length + ":" + ObjectId + StreamId.Length + ":" + StreamId;
+    public string Key => ObjectId.Length + ":" + ObjectId + StreamId.Length + ":" + StreamId;
 }
 
 /// <summary>
@@ -17,7 +17,7 @@ public readonly record struct FileIdentity(string ObjectId, string StreamId = ""
 /// </summary>
 public interface IFileIdentityStore
 {
-	ValueTask<FileIdentity?> ResolveIdentityAsync(string path, string streamName = "", CancellationToken cancellationToken = default);
+    ValueTask<FileIdentity?> ResolveIdentityAsync(string path, string streamName = "", CancellationToken cancellationToken = default);
 }
 
 /// <summary>

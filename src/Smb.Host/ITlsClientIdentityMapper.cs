@@ -20,11 +20,11 @@ namespace Smb.Host;
 /// </summary>
 public interface ITlsClientIdentityMapper
 {
-	/// <summary>
-	/// Returns the SMB identity for <paramref name="clientCertificate" />, or <c>null</c> to assert no
-	/// identity (the certificate is still recorded on the connection). Called only for a certificate
-	/// the TLS layer already validated. Should not throw for an unrecognized certificate — return
-	/// <c>null</c> instead.
-	/// </summary>
-	SecurityIdentity? Map(X509Certificate2 clientCertificate);
+    /// <summary>
+    /// Returns the SMB identity for <paramref name="clientCertificate" />, or <c>null</c> to assert no
+    /// identity (the certificate is still recorded on the connection). Called only for a certificate
+    /// the TLS layer already validated. Should not throw for an unrecognized certificate — return
+    /// <c>null</c> instead.
+    /// </summary>
+    SecurityIdentity? Map(X509Certificate2 clientCertificate);
 }

@@ -7,7 +7,7 @@ namespace Smb.FileSystem;
 
 public interface IExtendedAttributeStore
 {
-	ValueTask<FileStoreResult<IReadOnlyList<ExtendedAttribute>>> GetExtendedAttributesAsync(IFileHandle handle, CancellationToken cancellationToken = default(CancellationToken));
+    ValueTask<FileStoreResult<IReadOnlyList<ExtendedAttribute>>> GetExtendedAttributesAsync(IFileHandle handle, CancellationToken cancellationToken = default(CancellationToken));
 
-	ValueTask<NtStatus> SetExtendedAttributesAsync(IFileHandle handle, IReadOnlyList<ExtendedAttribute> entries, CancellationToken cancellationToken = default(CancellationToken));
+    ValueTask<NtStatus> SetExtendedAttributesAsync(IFileHandle handle, IReadOnlyList<ExtendedAttribute> entries, CancellationToken cancellationToken = default(CancellationToken));
 }

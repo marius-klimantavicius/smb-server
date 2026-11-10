@@ -8,13 +8,13 @@ namespace Smb.Server.Quota;
 
 public interface IQuotaProvider
 {
-	bool IsSupported { get; }
+    bool IsSupported { get; }
 
-	IReadOnlyList<FileQuotaInformation> Query(IShare share, IReadOnlyList<Sid> sidFilter);
+    IReadOnlyList<FileQuotaInformation> Query(IShare share, IReadOnlyList<Sid> sidFilter);
 
-	NtStatus Set(IShare share, IReadOnlyList<FileQuotaInformation> entries);
+    NtStatus Set(IShare share, IReadOnlyList<FileQuotaInformation> entries);
 
-	bool TryReserve(IShare share, Sid owner, long additionalBytes);
+    bool TryReserve(IShare share, Sid owner, long additionalBytes);
 
-	void Release(IShare share, Sid owner, long bytes);
+    void Release(IShare share, Sid owner, long bytes);
 }

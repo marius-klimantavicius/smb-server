@@ -2,7 +2,7 @@ namespace Smb.Auth;
 
 public interface ISpnegoNegotiator
 {
-	byte[] CreateInitialServerToken();
+    byte[] CreateInitialServerToken();
 
-	ISpnegoServerContext CreateServerContext();
+    ISpnegoServerContext CreateServerContext();
 }

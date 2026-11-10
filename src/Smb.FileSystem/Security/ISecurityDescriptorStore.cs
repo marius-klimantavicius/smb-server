@@ -11,9 +11,9 @@ namespace Smb.FileSystem.Security;
 /// and ID reuse. Coordinate such changes or manage persistent generations separately.</summary>
 public interface ISecurityDescriptorStore
 {
-	SecurityDescriptor? TryGet(string key);
+    SecurityDescriptor? TryGet(string key);
 
-	void Set(string key, SecurityDescriptor descriptor);
+    void Set(string key, SecurityDescriptor descriptor);
 
-	void Remove(string key);
+    void Remove(string key);
 }

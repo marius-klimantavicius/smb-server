@@ -24,95 +24,95 @@ namespace Smb.Host;
 /// </summary>
 public sealed class SmbQuicOptions
 {
-	/// <summary>The ALPN protocol identifier for SMB over QUIC (MS-SMB2): "smb".</summary>
-	public static readonly SslApplicationProtocol SmbAlpn = new SslApplicationProtocol("smb");
+    /// <summary>The ALPN protocol identifier for SMB over QUIC (MS-SMB2): "smb".</summary>
+    public static readonly SslApplicationProtocol SmbAlpn = new SslApplicationProtocol("smb");
 
-	/// <summary>
-	/// The server certificate presented in the QUIC (TLS 1.3) handshake. Required, must contain a
-	/// private key. QUIC has no unauthenticated mode, so a certificate is always mandatory (unlike TCP,
-	/// where TLS is opt-in).
-	/// </summary>
-	public required X509Certificate2 ServerCertificate { get; set; }
+    /// <summary>
+    /// The server certificate presented in the QUIC (TLS 1.3) handshake. Required, must contain a
+    /// private key. QUIC has no unauthenticated mode, so a certificate is always mandatory (unlike TCP,
+    /// where TLS is opt-in).
+    /// </summary>
+    public required X509Certificate2 ServerCertificate { get; set; }
 
-	/// <summary>
-	/// Require the client to present a certificate for an additional authentication layer beyond SMB's
-	/// SPNEGO/GSS. Default <c>false</c>. A required-but-absent or rejected client certificate fails the
-	/// handshake and the connection is dropped.
-	/// </summary>
-	public bool RequireClientCertificate { get; set; }
+    /// <summary>
+    /// Require the client to present a certificate for an additional authentication layer beyond SMB's
+    /// SPNEGO/GSS. Default <c>false</c>. A required-but-absent or rejected client certificate fails the
+    /// handshake and the connection is dropped.
+    /// </summary>
+    public bool RequireClientCertificate { get; set; }
 
-	/// <summary>
-	/// Optional validation callback for the client certificate. When null the platform default chain
-	/// validation applies. Provide a callback to pin a CA, check a thumbprint, or accept a self-signed
-	/// client certificate.
-	/// </summary>
-	public RemoteCertificateValidationCallback? ClientCertificateValidation { get; set; }
+    /// <summary>
+    /// Optional validation callback for the client certificate. When null the platform default chain
+    /// validation applies. Provide a callback to pin a CA, check a thumbprint, or accept a self-signed
+    /// client certificate.
+    /// </summary>
+    public RemoteCertificateValidationCallback? ClientCertificateValidation { get; set; }
 
-	/// <summary>
-	/// ALPN protocols advertised by the listener. Defaults to the single SMB identifier
-	/// (<see cref="F:Smb.Host.SmbQuicOptions.SmbAlpn" />). Rarely needs changing.
-	/// </summary>
-	public IReadOnlyList<SslApplicationProtocol> ApplicationProtocols { get; set; } = [SmbAlpn];
+    /// <summary>
+    /// ALPN protocols advertised by the listener. Defaults to the single SMB identifier
+    /// (<see cref="F:Smb.Host.SmbQuicOptions.SmbAlpn" />). Rarely needs changing.
+    /// </summary>
+    public IReadOnlyList<SslApplicationProtocol> ApplicationProtocols { get; set; } = [SmbAlpn];
 
-	/// <summary>
-	/// Maximum concurrent inbound bidirectional streams a single QUIC connection may open (each maps to
-	/// one SMB2 connection). SMB uses one stream per connection; the default 256 leaves generous head
-	/// room while bounding per-connection resource use.
-	/// </summary>
-	public int MaxInboundStreams { get; set; } = 256;
+    /// <summary>
+    /// Maximum concurrent inbound bidirectional streams a single QUIC connection may open (each maps to
+    /// one SMB2 connection). SMB uses one stream per connection; the default 256 leaves generous head
+    /// room while bounding per-connection resource use.
+    /// </summary>
+    public int MaxInboundStreams { get; set; } = 256;
 
-	/// <summary>
-	/// QUIC transport idle timeout (no traffic) before the connection is closed. <see cref="F:System.TimeSpan.Zero" />
-	/// (default) uses the MsQuic default. SMB's own idle/session timeouts (M8.2) apply on top.
-	/// </summary>
-	public TimeSpan IdleTimeout { get; set; } = TimeSpan.Zero;
+    /// <summary>
+    /// QUIC transport idle timeout (no traffic) before the connection is closed. <see cref="F:System.TimeSpan.Zero" />
+    /// (default) uses the MsQuic default. SMB's own idle/session timeouts (M8.2) apply on top.
+    /// </summary>
+    public TimeSpan IdleTimeout { get; set; } = TimeSpan.Zero;
 
-	/// <summary>
-	/// Escape hatch for full control over the TLS 1.3 handshake: invoked with the
-	/// <see cref="T:System.Net.Security.SslServerAuthenticationOptions" /> derived from the properties above, immediately
-	/// before it is handed to the QUIC listener. Anything set here overrides the derived values.
-	/// </summary>
-	public Action<SslServerAuthenticationOptions>? ConfigureAuthentication { get; set; }
+    /// <summary>
+    /// Escape hatch for full control over the TLS 1.3 handshake: invoked with the
+    /// <see cref="T:System.Net.Security.SslServerAuthenticationOptions" /> derived from the properties above, immediately
+    /// before it is handed to the QUIC listener. Anything set here overrides the derived values.
+    /// </summary>
+    public Action<SslServerAuthenticationOptions>? ConfigureAuthentication { get; set; }
 
-	/// <summary>Builds the per-connection server options (TLS + stream limits) for the QUIC listener.</summary>
-	internal QuicServerConnectionOptions BuildServerConnectionOptions()
-	{
-		var sslServerAuthenticationOptions = new SslServerAuthenticationOptions
-		{
-			ServerCertificate = ServerCertificate,
-			ClientCertificateRequired = RequireClientCertificate,
-			RemoteCertificateValidationCallback = ClientCertificateValidation,
-			ApplicationProtocols = ApplicationProtocols.ToList(),
-		};
-		ConfigureAuthentication?.Invoke(sslServerAuthenticationOptions);
-		return new QuicServerConnectionOptions
-		{
-			DefaultStreamErrorCode = 0L,
-			DefaultCloseErrorCode = 0L,
-			IdleTimeout = IdleTimeout,
-			MaxInboundBidirectionalStreams = MaxInboundStreams,
-			MaxInboundUnidirectionalStreams = 0,
-			ServerAuthenticationOptions = sslServerAuthenticationOptions,
-		};
-	}
+    /// <summary>Builds the per-connection server options (TLS + stream limits) for the QUIC listener.</summary>
+    internal QuicServerConnectionOptions BuildServerConnectionOptions()
+    {
+        var sslServerAuthenticationOptions = new SslServerAuthenticationOptions
+        {
+            ServerCertificate = ServerCertificate,
+            ClientCertificateRequired = RequireClientCertificate,
+            RemoteCertificateValidationCallback = ClientCertificateValidation,
+            ApplicationProtocols = ApplicationProtocols.ToList(),
+        };
+        ConfigureAuthentication?.Invoke(sslServerAuthenticationOptions);
+        return new QuicServerConnectionOptions
+        {
+            DefaultStreamErrorCode = 0L,
+            DefaultCloseErrorCode = 0L,
+            IdleTimeout = IdleTimeout,
+            MaxInboundBidirectionalStreams = MaxInboundStreams,
+            MaxInboundUnidirectionalStreams = 0,
+            ServerAuthenticationOptions = sslServerAuthenticationOptions,
+        };
+    }
 
-	/// <summary>Validates the QUIC configuration and throws on misconfiguration.</summary>
-	internal void Validate()
-	{
-		if (ServerCertificate == null)
-		{
-			throw new InvalidOperationException("SmbQuicOptions.ServerCertificate is required.");
-		}
+    /// <summary>Validates the QUIC configuration and throws on misconfiguration.</summary>
+    internal void Validate()
+    {
+        if (ServerCertificate == null)
+        {
+            throw new InvalidOperationException("SmbQuicOptions.ServerCertificate is required.");
+        }
 
-		if (!ServerCertificate.HasPrivateKey)
-		{
-			throw new InvalidOperationException("SmbQuicOptions.ServerCertificate must contain a private key.");
-		}
+        if (!ServerCertificate.HasPrivateKey)
+        {
+            throw new InvalidOperationException("SmbQuicOptions.ServerCertificate must contain a private key.");
+        }
 
-		var applicationProtocols = ApplicationProtocols;
-		if (applicationProtocols == null || applicationProtocols.Count <= 0)
-		{
-			throw new InvalidOperationException("SmbQuicOptions.ApplicationProtocols must list at least one ALPN protocol.");
-		}
-	}
+        var applicationProtocols = ApplicationProtocols;
+        if (applicationProtocols == null || applicationProtocols.Count <= 0)
+        {
+            throw new InvalidOperationException("SmbQuicOptions.ApplicationProtocols must list at least one ALPN protocol.");
+        }
+    }
 }

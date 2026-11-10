@@ -4,5 +4,5 @@ namespace Smb.Auth;
 
 public interface ISpnegoServerContext
 {
-	GssResult Accept(ReadOnlySpan<byte> spnegoToken);
+    GssResult Accept(ReadOnlySpan<byte> spnegoToken);
 }

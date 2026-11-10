@@ -9,26 +9,26 @@ namespace Smb.Server.Quota;
 
 public sealed class NullQuotaProvider : IQuotaProvider
 {
-	public static readonly NullQuotaProvider Instance = new NullQuotaProvider();
+    public static readonly NullQuotaProvider Instance = new NullQuotaProvider();
 
-	public bool IsSupported => false;
+    public bool IsSupported => false;
 
-	public IReadOnlyList<FileQuotaInformation> Query(IShare share, IReadOnlyList<Sid> sidFilter)
-	{
-		return Array.Empty<FileQuotaInformation>();
-	}
+    public IReadOnlyList<FileQuotaInformation> Query(IShare share, IReadOnlyList<Sid> sidFilter)
+    {
+        return Array.Empty<FileQuotaInformation>();
+    }
 
-	public NtStatus Set(IShare share, IReadOnlyList<FileQuotaInformation> entries)
-	{
-		return NtStatus.NotSupported;
-	}
+    public NtStatus Set(IShare share, IReadOnlyList<FileQuotaInformation> entries)
+    {
+        return NtStatus.NotSupported;
+    }
 
-	public bool TryReserve(IShare share, Sid owner, long additionalBytes)
-	{
-		return true;
-	}
+    public bool TryReserve(IShare share, Sid owner, long additionalBytes)
+    {
+        return true;
+    }
 
-	public void Release(IShare share, Sid owner, long bytes)
-	{
-	}
+    public void Release(IShare share, Sid owner, long bytes)
+    {
+    }
 }

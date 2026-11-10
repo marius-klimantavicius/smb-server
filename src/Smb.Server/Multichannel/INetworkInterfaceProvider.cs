@@ -5,5 +5,5 @@ namespace Smb.Server.Multichannel;
 
 public interface INetworkInterfaceProvider
 {
-	IReadOnlyList<NetworkInterfaceInfo> GetInterfaces();
+    IReadOnlyList<NetworkInterfaceInfo> GetInterfaces();
 }

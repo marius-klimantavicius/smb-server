@@ -9,69 +9,69 @@ namespace Smb.FileSystem;
 
 public interface IFileStore
 {
-	ValueTask<FileStoreResult<FileCreateResult>> CreateAsync(string path, FileAccessIntent access, CreateDispositionIntent disposition, bool directoryRequired, bool nonDirectoryRequired, CancellationToken cancellationToken = default(CancellationToken));
+    ValueTask<FileStoreResult<FileCreateResult>> CreateAsync(string path, FileAccessIntent access, CreateDispositionIntent disposition, bool directoryRequired, bool nonDirectoryRequired, CancellationToken cancellationToken = default(CancellationToken));
 
-	ValueTask<FileStoreResult<int>> ReadAsync(IFileHandle handle, long offset, Memory<byte> buffer, CancellationToken cancellationToken = default(CancellationToken));
+    ValueTask<FileStoreResult<int>> ReadAsync(IFileHandle handle, long offset, Memory<byte> buffer, CancellationToken cancellationToken = default(CancellationToken));
 
-	ValueTask<FileStoreResult<int>> WriteAsync(IFileHandle handle, long offset, ReadOnlyMemory<byte> data, CancellationToken cancellationToken = default(CancellationToken));
+    ValueTask<FileStoreResult<int>> WriteAsync(IFileHandle handle, long offset, ReadOnlyMemory<byte> data, CancellationToken cancellationToken = default(CancellationToken));
 
-	ValueTask<FileStoreResult<int>> ReadWithOptionsAsync(IFileHandle handle, long offset, Memory<byte> buffer, FileIoOptions options, CancellationToken cancellationToken = default)
-		=> ReadAsync(handle, offset, buffer, cancellationToken);
+    ValueTask<FileStoreResult<int>> ReadWithOptionsAsync(IFileHandle handle, long offset, Memory<byte> buffer, FileIoOptions options, CancellationToken cancellationToken = default)
+        => ReadAsync(handle, offset, buffer, cancellationToken);
 
-	async ValueTask<FileStoreResult<int>> WriteWithOptionsAsync(IFileHandle handle, long offset, ReadOnlyMemory<byte> data, FileIoOptions options, CancellationToken cancellationToken = default)
-	{
-		var result = await WriteAsync(handle, offset, data, cancellationToken).ConfigureAwait(false);
-		if (!result.IsSuccess || !options.WriteThrough) return result;
+    async ValueTask<FileStoreResult<int>> WriteWithOptionsAsync(IFileHandle handle, long offset, ReadOnlyMemory<byte> data, FileIoOptions options, CancellationToken cancellationToken = default)
+    {
+        var result = await WriteAsync(handle, offset, data, cancellationToken).ConfigureAwait(false);
+        if (!result.IsSuccess || !options.WriteThrough) return result;
 
-		var status = await FlushAsync(handle, cancellationToken).ConfigureAwait(false);
-		return status == NtStatus.Success ? result : FileStoreResult<int>.Fail(status);
-	}
+        var status = await FlushAsync(handle, cancellationToken).ConfigureAwait(false);
+        return status == NtStatus.Success ? result : FileStoreResult<int>.Fail(status);
+    }
 
-	ValueTask<FileStoreResult<IReadOnlyList<FileEntryInfo>>> QueryDirectoryAsync(IFileHandle handle, string searchPattern, CancellationToken cancellationToken = default(CancellationToken));
+    ValueTask<FileStoreResult<IReadOnlyList<FileEntryInfo>>> QueryDirectoryAsync(IFileHandle handle, string searchPattern, CancellationToken cancellationToken = default(CancellationToken));
 
-	async ValueTask<FileStoreResult<BoundedDirectoryListing>> QueryDirectoryAsync(IFileHandle handle, string searchPattern, int maxEntries, CancellationToken cancellationToken = default(CancellationToken))
-	{
-		var fileStoreResult = await QueryDirectoryAsync(handle, searchPattern, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
-		if (!fileStoreResult.IsSuccess)
-		{
-			return FileStoreResult<BoundedDirectoryListing>.Fail(fileStoreResult.Status);
-		}
+    async ValueTask<FileStoreResult<BoundedDirectoryListing>> QueryDirectoryAsync(IFileHandle handle, string searchPattern, int maxEntries, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        var fileStoreResult = await QueryDirectoryAsync(handle, searchPattern, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
+        if (!fileStoreResult.IsSuccess)
+        {
+            return FileStoreResult<BoundedDirectoryListing>.Fail(fileStoreResult.Status);
+        }
 
-		var value = fileStoreResult.Value;
-		if (maxEntries > 0 && value.Count > maxEntries)
-		{
-			var list = new List<FileEntryInfo>(maxEntries);
-			for (var i = 0; i < maxEntries; i++)
-			{
-				list.Add(value[i]);
-			}
+        var value = fileStoreResult.Value;
+        if (maxEntries > 0 && value.Count > maxEntries)
+        {
+            var list = new List<FileEntryInfo>(maxEntries);
+            for (var i = 0; i < maxEntries; i++)
+            {
+                list.Add(value[i]);
+            }
 
-			return FileStoreResult<BoundedDirectoryListing>.Ok(new BoundedDirectoryListing(list, Truncated: true));
-		}
+            return FileStoreResult<BoundedDirectoryListing>.Ok(new BoundedDirectoryListing(list, Truncated: true));
+        }
 
-		return FileStoreResult<BoundedDirectoryListing>.Ok(new BoundedDirectoryListing(value, Truncated: false));
-	}
+        return FileStoreResult<BoundedDirectoryListing>.Ok(new BoundedDirectoryListing(value, Truncated: false));
+    }
 
-	ValueTask<NtStatus> SetEndOfFileAsync(IFileHandle handle, long length, CancellationToken cancellationToken = default(CancellationToken));
+    ValueTask<NtStatus> SetEndOfFileAsync(IFileHandle handle, long length, CancellationToken cancellationToken = default(CancellationToken));
 
-	ValueTask<NtStatus> RenameAsync(IFileHandle handle, string newPath, bool replaceIfExists, CancellationToken cancellationToken = default(CancellationToken));
+    ValueTask<NtStatus> RenameAsync(IFileHandle handle, string newPath, bool replaceIfExists, CancellationToken cancellationToken = default(CancellationToken));
 
-	ValueTask<NtStatus> SetDeleteOnCloseAsync(IFileHandle handle, bool delete, CancellationToken cancellationToken = default(CancellationToken));
+    ValueTask<NtStatus> SetDeleteOnCloseAsync(IFileHandle handle, bool delete, CancellationToken cancellationToken = default(CancellationToken));
 
-	ValueTask<NtStatus> FlushAsync(IFileHandle handle, CancellationToken cancellationToken = default(CancellationToken));
+    ValueTask<NtStatus> FlushAsync(IFileHandle handle, CancellationToken cancellationToken = default(CancellationToken));
 
-	ValueTask<FileStoreResult<long>> CopyRangeAsync(IFileHandle source, long sourceOffset, IFileHandle destination, long destinationOffset, long length, CancellationToken cancellationToken = default(CancellationToken))
-	{
-		return new ValueTask<FileStoreResult<long>>(FileStoreResult<long>.Fail(NtStatus.NotSupported));
-	}
+    ValueTask<FileStoreResult<long>> CopyRangeAsync(IFileHandle source, long sourceOffset, IFileHandle destination, long destinationOffset, long length, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return new ValueTask<FileStoreResult<long>>(FileStoreResult<long>.Fail(NtStatus.NotSupported));
+    }
 
-	ValueTask<FileStoreResult<SecurityDescriptor>> GetSecurityAsync(IFileHandle handle, CancellationToken cancellationToken = default(CancellationToken))
-	{
-		return new ValueTask<FileStoreResult<SecurityDescriptor>>(FileStoreResult<SecurityDescriptor>.Fail(NtStatus.NotSupported));
-	}
+    ValueTask<FileStoreResult<SecurityDescriptor>> GetSecurityAsync(IFileHandle handle, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return new ValueTask<FileStoreResult<SecurityDescriptor>>(FileStoreResult<SecurityDescriptor>.Fail(NtStatus.NotSupported));
+    }
 
-	ValueTask<NtStatus> SetSecurityAsync(IFileHandle handle, SecurityDescriptor descriptor, CancellationToken cancellationToken = default(CancellationToken))
-	{
-		return new ValueTask<NtStatus>(NtStatus.NotSupported);
-	}
+    ValueTask<NtStatus> SetSecurityAsync(IFileHandle handle, SecurityDescriptor descriptor, CancellationToken cancellationToken = default(CancellationToken))
+    {
+        return new ValueTask<NtStatus>(NtStatus.NotSupported);
+    }
 }

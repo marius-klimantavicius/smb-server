@@ -20,22 +20,22 @@ namespace Smb.FileSystem;
 /// </summary>
 public interface IAuthorizedCreateStore
 {
-	ValueTask<FileStoreResult<FileCreateResult>> CreateAuthorizedAsync(string path, string streamName,
-		FileAccessIntent access, CreateDispositionIntent disposition, bool directoryRequired,
-		bool nonDirectoryRequired, uint attributes, Func<SecurityDescriptor, bool> authorizeExisting,
-		Func<SecurityDescriptor, bool, bool> authorizeParent, Func<FileIdentity?, bool> validateIdentity, CancellationToken cancellationToken = default);
+    ValueTask<FileStoreResult<FileCreateResult>> CreateAuthorizedAsync(string path, string streamName,
+        FileAccessIntent access, CreateDispositionIntent disposition, bool directoryRequired,
+        bool nonDirectoryRequired, uint attributes, Func<SecurityDescriptor, bool> authorizeExisting,
+        Func<SecurityDescriptor, bool, bool> authorizeParent, Func<FileIdentity?, bool> validateIdentity, CancellationToken cancellationToken = default);
 
-	/// <summary>
-	/// Grant-aware acquisition. Pass the backend's supported specific access mask
-	/// (including current DOS restrictions) to authorizeExisting under the same guard.
-	/// Null denies; otherwise acquire using the returned final access intent. The
-	/// original overload remains compatible, but cannot reduce its host access intent.
-	/// Wrappers must forward this overload to retain grant-aware acquisition.
-	/// </summary>
-	ValueTask<FileStoreResult<FileCreateResult>> CreateAuthorizedAsync(string path, string streamName,
-		FileAccessIntent access, CreateDispositionIntent disposition, bool directoryRequired,
-		bool nonDirectoryRequired, uint attributes, Func<SecurityDescriptor, uint, FileAccessIntent?> authorizeExisting,
-		Func<SecurityDescriptor, bool, bool> authorizeParent, Func<FileIdentity?, bool> validateIdentity, CancellationToken cancellationToken = default)
-		=> CreateAuthorizedAsync(path, streamName, access, disposition, directoryRequired, nonDirectoryRequired, attributes,
-			descriptor => authorizeExisting(descriptor, uint.MaxValue).HasValue, authorizeParent, validateIdentity, cancellationToken);
+    /// <summary>
+    /// Grant-aware acquisition. Pass the backend's supported specific access mask
+    /// (including current DOS restrictions) to authorizeExisting under the same guard.
+    /// Null denies; otherwise acquire using the returned final access intent. The
+    /// original overload remains compatible, but cannot reduce its host access intent.
+    /// Wrappers must forward this overload to retain grant-aware acquisition.
+    /// </summary>
+    ValueTask<FileStoreResult<FileCreateResult>> CreateAuthorizedAsync(string path, string streamName,
+        FileAccessIntent access, CreateDispositionIntent disposition, bool directoryRequired,
+        bool nonDirectoryRequired, uint attributes, Func<SecurityDescriptor, uint, FileAccessIntent?> authorizeExisting,
+        Func<SecurityDescriptor, bool, bool> authorizeParent, Func<FileIdentity?, bool> validateIdentity, CancellationToken cancellationToken = default)
+        => CreateAuthorizedAsync(path, streamName, access, disposition, directoryRequired, nonDirectoryRequired, attributes,
+            descriptor => authorizeExisting(descriptor, uint.MaxValue).HasValue, authorizeParent, validateIdentity, cancellationToken);
 }

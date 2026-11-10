@@ -4,5 +4,5 @@ namespace Smb.Server.Rpc;
 
 public interface IRpcEndpoint
 {
-	byte[] HandlePdu(ReadOnlySpan<byte> pdu);
+    byte[] HandlePdu(ReadOnlySpan<byte> pdu);
 }

@@ -2,5 +2,5 @@ namespace Smb.FileSystem;
 
 public interface IVolumeInfoProvider
 {
-	VolumeInfo GetVolumeInfo();
+    VolumeInfo GetVolumeInfo();
 }

@@ -4,9 +4,9 @@ namespace Smb.Auth;
 
 public interface IGssMechanism
 {
-	string MechOid { get; }
+    string MechOid { get; }
 
-	bool IsComplete { get; }
+    bool IsComplete { get; }
 
-	GssResult Accept(ReadOnlySpan<byte> inToken);
+    GssResult Accept(ReadOnlySpan<byte> inToken);
 }

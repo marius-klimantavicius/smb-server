@@ -14,146 +14,146 @@ namespace Smb.Server.State;
 
 public sealed class SmbServerState
 {
-	private long _sessionIdCounter;
+    private long _sessionIdCounter;
 
-	private long _sessionGlobalIdCounter;
+    private long _sessionGlobalIdCounter;
 
-	private long _persistentIdCounter;
+    private long _persistentIdCounter;
 
-	public CreateReplayRegistry CreateReplays { get; } = new CreateReplayRegistry();
+    public CreateReplayRegistry CreateReplays { get; } = new CreateReplayRegistry();
 
     public Recovery.ServerRecoveryCoordinator? Recovery { get; }
 
-	public SmbServerOptions Options { get; }
+    public SmbServerOptions Options { get; }
 
-	public ShareCollection Shares { get; }
+    public ShareCollection Shares { get; }
 
-	public ConcurrentDictionary<ulong, SmbSession> SessionGlobalList { get; } = new ConcurrentDictionary<ulong, SmbSession>();
+    public ConcurrentDictionary<ulong, SmbSession> SessionGlobalList { get; } = new ConcurrentDictionary<ulong, SmbSession>();
 
-	public ConcurrentDictionary<Guid, SmbConnection> Connections { get; } = new ConcurrentDictionary<Guid, SmbConnection>();
+    public ConcurrentDictionary<Guid, SmbConnection> Connections { get; } = new ConcurrentDictionary<Guid, SmbConnection>();
 
-	public WitnessRegistrationStore WitnessRegistrations { get; } = new WitnessRegistrationStore();
+    public WitnessRegistrationStore WitnessRegistrations { get; } = new WitnessRegistrationStore();
 
-	private sealed class ClientEntry
-	{
-		internal SmbDialect Dialect;
-		internal readonly HashSet<Guid> Connections = new HashSet<Guid>();
-	}
-	private readonly Lock _clientGate = new Lock();
-	private readonly Dictionary<Guid, ClientEntry> _clients = new Dictionary<Guid, ClientEntry>();
+    private sealed class ClientEntry
+    {
+        internal SmbDialect Dialect;
+        internal readonly HashSet<Guid> Connections = new HashSet<Guid>();
+    }
+    private readonly Lock _clientGate = new Lock();
+    private readonly Dictionary<Guid, ClientEntry> _clients = new Dictionary<Guid, ClientEntry>();
 
-	internal void RegisterClientConnection(SmbConnection connection)
-	{
-		if (connection.Dialect == SmbDialect.Smb202) return;
-		lock (_clientGate)
-		{
-			var guid = new Guid(connection.ClientGuid);
-			if (!_clients.TryGetValue(guid, out var client)) _clients.Add(guid, client = new ClientEntry());
-			client.Connections.Add(connection.ConnectionId);
-		}
-	}
+    internal void RegisterClientConnection(SmbConnection connection)
+    {
+        if (connection.Dialect == SmbDialect.Smb202) return;
+        lock (_clientGate)
+        {
+            var guid = new Guid(connection.ClientGuid);
+            if (!_clients.TryGetValue(guid, out var client)) _clients.Add(guid, client = new ClientEntry());
+            client.Connections.Add(connection.ConnectionId);
+        }
+    }
 
-	internal bool AcceptClientDialect(SmbConnection connection)
-	{
-		if (connection.Dialect == SmbDialect.Smb202) return true;
-		lock (_clientGate)
-		{
-			var guid = new Guid(connection.ClientGuid);
-			if (!_clients.TryGetValue(guid, out var client)) _clients.Add(guid, client = new ClientEntry());
-			client.Connections.Add(connection.ConnectionId);
-			if (client.Dialect != SmbDialect.None && client.Dialect != connection.Dialect) return false;
-			client.Dialect = connection.Dialect;
-			return true;
-		}
-	}
+    internal bool AcceptClientDialect(SmbConnection connection)
+    {
+        if (connection.Dialect == SmbDialect.Smb202) return true;
+        lock (_clientGate)
+        {
+            var guid = new Guid(connection.ClientGuid);
+            if (!_clients.TryGetValue(guid, out var client)) _clients.Add(guid, client = new ClientEntry());
+            client.Connections.Add(connection.ConnectionId);
+            if (client.Dialect != SmbDialect.None && client.Dialect != connection.Dialect) return false;
+            client.Dialect = connection.Dialect;
+            return true;
+        }
+    }
 
-	internal void UnregisterClientConnection(SmbConnection connection)
-	{
-		if (connection.Dialect == SmbDialect.Smb202) return;
-		lock (_clientGate)
-		{
-			var guid = new Guid(connection.ClientGuid);
-			if (_clients.TryGetValue(guid, out var client) && client.Connections.Remove(connection.ConnectionId) && client.Connections.Count == 0)
-				_clients.Remove(guid);
-		}
-	}
+    internal void UnregisterClientConnection(SmbConnection connection)
+    {
+        if (connection.Dialect == SmbDialect.Smb202) return;
+        lock (_clientGate)
+        {
+            var guid = new Guid(connection.ClientGuid);
+            if (_clients.TryGetValue(guid, out var client) && client.Connections.Remove(connection.ConnectionId) && client.Connections.Count == 0)
+                _clients.Remove(guid);
+        }
+    }
 
-	public SmbServerState(SmbServerOptions options)
-	{
-		Options = options;
-		Shares = options.Shares;
+    public SmbServerState(SmbServerOptions options)
+    {
+        Options = options;
+        Shares = options.Shares;
         if (options.RecoveryStore != null)
         {
             options.ServerGuid = options.RecoveryStore.ServerGuid.ToByteArray();
             Recovery = new Recovery.ServerRecoveryCoordinator(this, options.RecoveryStore);
             options.RecoveryCoordinator = Recovery;
         }
-		if (options.DurableHandleStore is IPersistentHandleStore persistentHandleStore)
-		{
-			_persistentIdCounter = (long)(persistentHandleStore.HighestPersistentId & 0x7FFFFFFFFFFFFFFFL);
-		}
-	}
+        if (options.DurableHandleStore is IPersistentHandleStore persistentHandleStore)
+        {
+            _persistentIdCounter = (long)(persistentHandleStore.HighestPersistentId & 0x7FFFFFFFFFFFFFFFL);
+        }
+    }
 
-	public IReadOnlyList<IShare> GetVisibleShares(SecurityIdentity identity, SmbConnection? connection = null)
-	{
-		var list = new List<IShare>();
-		foreach (var item in Shares.All)
-		{
-			var context = new ShareAccessContext
-			{
-				Identity = identity,
-				Share = item,
-				Connection = connection,
-			};
-			if (Options.ShareAccessPolicy.IsVisible(context))
-			{
-				list.Add(item);
-			}
-		}
+    public IReadOnlyList<IShare> GetVisibleShares(SecurityIdentity identity, SmbConnection? connection = null)
+    {
+        var list = new List<IShare>();
+        foreach (var item in Shares.All)
+        {
+            var context = new ShareAccessContext
+            {
+                Identity = identity,
+                Share = item,
+                Connection = connection,
+            };
+            if (Options.ShareAccessPolicy.IsVisible(context))
+            {
+                list.Add(item);
+            }
+        }
 
-		return list;
-	}
+        return list;
+    }
 
-	public async ValueTask<IReadOnlyList<IShare>> GetVisibleSharesAsync(SecurityIdentity identity, SmbConnection? connection = null)
-	{
-		var result = new List<IShare>();
-		foreach (var share in Shares.All)
-		{
-			var context = new ShareAccessContext
-			{
-				Identity = identity,
-				Share = share,
-				Connection = connection,
-			};
-			if (await Options.ShareAccessPolicy.IsVisibleAsync(context).ConfigureAwait(continueOnCapturedContext: false))
-			{
-				result.Add(share);
-			}
-		}
+    public async ValueTask<IReadOnlyList<IShare>> GetVisibleSharesAsync(SecurityIdentity identity, SmbConnection? connection = null)
+    {
+        var result = new List<IShare>();
+        foreach (var share in Shares.All)
+        {
+            var context = new ShareAccessContext
+            {
+                Identity = identity,
+                Share = share,
+                Connection = connection,
+            };
+            if (await Options.ShareAccessPolicy.IsVisibleAsync(context).ConfigureAwait(continueOnCapturedContext: false))
+            {
+                result.Add(share);
+            }
+        }
 
-		return result;
-	}
+        return result;
+    }
 
-	public ulong AllocateSessionId()
-	{
+    public ulong AllocateSessionId()
+    {
         if (Options.RecoveryStore != null) return Options.RecoveryStore.AllocateId(Smb.Server.Recovery.RecoveryIdKind.Session);
-		ulong num;
-		do
-		{
-			num = (ulong)Interlocked.Increment(ref _sessionIdCounter);
-		} while (num == 0L);
+        ulong num;
+        do
+        {
+            num = (ulong)Interlocked.Increment(ref _sessionIdCounter);
+        } while (num == 0L);
 
-		return num;
-	}
+        return num;
+    }
 
-	public ulong AllocateSessionGlobalId()
-	{
-		return (ulong)Interlocked.Increment(ref _sessionGlobalIdCounter);
-	}
+    public ulong AllocateSessionGlobalId()
+    {
+        return (ulong)Interlocked.Increment(ref _sessionGlobalIdCounter);
+    }
 
-	public ulong AllocatePersistentId()
-	{
+    public ulong AllocatePersistentId()
+    {
         if (Options.RecoveryStore != null) return 0x8000000000000000UL | Options.RecoveryStore.AllocateId(Smb.Server.Recovery.RecoveryIdKind.PersistentHandle);
-		return (ulong)(long.MinValue | Interlocked.Increment(ref _persistentIdCounter));
-	}
+        return (ulong)(long.MinValue | Interlocked.Increment(ref _persistentIdCounter));
+    }
 }

@@ -335,16 +335,30 @@ public unsafe class SqliteConnection : IDisposable
                     SqliteException.ThrowIfNotOk(result, Handle);
                     if (statement != null)
                     {
-                        do { result = sqlite3_step(statement); } while (result == SQLITE_ROW);
-                        if (result != SQLITE_DONE) SqliteException.ThrowIfNotOk(result, Handle);
+                        do
+                        {
+                            result = sqlite3_step(statement);
+                        } while (result == SQLITE_ROW);
+
+                        if (result != SQLITE_DONE)
+                            SqliteException.ThrowIfNotOk(result, Handle);
+
                         changes += sqlite3_changes(Handle);
                     }
-                    if ((char*)tail <= cursor) break;
+
+                    if ((char*)tail <= cursor)
+                        break;
+
                     cursor = (char*)tail;
                 }
-                finally { if (statement != null) sqlite3_finalize(statement); }
+                finally
+                {
+                    if (statement != null)
+                        sqlite3_finalize(statement);
+                }
             }
         }
+
         return changes;
     }
 

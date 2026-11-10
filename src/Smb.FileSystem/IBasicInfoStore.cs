@@ -7,5 +7,5 @@ namespace Smb.FileSystem;
 
 public interface IBasicInfoStore
 {
-	ValueTask<NtStatus> SetBasicInfoAsync(IFileHandle handle, FileBasicInfoUpdate update, CancellationToken cancellationToken = default(CancellationToken));
+    ValueTask<NtStatus> SetBasicInfoAsync(IFileHandle handle, FileBasicInfoUpdate update, CancellationToken cancellationToken = default(CancellationToken));
 }

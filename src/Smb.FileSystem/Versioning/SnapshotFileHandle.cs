@@ -4,42 +4,42 @@ namespace Smb.FileSystem.Versioning;
 
 internal sealed class SnapshotFileHandle : IFileHandle, IDisposable
 {
-	private readonly byte[] _content;
+    private readonly byte[] _content;
 
-	private readonly FileEntryInfo _info;
+    private readonly FileEntryInfo _info;
 
-	public FileIdentity? Identity { get; }
+    public FileIdentity? Identity { get; }
 
-	public string Path { get; }
+    public string Path { get; }
 
-	public bool IsDirectory => false;
+    public bool IsDirectory => false;
 
-	public SnapshotFileHandle(string path, byte[] content, FileEntryInfo info, FileIdentity identity)
-	{
-		Path = path;
-		Identity = identity;
-		_content = content;
-		_info = info;
-	}
+    public SnapshotFileHandle(string path, byte[] content, FileEntryInfo info, FileIdentity identity)
+    {
+        Path = path;
+        Identity = identity;
+        _content = content;
+        _info = info;
+    }
 
-	public FileEntryInfo GetInfo()
-	{
-		return _info;
-	}
+    public FileEntryInfo GetInfo()
+    {
+        return _info;
+    }
 
-	public FileStoreResult<int> Read(long offset, Span<byte> buffer)
-	{
-		if (offset < 0 || offset >= _content.Length)
-		{
-			return FileStoreResult<int>.Ok(0);
-		}
+    public FileStoreResult<int> Read(long offset, Span<byte> buffer)
+    {
+        if (offset < 0 || offset >= _content.Length)
+        {
+            return FileStoreResult<int>.Ok(0);
+        }
 
-		var num = Math.Min(buffer.Length, _content.Length - (int)offset);
-		_content.AsSpan((int)offset, num).CopyTo(buffer);
-		return FileStoreResult<int>.Ok(num);
-	}
+        var num = Math.Min(buffer.Length, _content.Length - (int)offset);
+        _content.AsSpan((int)offset, num).CopyTo(buffer);
+        return FileStoreResult<int>.Ok(num);
+    }
 
-	public void Dispose()
-	{
-	}
+    public void Dispose()
+    {
+    }
 }
